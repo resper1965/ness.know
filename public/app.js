@@ -26,6 +26,33 @@ async function api(caminho, opcoes = {}) {
 
 const URL_MCP = `${location.origin}/mcp`;
 
+/** Receitas de conexão por cliente. `chave` vira a chave real logo depois de gerada. */
+const receitas = (chave) => [
+  { nome: "Claude Code", onde: "terminal, na pasta do projeto (ou com --scope user para todos)", texto: `claude mcp add --transport http ness-know ${URL_MCP} --header "Authorization: Bearer ${chave}"` },
+  {
+    nome: "Codex (CLI e IDE)",
+    onde: "~/.codex/config.toml; a chave fica na variável NESS_KNOW_TOKEN do sistema",
+    texto: `[mcp_servers.ness-know]\nurl = "${URL_MCP}"\nbearer_token_env_var = "NESS_KNOW_TOKEN"\n\n# a chave, uma vez por máquina:\n# Windows:     setx NESS_KNOW_TOKEN "${chave}"\n# macOS/Linux: export NESS_KNOW_TOKEN="${chave}"`,
+  },
+  { nome: "Cursor", onde: ".cursor/mcp.json no projeto (ou ~/.cursor/mcp.json)", texto: JSON.stringify({ mcpServers: { "ness-know": { url: URL_MCP, headers: { Authorization: `Bearer ${chave}` } } } }, null, 2) },
+  { nome: "VS Code (Copilot)", onde: ".vscode/mcp.json", texto: JSON.stringify({ servers: { "ness-know": { type: "http", url: URL_MCP, headers: { Authorization: `Bearer ${chave}` } } } }, null, 2) },
+  {
+    nome: "Claude Desktop",
+    onde: "claude_desktop_config.json (Configurações › Desenvolvedor › Editar config); usa a ponte mcp-remote, exige Node",
+    texto: JSON.stringify({ mcpServers: { "ness-know": { command: "npx", args: ["-y", "mcp-remote", URL_MCP, "--header", `Authorization: Bearer ${chave}`] } } }, null, 2),
+  },
+];
+
+function mostrarReceitas(destino, chave) {
+  destino.replaceChildren(
+    ...receitas(chave).map((r) => {
+      const d = el("div", null, "receita");
+      d.append(el("h2", r.nome), el("p", r.onde, "apoio"), el("pre", r.texto));
+      return d;
+    }),
+  );
+}
+
 async function carregarPacotes() {
   const pacotes = await api("/api/pacotes");
   $("#pacotes").replaceChildren(...pacotes.map((p) => linha(p.slug, p.nome, p.versao || "", String(p.documentos))));
@@ -69,9 +96,9 @@ $("#nova").addEventListener("submit", async (e) => {
       el("pre", r.token),
       el("p", "Endereço MCP (HTTP):", "apoio"),
       el("pre", URL_MCP),
-      el("p", "Claude Code:", "apoio"),
-      el("pre", `claude mcp add --transport http ness-know ${URL_MCP} --header "Authorization: Bearer ${r.token}"`),
+      el("p", "As receitas de conexão abaixo já estão com esta chave.", "apoio"),
     );
+    mostrarReceitas($("#receitas"), r.token);
     saida.replaceChildren(caixa);
     $("#nome").value = "";
     carregarChaves();
@@ -98,6 +125,9 @@ $("#teste").addEventListener("submit", async (e) => {
     out.replaceChildren(el("p", err.message, "erro"));
   }
 });
+
+$("#url-mcp").textContent = URL_MCP;
+mostrarReceitas($("#receitas"), "SUA_CHAVE");
 
 (async () => {
   try {

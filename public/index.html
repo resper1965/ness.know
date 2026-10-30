@@ -48,6 +48,10 @@
     pre { white-space: pre-wrap; word-break: break-all; background: var(--branco); border: 1px solid var(--fio); padding: 10px 12px; font: 13px/1.45 ui-monospace, Menlo, Consolas, monospace; color: var(--tinta); margin: 6px 0 12px; }
     code { font: 13px ui-monospace, Menlo, Consolas, monospace; background: var(--nevoa); padding: 1px 5px; }
     .erro { color: var(--erro); }
+    .receita { border-bottom: 1px solid var(--fio); padding: 14px 0; }
+    .receita h2 { margin: 0; font-weight: 600; font-size: 15px; }
+    .receita h2::before { content: "▸ "; color: var(--ciano); }
+    .receita p { margin: 4px 0 0; }
     .trecho { border-bottom: 1px solid var(--fio); padding: 14px 0; }
     .trecho h2 { margin: 0; font-weight: 600; font-size: 15px; color: var(--tinta); } /* ciano-escuro sobre branco não passa no contraste AA em texto pequeno */
     .trecho h2::before { content: "▸ "; color: var(--ciano); }
@@ -85,8 +89,14 @@
       <p class="apoio">Carga de documentos: <code>node scripts/carregar-pacote.mjs &lt;pasta&gt; https://know.ness.com.br</code></p>
     </section>
 
+    <section aria-labelledby="t-conectar">
+      <h1 id="t-conectar"><span class="num">03</span>Conectar um agente</h1>
+      <p class="apoio">Endereço MCP (HTTP): <code id="url-mcp"></code>. Gere uma chave acima e as receitas saem com ela preenchida; até lá aparecem com <code>SUA_CHAVE</code>. Ferramentas: <code>listar_pacotes</code> e <code>buscar_conhecimento</code>, só leitura.</p>
+      <div id="receitas"></div>
+    </section>
+
     <section aria-labelledby="t-teste">
-      <h1 id="t-teste"><span class="num">03</span>Testar a busca</h1>
+      <h1 id="t-teste"><span class="num">04</span>Testar a busca</h1>
       <form id="teste">
         <label for="consulta">Pergunta</label>
         <input id="consulta" type="text" required placeholder="Como tratar um incidente de segurança?">
