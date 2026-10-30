@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>ness.KNOW</title>
+  <style>
+    :root { --fundo: #0B1326; --cartao: #111c33; --linha: #24304a; --texto: #e6ebf5; --suave: #9aa6bd; --ponto: #00ADE8; --erro: #ff6b6b; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--fundo); color: var(--texto); font: 15px/1.5 Inter, system-ui, sans-serif; }
+    header { display: flex; justify-content: space-between; align-items: baseline; padding: 16px 20px; border-bottom: 1px solid var(--linha); }
+    h1 { margin: 0; font: 600 20px Montserrat, Inter, sans-serif; }
+    h1 b { color: var(--ponto); }
+    main { max-width: 960px; margin: 0 auto; padding: 16px; display: grid; gap: 16px; }
+    section { background: var(--cartao); border: 1px solid var(--linha); padding: 16px; }
+    h2 { margin: 0 0 12px; font: 600 16px Montserrat, Inter, sans-serif; }
+    label { display: block; margin: 8px 0 4px; color: var(--suave); font-size: 13px; }
+    input[type=text], textarea { width: 100%; padding: 8px; background: var(--fundo); color: var(--texto); border: 1px solid var(--linha); font: inherit; }
+    button { padding: 8px 14px; background: var(--ponto); color: #001018; border: 0; font: 600 14px Inter, sans-serif; cursor: pointer; }
+    button.secundario { background: transparent; color: var(--suave); border: 1px solid var(--linha); }
+    button:disabled { opacity: .5; cursor: default; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--linha); vertical-align: top; }
+    th { color: var(--suave); font-weight: 500; }
+    .marcas { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+    .marcas label { display: flex; gap: 6px; align-items: center; margin: 0; color: var(--texto); }
+    .token { margin-top: 12px; padding: 12px; border: 1px solid var(--ponto); }
+    pre { white-space: pre-wrap; word-break: break-all; background: var(--fundo); padding: 8px; font: 13px/1.4 "JetBrains Mono", ui-monospace, monospace; }
+    .erro { color: var(--erro); }
+    .suave { color: var(--suave); font-size: 13px; }
+    .trecho { border-top: 1px solid var(--linha); padding: 8px 0; }
+    .trecho p { margin: 4px 0 0; white-space: pre-wrap; font-size: 13px; }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  </style>
+</head>
+<body>
+  <header><h1>ness<b>.</b>KNOW</h1><span class="suave" id="eu"></span></header>
+  <main>
+    <section>
+      <h2>Chaves de API</h2>
+      <p class="suave">Cada projeto ou agente recebe uma chave e só enxerga os pacotes marcados. A chave aparece uma vez, na criação.</p>
+      <form id="nova">
+        <label for="nome">Nome do cliente</label>
+        <input id="nome" type="text" required maxlength="100" placeholder="ex.: faBRAINzio, ness.brain, Claude do Ricardo">
+        <label>Pacotes liberados</label>
+        <div class="marcas" id="escolha"></div>
+        <p><button type="submit">Gerar chave</button></p>
+      </form>
+      <div id="nova-saida"></div>
+      <table><thead><tr><th>Nome</th><th>Pacotes</th><th>Último uso</th><th></th></tr></thead><tbody id="chaves"></tbody></table>
+    </section>
+    <section>
+      <h2>Pacotes</h2>
+      <table><thead><tr><th>Slug</th><th>Nome</th><th>Versão</th><th>Documentos</th></tr></thead><tbody id="pacotes"></tbody></table>
+      <p class="suave">Para carregar documentos: <code>node scripts/carregar-pacote.mjs &lt;pasta&gt; https://know.ness.com.br</code></p>
+    </section>
+    <section>
+      <h2>Testar a busca</h2>
+      <form id="teste"><label for="consulta">Pergunta</label><input id="consulta" type="text" required placeholder="ex.: como tratar um incidente de segurança?"><p><button type="submit">Buscar</button></p></form>
+      <div id="resultado"></div>
+    </section>
+  </main>
+  <script src="/app.js" type="module"></script>
+</body>
+</html>

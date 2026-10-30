@@ -1,0 +1,25 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ness-know",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  // Interface de admin (chaves, pacotes, teste de busca). /mcp e /health passam pelo Worker antes dos arquivos.
+  "assets": { "directory": "public", "binding": "ASSETS", "run_worker_first": ["/api/*", "/mcp", "/health"] },
+  // Domínio próprio. A zona ness.com.br precisa estar nesta conta Cloudflare.
+  "routes": [{ "pattern": "know.ness.com.br", "custom_domain": true }],
+  "d1_databases": [{ "binding": "DB", "database_name": "ness-know", "database_id": "f5472779-9e83-48ba-b778-b1fd7e491d56", "migrations_dir": "migrations" }],
+  "r2_buckets": [{ "binding": "ARQUIVOS", "bucket_name": "ness-know-arquivos" }],
+  // bge-m3: 1024 dimensões, cosseno; índice de metadados em "alvo" criado antes do primeiro vetor (docs/deploy.md).
+  "vectorize": [{ "binding": "VETORES", "index_name": "ness-know-trechos" }],
+  "ai": { "binding": "AI" },
+  "vars": {
+    // Quem administra (chaves e pacotes). O login é o Cloudflare Access.
+    "ADMIN_EMAILS": "resper@bekaa.eu",
+    "ACCESS_TEAM": "ness.cloudflareaccess.com",
+    "ACCESS_AUD": "PREENCHER",
+    // Busca calibrada com scripts/avaliar-busca.mjs (avaliação de 30/10/2026 no faBRAINzio).
+    "BUSCA_RERANK": "0",
+    "BUSCA_MINIMO": "0.4"
+  }
+}
