@@ -1,7 +1,7 @@
 // ness.KNOW: base de conhecimento por MCP (Streamable HTTP, sem sessão): outros projetos consultam os pacotes que lhes foram liberados.
 // Autenticação por chave de API (Bearer), guardada só em hash na tabela `chaves`; /mcp fica fora do Cloudflare Access.
 import { buscarEm, type EnvBusca } from "./busca";
-import { correlacionar, MAX_DESTINOS, PACOTE_STRM } from "./strm";
+import { cobertura, correlacionar, MAX_DESTINOS, MAX_IMPLEMENTADOS, PACOTE_STRM } from "./strm";
 
 export interface EnvMcp extends EnvBusca {
   /** Ajustes medidos com scripts/avaliar-busca.mjs: "1" liga o rerank; número troca a nota mínima da semântica. */
@@ -94,6 +94,21 @@ const FERRAMENTAS = [
     },
     annotations: { readOnlyHint: true },
   },
+  {
+    name: "cobertura",
+    description:
+      "Avaliação de lacunas entre frameworks pelo SCF STRM: dado o que a organização já implementou num framework (ex.: controles do Anexo A da ISO 27001 aplicados na SoA) ou em controles SCF, classifica cada item do framework alvo (ex.: TX-RAMP, NIST CSF, CIS) como coberto, parcial ou sem_cobertura, com o caminho e os controles SCF que faltam. Resultado indicativo: confirme cada lacuna no texto da norma com buscar_conhecimento. Ids em listar_pacotes, pacote scf-strm; Anexo A da ISO 27001 = framework da ISO 27002 (aceita A.8.16 ou 8.16).",
+    inputSchema: {
+      type: "object",
+      properties: {
+        de: { type: "string", description: "id do framework do que está implementado (ex.: general-iso-27002-2022) ou scf" },
+        implementados: { type: "array", items: { type: "string" }, description: `itens implementados nesse framework (ex.: ["5.15", "8.16"]) ou controles SCF; até ${MAX_IMPLEMENTADOS}` },
+        alvo: { type: "string", description: "id do framework a avaliar (ex.: usa-state-tx-txramp-2-0-level-2)" },
+      },
+      required: ["de", "implementados", "alvo"],
+    },
+    annotations: { readOnlyHint: true },
+  },
 ];
 
 type Resposta = { content: { type: "text"; text: string }[]; isError?: boolean };
@@ -150,6 +165,16 @@ async function chamar(env: EnvMcp, cliente: Cliente, nome: string, args: Record<
     const r = await correlacionar(env.DB, item, de, para);
     if ("erro" in r) return texto(r.erro, true);
     return texto(JSON.stringify({ ...r, fonte: { sistema: "ness.KNOW", base: `SCF STRM ${r.versao_scf ?? ""}`.trim(), consulta: `${de} ${item}`, coletado_em: new Date().toISOString() } }, null, 1));
+  }
+  if (nome === "cobertura") {
+    if (!cliente.pacotes.includes(PACOTE_STRM)) return texto(`esta chave não libera o pacote ${PACOTE_STRM} (correspondência entre frameworks)`, true);
+    const de = typeof args.de === "string" ? args.de.slice(0, 120) : "";
+    const alvo = typeof args.alvo === "string" ? args.alvo.slice(0, 120) : "";
+    const implementados = Array.isArray(args.implementados) ? args.implementados.filter((x): x is string => typeof x === "string").slice(0, MAX_IMPLEMENTADOS).map((x) => x.slice(0, 60)) : [];
+    if (!de || !alvo || !implementados.length) return texto("informe de, implementados e alvo (ids em listar_pacotes, pacote scf-strm)", true);
+    const r = await cobertura(env.DB, de, implementados, alvo);
+    if ("erro" in r) return texto(r.erro, true);
+    return texto(JSON.stringify({ ...r, fonte: { sistema: "ness.KNOW", base: `SCF STRM ${r.versao_scf ?? ""}`.trim(), consulta: `${de} → ${alvo} (${implementados.length} implementados)`, coletado_em: new Date().toISOString() } }, null, 1));
   }
   return texto(`ferramenta desconhecida: ${nome}`, true);
 }

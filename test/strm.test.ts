@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import migracao from "../migrations/0003_strm.sql?raw";
 import { lerPlanilha, paraSql } from "../scripts/strm.mjs";
-import { correlacionar } from "../src/strm";
+import { cobertura, correlacionar } from "../src/strm";
 import { bancoTeste } from "./sqlite";
 
 const CAB = ["FDE #", "FDE Name", "Focal Document Element (FDE) Description", "STRM\nRationale", "STRM\nRelationship", "SCF Control", "SCF #", "Secure Controls Framework (SCF)\nControl Description", "Strength of Relationship", "Notes"];
@@ -97,5 +97,29 @@ describe("correlacionar", () => {
     expect(r.scf).toHaveLength(45);
     expect(r.scf.every((s) => s.nome)).toBe(true);
     expect(r.correspondencias).toHaveLength(45);
+  });
+});
+
+describe("cobertura", () => {
+  const db = () => bancoTeste(migracao, BASE, "INSERT INTO strm VALUES ('cis', '4.1', 'Secure Configuration', 'subconjunto', 10, 'CFG-02');");
+
+  it("classifica cada item do alvo pelo melhor caminho a partir do que está implementado", async () => {
+    const r = await cobertura(db(), "iso", ["A.8.16", "9.99"], "cis");
+    if ("erro" in r) throw new Error(r.erro);
+    expect(r.alvo).toEqual({ framework: "cis", nome: "CIS v8.1" });
+    expect(r.implementados_desconhecidos).toEqual(["9.99"]); // "A.8.16" vale como 8.16 na ISO 27002
+    expect(r.resumo).toEqual({ coberto: 1, parcial: 1, sem_cobertura: 1 });
+    expect(r.itens).toEqual([
+      { item: "4.1", nome: "Secure Configuration", situacao: "sem_cobertura", forca: null, via: null, scf_sem_cobertura: ["CFG-02"] },
+      { item: "8.2", nome: "Collect Audit Logs", situacao: "coberto", forca: 8, via: { scf: "MON-01", origem: "8.16" }, scf_sem_cobertura: [] },
+      { item: "8.11", nome: "Conduct Audit Log Reviews", situacao: "parcial", forca: 5, via: { scf: "MON-02.2", origem: "8.16" }, scf_sem_cobertura: [] },
+    ]);
+  });
+
+  it("aceita controles SCF como o que está implementado e explica alvo desconhecido", async () => {
+    const r = await cobertura(db(), "scf", ["mon-02.2"], "cis");
+    if ("erro" in r) throw new Error(r.erro);
+    expect(r.itens.find((i) => i.item === "8.11")).toMatchObject({ situacao: "coberto", forca: 10 });
+    expect(await cobertura(db(), "iso", ["8.16"], "nao-existe")).toEqual({ erro: expect.stringContaining("framework desconhecido") });
   });
 });

@@ -10,7 +10,7 @@
 
 ## Ferramentas
 
-As três ferramentas são só de leitura (`readOnlyHint: true`).
+As quatro ferramentas são só de leitura (`readOnlyHint: true`).
 
 ### `listar_pacotes`
 
@@ -115,6 +115,30 @@ Erros (resultado com `isError: true`):
 | Id de `de` inexistente | `framework desconhecido` |
 | Controle SCF inexistente (`de` = `scf`) | `controle SCF desconhecido` |
 | O item não consta no framework | `item … sem correspondência …` (para o Anexo A da ISO 27001, a mensagem indica o framework da ISO 27002) |
+
+### `cobertura`
+
+Avaliação de lacunas: a partir do que a organização já implementou num framework (por exemplo, os controles do Anexo A aplicados na SoA), classifica cada item de outro framework. Exige o pacote `scf-strm`.
+
+| Argumento | Tipo | Obrigatório | Descrição |
+| --- | --- | --- | --- |
+| `de` | string | sim | Id do framework do que está implementado (`general-iso-27002-2022` para o Anexo A da 27001), ou `scf` |
+| `implementados` | string[] | sim | Itens implementados (`A.8.16` ou `8.16`), ou controles SCF; até 500 |
+| `alvo` | string | sim | Id do framework a avaliar (ex.: `usa-state-tx-txramp-2-0-level-2`) |
+
+Resposta: `resumo` (`coberto`, `parcial`, `sem_cobertura`), `implementados_desconhecidos` e `itens`, um por item do alvo:
+
+```json
+{ "item": "AC-02 (05)", "nome": "Account Management | Inactivity Logout", "situacao": "sem_cobertura", "forca": null, "via": null, "scf_sem_cobertura": ["IAC-24"] }
+```
+
+- `coberto`: o melhor caminho implementado → SCF → item tem força 8 ou mais.
+- `parcial`: há caminho, com força menor.
+- `sem_cobertura`: nenhum controle SCF do item é alcançado pelo que está implementado; `scf_sem_cobertura` diz quais faltam.
+
+O resultado é indicativo e segue a granularidade do SCF. Um item do alvo ligado a um subcontrole SCF (ex.: `IAC-24`) só conta como alcançado se algo implementado ligar ao mesmo subcontrole. Exemplo real (SCF 2026.1): o Anexo A inteiro dá, no TX-RAMP 2.0 Level 2, 21 itens cobertos, 108 parciais e 94 sem cobertura. Confirme cada lacuna no texto da norma com `buscar_conhecimento`.
+
+Erros: os mesmos de `correlacionar`, mais `informe de, implementados e alvo (ids em listar_pacotes, pacote scf-strm)`.
 
 ## Erros
 

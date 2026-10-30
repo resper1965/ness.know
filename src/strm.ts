@@ -86,3 +86,80 @@ export async function correlacionar(db: D1Database, itemPedido: string, de: stri
   const correspondencias = [...melhor.values()].sort((a, b) => (b.forca ?? -1) - (a.forca ?? -1) || a.framework.localeCompare(b.framework) || a.item.localeCompare(b.item, undefined, { numeric: true }));
   return { origem, versao_scf: versao, scf, destinos_desconhecidos, correspondencias };
 }
+
+/** Caminho a partir desta força conta como cobertura; abaixo, cobertura parcial. */
+export const FORCA_COBERTURA = 8;
+/** Itens implementados por chamada: cobre o Anexo A inteiro (93) e o CSF (106) com folga. */
+export const MAX_IMPLEMENTADOS = 500;
+
+export interface ItemCobertura {
+  item: string;
+  nome: string | null;
+  situacao: "coberto" | "parcial" | "sem_cobertura";
+  /** Elo mais fraco do melhor caminho implementado → SCF → item do alvo. */
+  forca: number | null;
+  via: { scf: string; origem: string } | null;
+  /** Controles SCF ligados ao item do alvo que nada do implementado alcança. */
+  scf_sem_cobertura: string[];
+}
+export interface Cobertura {
+  de: string;
+  alvo: { framework: string; nome: string };
+  versao_scf: string | null;
+  implementados_desconhecidos: string[];
+  resumo: Record<ItemCobertura["situacao"], number>;
+  itens: ItemCobertura[];
+}
+
+/**
+ * Cobertura de um framework alvo a partir do que já está implementado em outro (ou de controles SCF).
+ * Indicativa: segue os mapeamentos do SCF; o requisito de cada item ainda precisa ser conferido no texto da norma.
+ */
+export async function cobertura(db: D1Database, de: string, implementados: string[], alvoId: string): Promise<Cobertura | { erro: string }> {
+  const alvo = await db.prepare("SELECT nome, versao_scf FROM strm_frameworks WHERE id = ?").bind(alvoId).first<{ nome: string; versao_scf: string | null }>();
+  if (!alvo) return { erro: `framework desconhecido: ${alvoId}. Os ids estão em listar_pacotes, pacote ${PACOTE_STRM}` };
+
+  // Melhor força com que o que está implementado alcança cada controle SCF.
+  const alcance = new Map<string, { forca: number | null; origem: string }>();
+  const pedidos = [...new Set(implementados.map((x) => x.trim()).filter(Boolean))];
+  let desconhecidos: string[];
+  if (de === "scf") {
+    const conhecidos = new Map(
+      (await db.prepare("SELECT scf FROM scf_controles").all<{ scf: string }>()).results.map((x) => [x.scf.toLowerCase(), x.scf]),
+    );
+    desconhecidos = pedidos.filter((p) => !conhecidos.has(p.toLowerCase()));
+    for (const p of pedidos) if (conhecidos.has(p.toLowerCase())) alcance.set(conhecidos.get(p.toLowerCase())!, { forca: 10, origem: conhecidos.get(p.toLowerCase())! });
+  } else {
+    if (!(await db.prepare("SELECT 1 FROM strm_frameworks WHERE id = ?").bind(de).first())) return { erro: `framework desconhecido: ${de}. Os ids estão em listar_pacotes, pacote ${PACOTE_STRM}` };
+    const linhas = (await db.prepare("SELECT item, forca, scf FROM strm WHERE framework = ?").bind(de).all<{ item: string; forca: number | null; scf: string }>()).results;
+    const itens = new Map(linhas.map((l) => [l.item.toLowerCase(), l.item]));
+    // "A.8.16" (Anexo A da 27001) vale como "8.16" (numeração da 27002 no STRM).
+    const resolver = (p: string) => itens.get(p.toLowerCase()) ?? itens.get(p.replace(/^a\./i, "").toLowerCase());
+    desconhecidos = pedidos.filter((p) => !resolver(p));
+    const meus = new Set(pedidos.map(resolver).filter((x): x is string => !!x));
+    for (const l of linhas) {
+      if (!meus.has(l.item)) continue;
+      const atual = alcance.get(l.scf);
+      if (!atual || (l.forca ?? -1) > (atual.forca ?? -1)) alcance.set(l.scf, { forca: l.forca, origem: l.item });
+    }
+  }
+
+  const linhasAlvo = (await db.prepare("SELECT item, item_nome, forca, scf FROM strm WHERE framework = ?").bind(alvoId).all<{ item: string; item_nome: string | null; forca: number | null; scf: string }>()).results;
+  const porItem = new Map<string, ItemCobertura>();
+  for (const l of linhasAlvo) {
+    const c = porItem.get(l.item) ?? { item: l.item, nome: l.item_nome, situacao: "sem_cobertura", forca: null, via: null, scf_sem_cobertura: [] };
+    porItem.set(l.item, c);
+    const a = alcance.get(l.scf);
+    if (!a) {
+      c.scf_sem_cobertura.push(l.scf);
+      continue;
+    }
+    const forca = minimo(a.forca, l.forca);
+    if (!c.via || (forca ?? -1) > (c.forca ?? -1)) Object.assign(c, { forca, via: { scf: l.scf, origem: a.origem } });
+  }
+  const itens = [...porItem.values()].sort((a, b) => a.item.localeCompare(b.item, undefined, { numeric: true }));
+  for (const c of itens) if (c.via) c.situacao = (c.forca ?? 0) >= FORCA_COBERTURA ? "coberto" : "parcial";
+  const resumo = { coberto: 0, parcial: 0, sem_cobertura: 0 };
+  for (const c of itens) resumo[c.situacao]++;
+  return { de, alvo: { framework: alvoId, nome: alvo.nome }, versao_scf: alvo.versao_scf, implementados_desconhecidos: desconhecidos, resumo, itens };
+}

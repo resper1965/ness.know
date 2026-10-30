@@ -53,7 +53,7 @@ describe("mcp", () => {
     const futura = (await (await chamar(env, { jsonrpc: "2.0", id: 9, method: "initialize", params: { protocolVersion: "2099-01-01" } })).json()) as { result: { protocolVersion: string } };
     expect(futura.result.protocolVersion).toBe("2025-06-18");
     const l = (await (await chamar(env, { jsonrpc: "2.0", id: 2, method: "tools/list" })).json()) as { result: { tools: { name: string }[] } };
-    expect(l.result.tools.map((t) => t.name)).toEqual(["listar_pacotes", "buscar_conhecimento", "correlacionar"]);
+    expect(l.result.tools.map((t) => t.name)).toEqual(["listar_pacotes", "buscar_conhecimento", "correlacionar", "cobertura"]);
   });
 
   it("busca só nos pacotes liberados, mesmo se pedir outro", async () => {
@@ -111,6 +111,16 @@ describe("mcp", () => {
     expect(sem.result.content[0].text).toContain("scf-strm");
     const { env: env2 } = await ambiente(["scf-strm"]);
     const faltando = (await (await chamar(env2, { jsonrpc: "2.0", id: 9, method: "tools/call", params: { name: "correlacionar", arguments: { item: "8.16" } } })).json()) as { result: { isError?: boolean } };
+    expect(faltando.result.isError).toBe(true);
+  });
+  it("cobertura exige o pacote scf-strm e valida os argumentos", async () => {
+    const chamada = (args: Record<string, unknown>) => ({ jsonrpc: "2.0", id: 10, method: "tools/call", params: { name: "cobertura", arguments: args } });
+    const { env } = await ambiente(["iso"]);
+    const sem = (await (await chamar(env, chamada({ de: "iso", implementados: ["8.16"], alvo: "cis" }))).json()) as { result: { isError?: boolean; content: { text: string }[] } };
+    expect(sem.result.isError).toBe(true);
+    expect(sem.result.content[0].text).toContain("scf-strm");
+    const { env: env2 } = await ambiente(["scf-strm"]);
+    const faltando = (await (await chamar(env2, chamada({ de: "iso", alvo: "cis" }))).json()) as { result: { isError?: boolean } };
     expect(faltando.result.isError).toBe(true);
   });
   it("correlacionar tira repetidos de para antes de limitar a 10 destinos", async () => {
