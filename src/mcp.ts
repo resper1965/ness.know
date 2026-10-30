@@ -1,6 +1,7 @@
 // ness.KNOW: base de conhecimento por MCP (Streamable HTTP, sem sessão): outros projetos consultam os pacotes que lhes foram liberados.
 // Autenticação por chave de API (Bearer), guardada só em hash na tabela `chaves`; /mcp fica fora do Cloudflare Access.
 import { buscarEm, type EnvBusca } from "./busca";
+import { correlacionar, MAX_DESTINOS, PACOTE_STRM } from "./strm";
 
 export interface EnvMcp extends EnvBusca {
   /** Ajustes medidos com scripts/avaliar-busca.mjs: "1" liga o rerank; número troca a nota mínima da semântica. */
@@ -78,6 +79,21 @@ const FERRAMENTAS = [
     },
     annotations: { readOnlyHint: true },
   },
+  {
+    name: "correlacionar",
+    description:
+      "Correspondência oficial entre frameworks (SCF STRM, NIST IR 8477). Dado um item de um framework (ex.: 8.16 da ISO 27002:2022, DE.CM-01 do NIST CSF 2.0), devolve os controles SCF ligados e os itens correspondentes nos frameworks de destino, com tipo de relação (igual, subconjunto, superconjunto, intersecao) e força de 0 a 10 do elo mais fraco. Ids dos frameworks: pacote scf-strm em listar_pacotes. Controles do Anexo A da ISO 27001 estão no framework da ISO 27002. Confirme o requisito com buscar_conhecimento antes de afirmar conformidade.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        item: { type: "string", description: "código do item na origem (ex.: 8.16, DE.CM-01, 8.11); com de = scf, um controle SCF (ex.: MON-01)" },
+        de: { type: "string", description: "id do framework de origem (ex.: general-iso-27002-2022) ou scf" },
+        para: { type: "array", items: { type: "string" }, description: `ids dos frameworks de destino, até ${MAX_DESTINOS}` },
+      },
+      required: ["item", "de", "para"],
+    },
+    annotations: { readOnlyHint: true },
+  },
 ];
 
 type Resposta = { content: { type: "text"; text: string }[]; isError?: boolean };
@@ -95,10 +111,13 @@ async function chamar(env: EnvMcp, cliente: Cliente, nome: string, args: Record<
         .bind(...cliente.pacotes)
         .all<{ dono: string; titulo: string; versao: string | null }>(),
     ]);
+    const frameworks = cliente.pacotes.includes(PACOTE_STRM)
+      ? (await env.DB.prepare("SELECT id, nome, itens FROM strm_frameworks ORDER BY id").all<{ id: string; nome: string; itens: number }>()).results
+      : [];
     const pacotes = p.results.map((x) => {
       const so = cliente.documentos[x.slug];
       const documentos = d.results.filter((y) => y.dono === x.slug && (!so || so.includes(y.titulo))).map((y) => ({ titulo: y.titulo, versao: y.versao }));
-      return { ...x, ...(so ? { restrito: true } : {}), documentos };
+      return { ...x, ...(so ? { restrito: true } : {}), documentos, ...(x.slug === PACOTE_STRM ? { frameworks } : {}) };
     });
     return texto(JSON.stringify({ pacotes }, null, 1));
   }
@@ -121,6 +140,16 @@ async function chamar(env: EnvMcp, cliente: Cliente, nome: string, args: Record<
       }),
     );
     return texto(JSON.stringify({ trechos }, null, 1));
+  }
+  if (nome === "correlacionar") {
+    if (!cliente.pacotes.includes(PACOTE_STRM)) return texto(`esta chave não libera o pacote ${PACOTE_STRM} (correspondência entre frameworks)`, true);
+    const item = typeof args.item === "string" ? args.item.slice(0, 60) : "";
+    const de = typeof args.de === "string" ? args.de.slice(0, 120) : "";
+    const para = Array.isArray(args.para) ? args.para.filter((x): x is string => typeof x === "string").slice(0, MAX_DESTINOS) : [];
+    if (!item.trim() || !de || !para.length) return texto("informe item, de e para (ids em listar_pacotes, pacote scf-strm)", true);
+    const r = await correlacionar(env.DB, item, de, para);
+    if ("erro" in r) return texto(r.erro, true);
+    return texto(JSON.stringify({ ...r, fonte: { sistema: "ness.KNOW", base: `SCF STRM ${r.versao_scf ?? ""}`.trim(), consulta: `${de} ${item}`, coletado_em: new Date().toISOString() } }, null, 1));
   }
   return texto(`ferramenta desconhecida: ${nome}`, true);
 }

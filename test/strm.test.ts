@@ -46,3 +46,43 @@ describe("leitura do STRM", () => {
     expect(await db.prepare("SELECT slug, versao FROM pacotes").first()).toEqual({ slug: "scf-strm", versao: "2026.1" });
   });
 });
+
+import { correlacionar } from "../src/strm";
+
+const BASE = `
+INSERT INTO strm_frameworks VALUES ('iso', 'ISO 27002:2022', '2026.1', 1), ('csf', 'NIST CSF 2.0', '2026.1', 1), ('cis', 'CIS v8.1', '2026.1', 1);
+INSERT INTO scf_controles VALUES ('MON-01', 'Continuous Monitoring', 'd'), ('MON-02.2', 'Central Review', 'd');
+INSERT INTO strm VALUES
+  ('iso', '8.16', 'Monitoring activities', 'subconjunto', 10, 'MON-01'),
+  ('iso', '8.16', 'Monitoring activities', 'intersecao', 5, 'MON-02.2'),
+  ('csf', 'DE.CM-01', NULL, 'subconjunto', 10, 'MON-01'),
+  ('cis', '8.11', 'Conduct Audit Log Reviews', 'igual', 10, 'MON-02.2'),
+  ('cis', '8.2', 'Collect Audit Logs', 'intersecao', 8, 'MON-01'),
+  ('cis', '8.2', 'Collect Audit Logs', 'intersecao', 6, 'MON-02.2');
+`;
+const banco = () => bancoTeste(migracao, BASE);
+
+describe("correlacionar", () => {
+  it("vai do item ao SCF e do SCF aos destinos, com a força do elo mais fraco e um resultado por item", async () => {
+    const r = await correlacionar(banco(), " 8.16 ", "iso", ["csf", "cis", "iso"]);
+    if ("erro" in r) throw new Error(r.erro);
+    expect(r.origem).toEqual({ framework: "iso", nome: "ISO 27002:2022", item: "8.16", item_nome: "Monitoring activities" });
+    expect(r.scf.map((s) => s.scf)).toEqual(["MON-01", "MON-02.2"]);
+    expect(r.correspondencias).toEqual([
+      { framework: "csf", item: "DE.CM-01", nome: null, via: "MON-01", relacao_origem: "subconjunto", relacao_destino: "subconjunto", forca: 10 },
+      { framework: "cis", item: "8.2", nome: "Collect Audit Logs", via: "MON-01", relacao_origem: "subconjunto", relacao_destino: "intersecao", forca: 8 },
+      { framework: "cis", item: "8.11", nome: "Conduct Audit Log Reviews", via: "MON-02.2", relacao_origem: "intersecao", relacao_destino: "igual", forca: 5 },
+    ]);
+  });
+
+  it("aceita um controle SCF como origem", async () => {
+    const r = await correlacionar(banco(), "mon-02.2", "scf", ["cis"]);
+    if ("erro" in r) throw new Error(r.erro);
+    expect(r.correspondencias.map((c) => c.item)).toEqual(["8.11", "8.2"]);
+  });
+
+  it("explica framework e item desconhecidos", async () => {
+    expect(await correlacionar(banco(), "8.16", "nao-existe", ["cis"])).toEqual({ erro: expect.stringContaining("framework desconhecido") });
+    expect(await correlacionar(banco(), "99.9", "iso", ["cis"])).toEqual({ erro: expect.stringContaining("sem correspondência") });
+  });
+});
