@@ -28,8 +28,13 @@ describe("leitura do STRM", () => {
   });
 
   it("acha as colunas mesmo deslocadas (FDE # repetido) e com FDE#", () => {
-    const deslocado = [["Focal Document:", "X"], [], [], [], ["FDE #", "FDE #", "FDE Name", "Desc", "STRM Rationale", "STRM Relationship", "SCF Control", "SCF #", "SCF desc", "Strength of Relationship (optional)"], ["A1", "dup", "Nome", "d", "Functional", "Equal", "Ctl", "IAC-01", "d", "8"]];
+    const deslocado = [["Focal Document:", "X"], [], [], [], ["CMMC FDE#", "FDE #", "FDE Name", "Desc", "STRM Rationale", "STRM Relationship", "SCF Control", "SCF #", "SCF desc", "Strength of Relationship (optional)"], ["A1", "dup", "Nome", "d", "Functional", "Equal", "Ctl", "IAC-01", "d", "8"]];
     expect(lerPlanilha(deslocado, "scf-strm-x.xlsx").ligacoes).toEqual([{ item: "A1", itemNome: "Nome", relacao: "igual", forca: 8, scf: "IAC-01", scfNome: "Ctl", scfDescricao: "d" }]);
+  });
+
+  it("cabeçalho sem STRM Relationship falha com erro que cita o arquivo", () => {
+    const semRelacao = [["Focal Document:", "X"], [], [], [], ["FDE #", "FDE Name", "Desc", "STRM Rationale", "SCF Control", "SCF #", "SCF desc"], ["A1", "n", "d", "Functional", "Ctl", "IAC-01", "d"]];
+    expect(() => lerPlanilha(semRelacao, "scf-strm-x-sem-relacao.xlsx")).toThrow(/scf-strm-x-sem-relacao\.xlsx.*STRM Relationship/);
   });
 
   it("o SQL gerado roda no esquema, escapa aspas e cria o pacote scf-strm", async () => {

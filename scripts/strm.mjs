@@ -34,7 +34,7 @@ export function lerPlanilha(linhas, arquivo) {
   const versao = depois("Reference document").match(/version\s+(\S+)/i)?.[1] ?? null;
 
   const h = linhas.findIndex((r) => r.some((c) => texto(c) === "SCF #"));
-  if (h < 0) return { id, nome, versao, ligacoes: [] };
+  if (h < 0) throw new Error(`${arquivo}: cabeçalho não reconhecido (falta SCF #)`);
   const cab = linhas[h].map(texto);
   const col = (teste) => cab.findIndex(teste);
   const c = {
@@ -46,6 +46,8 @@ export function lerPlanilha(linhas, arquivo) {
     scfDescricao: col((t) => t.startsWith("Secure Controls Framework (SCF)") || t.startsWith("SCF desc")), // "SCF desc" é o nome em planilhas mais enxutas
     forca: col((t) => t.startsWith("Strength of Relationship")),
   };
+  const faltam = [["item", "FDE #"], ["relacao", "STRM Relationship"], ["scf", "SCF #"], ["scfNome", "SCF Control"]].filter(([k]) => c[k] < 0).map(([, rotulo]) => rotulo);
+  if (faltam.length) throw new Error(`${arquivo}: cabeçalho não reconhecido (falta ${faltam.join(", ")})`);
 
   const ligacoes = [];
   let item = "";
@@ -61,7 +63,8 @@ export function lerPlanilha(linhas, arquivo) {
     const scf = texto(r[c.scf]);
     if (!item || !relacao || !/^[A-Z]{3}-\d/.test(scf)) continue;
     const f = texto(r[c.forca]);
-    ligacoes.push({ item, itemNome, relacao, forca: f !== "" && Number.isFinite(Number(f)) ? Number(f) : null, scf, scfNome: texto(r[c.scfNome]), scfDescricao: texto(r[c.scfDescricao]) });
+    const n = Number(f);
+    ligacoes.push({ item, itemNome, relacao, forca: f !== "" && Number.isInteger(n) && n >= 0 && n <= 10 ? n : null, scf, scfNome: texto(r[c.scfNome]), scfDescricao: texto(r[c.scfDescricao]) });
   }
   return { id, nome, versao, ligacoes };
 }
