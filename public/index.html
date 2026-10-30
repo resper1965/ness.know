@@ -10,119 +10,206 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    /* Sistema de design ness. (skill ness-brand): Montserrat, base branca, Tinta, um único acento ciano, sem sombra nem gradiente. */
+    /* Sistema de design ness.: Montserrat, base branca e Névoa, Tinta, um único acento ciano, sem sombra nem gradiente. */
     :root {
-      --ciano: #00ADE8; --ciano-nevoa: #E5F6FD;
+      --ciano: #00ADE8; --ciano-escuro: #0090C4; --ciano-nevoa: #E5F6FD;
       --tinta: #0E1116; --grafite: #2B333B; --cinza: #5A6473; --cinza-claro: #8A94A0;
-      --linha: #C7D2DE; --fio: #E4E8EC; --nevoa: #F4F7FA; --branco: #FFFFFF; --erro: #B42318;
-      --mono: ui-monospace, Menlo, Consolas, monospace;
+      --linha: #C7D2DE; --fio: #E4E8EC; --nevoa: #EEF3F8; --branco: #FFFFFF;
+      --erro: #B42318; --erro-fundo: #FDF0EF; --ok: #0F7B4F;
+      --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      --rapido: 160ms cubic-bezier(.2, .8, .2, 1);
     }
     * { box-sizing: border-box; }
-    html, body { height: 100%; }
-    body { margin: 0; background: var(--nevoa); color: var(--tinta); font: 400 15px/1.55 Montserrat, sans-serif; }
-    .larg { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+    ::selection { background: var(--ciano-nevoa); color: var(--tinta); }
+    html { scrollbar-color: var(--linha) transparent; }
+    body { margin: 0; min-height: 100vh; background: var(--nevoa); color: var(--tinta); font: 400 15px/1.55 Montserrat, sans-serif; caret-color: var(--ciano); font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; }
+    .larg { max-width: 1120px; margin: 0 auto; padding: 0 32px; }
 
+    /* Cabeçalho escuro com o logo e as abas */
     header { background: var(--tinta); color: var(--branco); }
-    .topo { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-top: 18px; padding-bottom: 14px; }
-    .marca { display: flex; align-items: baseline; gap: 4px; text-decoration: none; color: var(--branco); }
-    .marca img { height: 28px; width: auto; display: block; }
-    .marca span { font-weight: 500; font-size: 20px; letter-spacing: .02em; }
-    .eu { color: var(--cinza-claro); font-size: 13px; }
+    .topo { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-top: 22px; padding-bottom: 18px; }
+    .marca { display: flex; align-items: baseline; gap: 6px; text-decoration: none; color: var(--branco); }
+    .marca img { height: 32px; width: auto; display: block; }
+    .marca span { font-weight: 500; font-size: 22px; letter-spacing: .03em; }
+    .conta { display: flex; align-items: center; gap: 16px; font-size: 13px; color: var(--cinza-claro); }
+    .conta a { color: var(--branco); text-decoration: none; border-bottom: 1px solid var(--grafite); padding-bottom: 1px; transition: border-color var(--rapido); }
+    .conta a:hover { border-bottom-color: var(--ciano); }
 
-    nav[role=tablist] { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+    nav[role=tablist] { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 -14px; }
     nav[role=tablist] button {
-      background: none; border: 0; border-bottom: 3px solid transparent; color: var(--cinza-claro);
-      font: 500 14px Montserrat, sans-serif; padding: 12px 16px 11px; cursor: pointer; white-space: nowrap;
+      position: relative; background: none; border: 0; color: var(--cinza-claro);
+      font: 500 14px Montserrat, sans-serif; padding: 12px 14px 14px; cursor: pointer; white-space: nowrap; transition: color var(--rapido);
     }
+    nav[role=tablist] button::after { content: ""; position: absolute; left: 14px; right: 14px; bottom: 0; height: 3px; background: var(--ciano); transform: scaleX(0); transition: transform var(--rapido); }
     nav[role=tablist] button:hover { color: var(--branco); }
-    nav[role=tablist] button[aria-selected=true] { color: var(--branco); border-bottom-color: var(--ciano); }
-    nav[role=tablist] .cont { color: var(--cinza-claro); font-weight: 400; margin-left: 6px; }
+    nav[role=tablist] button[aria-selected=true] { color: var(--branco); }
+    nav[role=tablist] button[aria-selected=true]::after { transform: none; }
+    .cont { display: inline-block; min-width: 20px; margin-left: 8px; padding: 0 6px; font-size: 12px; line-height: 20px; text-align: center; color: var(--branco); background: var(--grafite); }
+    .cont:empty { display: none; }
 
-    main { padding-top: 28px; padding-bottom: 48px; }
-    #aviso:empty { display: none; }
-    #aviso { background: var(--branco); border-left: 4px solid var(--erro); color: var(--erro); padding: 12px 16px; margin-bottom: 20px; }
-    .painel { background: var(--branco); border: 1px solid var(--fio); padding: 28px; }
+    main.larg { padding-top: 32px; padding-bottom: 64px; }
     .painel[hidden] { display: none; }
-    h1 { font-weight: 600; font-size: 20px; letter-spacing: -.01em; margin: 0 0 4px; }
-    .lead { color: var(--cinza); margin: 0 0 24px; max-width: 68ch; }
-    h2 { font-weight: 600; font-size: 14px; margin: 0 0 10px; color: var(--grafite); }
+    .cabeca { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; margin-bottom: 24px; }
+    h1 { font-weight: 600; font-size: 26px; line-height: 1.2; letter-spacing: -.015em; margin: 0 0 6px; }
+    .lead { color: var(--cinza); margin: 0; max-width: 64ch; }
+    h2 { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; margin: 0; color: var(--tinta); }
+    h2::before { content: ""; width: 0; height: 0; border-left: 6px solid var(--ciano); border-top: 4.5px solid transparent; border-bottom: 4.5px solid transparent; }
     .apoio { color: var(--cinza); font-size: 13px; }
     p { margin: 0 0 12px; }
+    code { font: 13px var(--mono); background: var(--nevoa); padding: 1px 6px; color: var(--tinta); }
 
-    .duas { display: grid; grid-template-columns: minmax(280px, 360px) 1fr; gap: 32px; align-items: start; }
-    .coluna-form { border-right: 1px solid var(--fio); padding-right: 32px; }
+    .folha { background: var(--branco); border: 1px solid var(--fio); }
+    .painel > .folha + .folha { margin-top: 16px; }
+    .folha > header, .faixa { background: none; color: inherit; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 18px 24px; border-bottom: 1px solid var(--fio); }
+    .corpo { padding: 24px; }
 
-    label { display: block; margin: 0 0 6px; font-weight: 500; font-size: 13px; color: var(--grafite); }
-    input[type=text] { width: 100%; padding: 10px 12px; border: 1px solid var(--linha); background: var(--branco); color: var(--tinta); font: inherit; border-radius: 0; }
+    .duas { display: grid; grid-template-columns: 340px 1fr; gap: 16px; align-items: start; }
+
+    /* Formulários */
+    label, .rotulo { display: block; margin: 0 0 6px; font-weight: 500; font-size: 13px; color: var(--grafite); }
+    input[type=text], input[type=search], select { width: 100%; height: 42px; padding: 0 12px; border: 1px solid var(--linha); background: var(--branco); color: var(--tinta); font: inherit; border-radius: 0; transition: border-color var(--rapido); }
+    input[type=text]:hover, input[type=search]:hover, select:hover { border-color: var(--cinza-claro); }
+    input::placeholder { color: var(--cinza); }
     :focus-visible { outline: 2px solid var(--ciano); outline-offset: 2px; }
-    fieldset { border: 0; padding: 0; margin: 18px 0 20px; }
-    legend { padding: 0; margin-bottom: 8px; font-weight: 500; font-size: 13px; color: var(--grafite); }
-    .escolha { display: grid; gap: 8px; }
-    .escolha label { display: flex; gap: 10px; align-items: flex-start; margin: 0; font-weight: 400; font-size: 14px; color: var(--tinta); cursor: pointer; }
-    .escolha input { accent-color: var(--ciano); margin-top: 4px; }
+    input:focus-visible, select:focus-visible { outline-offset: 0; border-color: var(--tinta); }
+    .campo + .campo { margin-top: 20px; }
+    .escolha-topo { display: flex; justify-content: space-between; align-items: baseline; }
+    .escolha { display: grid; gap: 2px; border: 1px solid var(--fio); }
+    .escolha label { display: grid; grid-template-columns: 18px 1fr; gap: 12px; align-items: start; margin: 0; padding: 10px 12px; font-weight: 400; font-size: 14px; color: var(--tinta); cursor: pointer; transition: background var(--rapido); }
+    .escolha label:hover { background: var(--nevoa); }
+    .escolha label:has(input:checked) { background: var(--ciano-nevoa); }
+    .escolha input { accent-color: var(--ciano); width: 16px; height: 16px; margin: 2px 0 0; }
     .escolha small { display: block; color: var(--cinza); font-size: 12px; }
 
-    button.primario { padding: 10px 18px; background: var(--tinta); color: var(--branco); border: 0; font: 500 14px Montserrat, sans-serif; cursor: pointer; border-radius: 0; }
-    button.primario:hover { background: var(--grafite); }
-    button.secundario { background: var(--branco); color: var(--grafite); border: 1px solid var(--linha); padding: 5px 12px; font: 500 13px Montserrat, sans-serif; cursor: pointer; border-radius: 0; }
-    button.secundario:hover { border-color: var(--grafite); }
-    button:disabled { opacity: .5; cursor: default; }
-    .linha-acao { display: flex; gap: 10px; align-items: center; }
+    button { font: 500 14px Montserrat, sans-serif; border-radius: 0; cursor: pointer; transition: background var(--rapido), border-color var(--rapido), color var(--rapido); }
+    .primario { height: 42px; padding: 0 20px; background: var(--tinta); color: var(--branco); border: 1px solid var(--tinta); }
+    .primario:hover:not(:disabled) { background: var(--grafite); border-color: var(--grafite); }
+    .secundario { height: 32px; padding: 0 12px; background: var(--branco); color: var(--grafite); border: 1px solid var(--linha); font-size: 13px; }
+    .secundario:hover:not(:disabled) { border-color: var(--tinta); color: var(--tinta); }
+    .perigo { height: 32px; padding: 0 12px; background: var(--erro); color: var(--branco); border: 1px solid var(--erro); font-size: 13px; }
+    .perigo:hover { background: #8F1C13; }
+    .texto { background: none; border: 0; padding: 0; color: var(--grafite); font-size: 13px; text-decoration: underline; text-decoration-color: var(--linha); text-underline-offset: 3px; }
+    .texto:hover { color: var(--tinta); text-decoration-color: var(--ciano); }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    .acoes { display: flex; gap: 8px; align-items: center; margin-top: 24px; }
 
+    /* Tabelas leves */
     table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    th { background: var(--tinta); color: var(--branco); font-weight: 600; font-size: 13px; text-align: left; padding: 9px 12px; }
-    td { border-bottom: 1px solid var(--fio); padding: 10px 12px; color: var(--grafite); vertical-align: top; }
-    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
-    td .rev { color: var(--cinza-claro); }
-    tr.inativa td { color: var(--cinza-claro); }
-    .vazio { color: var(--cinza); padding: 18px 12px; border-bottom: 1px solid var(--fio); }
-    .rolagem { max-height: 420px; overflow: auto; }
+    th { background: var(--tinta); color: var(--branco); font-weight: 600; font-size: 12px; letter-spacing: .02em; text-align: left; padding: 10px 16px; white-space: nowrap; }
+    td { border-bottom: 1px solid var(--fio); padding: 14px 16px; color: var(--grafite); vertical-align: top; }
+    tbody tr:last-child td { border-bottom: 0; }
+    td.num, th.num { text-align: right; }
+    td.acao { text-align: right; white-space: nowrap; width: 1%; }
+    .nome { color: var(--tinta); font-weight: 500; }
+    .sub { display: block; color: var(--cinza); font-size: 12px; margin-top: 2px; }
+    code.sub { display: inline-block; font-size: 11px; margin-top: 6px; }
+    tr.inativa td, tr.inativa .nome { color: var(--cinza-claro); }
+    .estado { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+    .estado::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--cinza-claro); }
+    .estado.vivo::before { background: var(--ok); }
+    .estado.falha { color: var(--erro); }
+    .estado.falha::before { background: var(--erro); }
+    .esqueleto td span { display: block; height: 12px; background: var(--nevoa); animation: pulso 1.2s ease-in-out infinite alternate; }
+    @keyframes pulso { to { opacity: .45; } }
+    .vazio { padding: 40px 24px; text-align: center; color: var(--cinza); }
+    .vazio strong { display: block; color: var(--tinta); font-weight: 600; margin-bottom: 4px; }
 
-    .callout { margin-top: 20px; background: var(--ciano-nevoa); border-left: 4px solid var(--ciano); padding: 14px 16px; }
-    .callout strong { display: block; margin-bottom: 8px; }
-    .bloco { position: relative; }
-    pre { white-space: pre-wrap; word-break: break-all; background: var(--nevoa); border: 1px solid var(--fio); padding: 12px 14px; padding-right: 84px; font: 13px/1.5 var(--mono); color: var(--tinta); margin: 0 0 12px; }
-    .callout pre { background: var(--branco); }
-    .bloco .copiar { position: absolute; top: 8px; right: 8px; }
-    code { font: 13px var(--mono); background: var(--nevoa); padding: 1px 5px; }
-    button.link { background: none; border: 0; padding: 0; color: var(--tinta); font: 500 14px Montserrat, sans-serif; text-decoration: underline; text-decoration-color: var(--ciano); text-underline-offset: 3px; text-decoration-thickness: 2px; cursor: pointer; }
+    .confirma { display: inline-flex; gap: 6px; align-items: center; }
+    .confirma span { font-size: 13px; color: var(--grafite); margin-right: 4px; }
 
-    .clientes { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
-    .clientes button { background: var(--branco); border: 1px solid var(--linha); color: var(--grafite); padding: 7px 14px; font: 500 13px Montserrat, sans-serif; cursor: pointer; border-radius: 0; }
-    .clientes button[aria-pressed=true] { background: var(--tinta); border-color: var(--tinta); color: var(--branco); }
-    .ficha { display: grid; grid-template-columns: 140px 1fr; gap: 6px 16px; font-size: 14px; margin: 0 0 18px; }
+    /* Linha expansível dos pacotes */
+    .abre { display: inline-flex; align-items: center; gap: 8px; background: none; border: 0; padding: 0; color: var(--tinta); font-weight: 500; text-align: left; }
+    .abre svg { flex: none; color: var(--cinza); transition: transform var(--rapido); }
+    .abre[aria-expanded=true] svg { transform: rotate(90deg); color: var(--ciano); }
+    tr.detalhe td { background: var(--nevoa); padding: 0; }
+    .docs { padding: 8px 16px 16px 40px; }
+    .docs table { background: var(--branco); border: 1px solid var(--fio); }
+    .docs th { background: var(--branco); color: var(--cinza); border-bottom: 1px solid var(--fio); font-weight: 500; }
+    .docs table td { padding: 10px 16px; font-size: 13px; background: var(--branco); }
+
+    /* Avisos */
+    .callout { background: var(--ciano-nevoa); border-left: 4px solid var(--ciano); padding: 16px 18px; }
+    .callout strong { display: block; margin-bottom: 10px; font-weight: 600; }
+    .callout .texto { margin-top: 12px; color: var(--tinta); text-decoration-color: var(--ciano); font-weight: 500; font-size: 14px; }
+    .alerta { display: flex; gap: 12px; align-items: flex-start; background: var(--erro-fundo); border: 1px solid #F3C7C2; color: var(--erro); padding: 12px 16px; font-size: 14px; margin-bottom: 20px; }
+    .alerta:empty { display: none; }
+    .erro { color: var(--erro); font-size: 13px; margin: 10px 0 0; }
+
+    /* Blocos de código copiáveis */
+    .codigo { display: flex; align-items: stretch; border: 1px solid var(--fio); background: var(--nevoa); }
+    .callout .codigo { background: var(--branco); }
+    .codigo pre { flex: 1; margin: 0; padding: 12px 14px; overflow-x: auto; white-space: pre; font: 13px/1.6 var(--mono); color: var(--tinta); scrollbar-width: thin; }
+    .codigo .copiar { flex: none; height: auto; border: 0; border-left: 1px solid var(--fio); background: transparent; padding: 0 16px; }
+    .codigo .copiar:hover { background: var(--branco); }
+    .codigo .copiar.feito { color: var(--ok); }
+
+    /* Conectar */
+    .clientes { display: flex; flex-wrap: wrap; gap: 0; border: 1px solid var(--linha); width: fit-content; max-width: 100%; }
+    .clientes button { height: 38px; padding: 0 16px; background: var(--branco); border: 0; border-right: 1px solid var(--linha); color: var(--grafite); font-size: 13px; }
+    .clientes button:last-child { border-right: 0; }
+    .clientes button:hover { background: var(--nevoa); }
+    .clientes button[aria-pressed=true] { background: var(--tinta); color: var(--branco); }
+    .ficha { display: grid; grid-template-columns: 150px 1fr; gap: 10px 24px; font-size: 14px; margin: 24px 0; }
     .ficha dt { color: var(--cinza); }
-    .ficha dd { margin: 0; }
-    .estado-chave { font-size: 13px; margin-bottom: 14px; }
-    .estado-chave b { font-weight: 600; }
+    .ficha dd { margin: 0; color: var(--grafite); }
+    .faixa-chave { display: flex; justify-content: space-between; gap: 16px; align-items: center; padding: 12px 24px; background: var(--ciano-nevoa); font-size: 13px; border-bottom: 1px solid var(--fio); }
+    .faixa-chave.sem { background: var(--nevoa); }
+    .faixa-chave b { font-weight: 600; }
 
-    .busca { display: flex; gap: 10px; margin-bottom: 20px; }
-    .busca input { flex: 1; }
-    .trecho { border-top: 1px solid var(--fio); padding: 14px 0; }
+    /* Teste de busca */
+    .busca { display: grid; grid-template-columns: 1fr 160px auto; gap: 8px; }
+    .filtros { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+    .filtro { height: 30px; padding: 0 12px; border: 1px solid var(--linha); background: var(--branco); color: var(--grafite); font-size: 12px; }
+    .filtro[aria-pressed=true] { border-color: var(--ciano); background: var(--ciano-nevoa); color: var(--tinta); }
+    .resumo { display: flex; justify-content: space-between; color: var(--cinza); font-size: 13px; padding: 14px 24px; border-bottom: 1px solid var(--fio); }
+    .trecho { display: grid; grid-template-columns: 32px 1fr; gap: 0 12px; padding: 18px 24px; border-bottom: 1px solid var(--fio); }
+    .trecho:last-child { border-bottom: 0; }
+    .trecho .pos { color: var(--ciano-escuro); font-weight: 600; font-size: 13px; padding-top: 1px; }
     .trecho h3 { margin: 0; font-weight: 600; font-size: 14px; }
-    .trecho .meta { color: var(--cinza); font-size: 12px; }
-    .trecho p { margin: 6px 0 0; white-space: pre-wrap; font-size: 13px; color: var(--grafite); max-width: 90ch; }
-    .erro { color: var(--erro); }
+    .trecho .meta { display: flex; flex-wrap: wrap; gap: 4px 14px; color: var(--cinza); font-size: 12px; margin-top: 2px; }
+    .trecho p { margin: 10px 0 0; white-space: pre-wrap; font-size: 13px; line-height: 1.6; color: var(--grafite); max-width: 92ch; }
+    .marca-origem { color: var(--tinta); }
+
+    /* Estado sem acesso */
+    .portao { max-width: 480px; margin: 48px auto; background: var(--branco); border: 1px solid var(--fio); padding: 40px; text-align: left; }
+    .portao h1 { font-size: 22px; }
+    .portao p { color: var(--grafite); margin: 8px 0 24px; }
+    body.fora nav[role=tablist], body.fora .painel, body.fora .conta { display: none; }
+    body:not(.fora) .portao { display: none; }
+
     .oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-    @media (max-width: 760px) {
-      .larg { padding: 0 16px; }
-      .painel { padding: 20px 16px; }
-      .duas { grid-template-columns: 1fr; gap: 24px; }
-      .coluna-form { border-right: 0; padding-right: 0; }
-      .ficha { grid-template-columns: 1fr; }
-      .ficha dt { margin-top: 6px; }
-      .esconde-estreito { display: none; }
-      .busca { flex-direction: column; }
+    @media (max-width: 860px) {
+      .duas { grid-template-columns: 1fr; }
     }
-    @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+    @media (max-width: 640px) {
+      .larg { padding: 0 16px; }
+      .topo { padding-top: 16px; padding-bottom: 12px; }
+      .marca img { height: 26px; }
+      .marca span { font-size: 18px; }
+      .conta .quem { display: none; }
+      nav[role=tablist] { margin: 0 -16px; padding: 0 2px; }
+      main.larg { padding-top: 20px; }
+      h1 { font-size: 22px; }
+      .cabeca { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .corpo, .folha > header, .faixa, .resumo, .trecho { padding-left: 16px; padding-right: 16px; }
+      .faixa-chave { padding: 12px 16px; flex-direction: column; align-items: flex-start; }
+      .esconde-estreito { display: none; }
+      th, td { padding-left: 12px; padding-right: 12px; }
+      .ficha { grid-template-columns: 1fr; gap: 2px; }
+      .ficha dd { margin-bottom: 10px; }
+      .busca { grid-template-columns: 1fr; }
+      .docs { padding: 8px 8px 12px; }
+      .portao { padding: 28px 20px; margin: 24px 0; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::after { transition: none !important; animation: none !important; } }
   </style>
 </head>
 <body>
   <header>
     <div class="larg topo">
-      <a class="marca" href="/" aria-label="ness.KNOW"><img src="/ness-logo-white.svg" alt="ness." width="85" height="28"><span>KNOW</span></a>
-      <span class="eu" id="eu"></span>
+      <a class="marca" href="/" aria-label="ness.KNOW, início"><img src="/ness-logo-white.svg" alt="ness." width="97" height="32"><span>KNOW</span></a>
+      <div class="conta"><span class="quem" id="eu"></span><a href="/cdn-cgi/access/logout">Sair</a></div>
     </div>
     <div class="larg">
       <nav role="tablist" aria-label="Seções">
@@ -135,66 +222,126 @@
   </header>
 
   <main class="larg">
-    <div id="aviso" role="alert"></div>
+    <div class="alerta" id="aviso" role="alert"></div>
+
+    <div class="portao" id="portao">
+      <h1>Entre para continuar</h1>
+      <p>Sua sessão expirou ou este e-mail não está na lista de administradores do ness.KNOW. Entre de novo com o e-mail da ness.; se o problema continuar, peça acesso ao responsável.</p>
+      <button type="button" class="primario" id="entrar">Entrar de novo</button>
+    </div>
 
     <section class="painel" id="chaves" role="tabpanel" aria-labelledby="tab-chaves">
-      <h1>Chaves de API</h1>
-      <p class="lead">Cada cliente recebe a sua chave e só enxerga os pacotes marcados nela. Para mudar os pacotes de uma chave, revogue e gere outra.</p>
+      <div class="cabeca">
+        <div>
+          <h1>Chaves de API</h1>
+          <p class="lead">Cada agente recebe a sua chave e só enxerga os pacotes marcados nela. Para mudar os pacotes, revogue a chave e gere outra.</p>
+        </div>
+      </div>
       <div class="duas">
-        <form id="nova" class="coluna-form">
-          <label for="nome">Nome do cliente</label>
-          <input id="nome" type="text" required maxlength="100" placeholder="faBRAINzio" autocomplete="off">
-          <fieldset>
-            <legend>Pacotes liberados</legend>
-            <div class="escolha" id="escolha"></div>
-          </fieldset>
-          <button type="submit" class="primario">Gerar chave</button>
+        <form id="nova" class="folha" novalidate>
+          <header><h2>Nova chave</h2></header>
+          <div class="corpo">
+            <div class="campo">
+              <label for="nome">Quem vai usar</label>
+              <input id="nome" type="text" required maxlength="100" placeholder="Ex.: faBRAINzio" autocomplete="off">
+            </div>
+            <div class="campo">
+              <div class="escolha-topo"><span class="rotulo" id="rot-pacotes">Pacotes liberados</span><button type="button" class="texto" id="todos">Desmarcar todos</button></div>
+              <div class="escolha" id="escolha" role="group" aria-labelledby="rot-pacotes"></div>
+            </div>
+            <div class="acoes"><button type="submit" class="primario" id="gerar">Gerar chave</button></div>
+            <p class="erro" id="nova-erro" role="alert" hidden></p>
+          </div>
           <div id="nova-saida" aria-live="polite"></div>
         </form>
-        <div>
-          <h2>Chaves emitidas</h2>
-          <div class="rolagem">
-            <table>
-              <thead><tr><th>Cliente</th><th>Pacotes</th><th class="esconde-estreito">Último uso</th><th></th></tr></thead>
-              <tbody id="lista-chaves"></tbody>
-            </table>
-          </div>
+        <div class="folha">
+          <header>
+            <h2>Chaves emitidas</h2>
+            <button type="button" class="texto" id="ver-revogadas" hidden></button>
+          </header>
+          <table>
+            <thead><tr><th>Agente</th><th>Pacotes</th><th class="esconde-estreito">Último uso</th><th><span class="oculto">Ações</span></th></tr></thead>
+            <tbody id="lista-chaves"></tbody>
+          </table>
         </div>
       </div>
     </section>
 
     <section class="painel" id="pacotes" role="tabpanel" aria-labelledby="tab-pacotes" hidden>
-      <h1>Pacotes</h1>
-      <p class="lead">Conjuntos de normas, leis e frameworks que podem ser liberados por chave.</p>
-      <table>
-        <thead><tr><th>Nome</th><th class="esconde-estreito">Identificador</th><th>Versão</th><th class="num">Documentos</th></tr></thead>
-        <tbody id="lista-pacotes"></tbody>
-      </table>
-      <p class="apoio" style="margin-top:18px">Para carregar documentos num pacote, rode no repositório: <code>node scripts/carregar-pacote.mjs &lt;pasta&gt; https://know.ness.com.br</code></p>
+      <div class="cabeca">
+        <div>
+          <h1>Pacotes</h1>
+          <p class="lead">Conjuntos de normas, leis e frameworks. Abra um pacote para ver os documentos e a situação de cada um.</p>
+        </div>
+      </div>
+      <div class="folha">
+        <table>
+          <thead><tr><th>Pacote</th><th class="esconde-estreito">Versão</th><th class="esconde-estreito">Atualizado</th><th class="num">Documentos</th></tr></thead>
+          <tbody id="lista-pacotes"></tbody>
+        </table>
+      </div>
+      <div class="folha">
+        <header><h2>Carregar ou atualizar um pacote</h2></header>
+        <div class="corpo">
+          <p class="apoio">Rode no repositório <code>ness.know</code>. Recarregar um documento com o mesmo título substitui a versão anterior.</p>
+          <div class="codigo"><pre id="cmd-carga">node scripts/carregar-pacote.mjs &lt;pasta-do-pacote&gt; https://know.ness.com.br</pre><button type="button" class="secundario copiar" data-copiar="cmd-carga">Copiar</button></div>
+        </div>
+      </div>
     </section>
 
     <section class="painel" id="conectar" role="tabpanel" aria-labelledby="tab-conectar" hidden>
-      <h1>Conectar um agente</h1>
-      <p class="lead">O agente acessa a base pelo protocolo MCP, só para leitura, com duas ferramentas: <code>listar_pacotes</code> e <code>buscar_conhecimento</code>.</p>
-      <p class="estado-chave" id="estado-chave"></p>
-      <div class="clientes" id="clientes" aria-label="Agente"></div>
-      <dl class="ficha">
-        <dt>Endereço MCP</dt><dd><code id="url-mcp"></code></dd>
-        <dt>Onde configurar</dt><dd id="receita-onde"></dd>
-      </dl>
-      <div class="bloco"><pre id="receita-texto"></pre><button type="button" class="secundario copiar" data-copiar="receita-texto">Copiar</button></div>
-      <p class="apoio" id="receita-nota"></p>
+      <div class="cabeca">
+        <div>
+          <h1>Conectar um agente</h1>
+          <p class="lead">O agente consulta a base pelo protocolo MCP, só para leitura, com duas ferramentas: <code>listar_pacotes</code> e <code>buscar_conhecimento</code>.</p>
+        </div>
+      </div>
+      <div class="folha">
+        <div class="faixa-chave" id="estado-chave"></div>
+        <div class="corpo">
+          <span class="rotulo" id="rot-cliente">Agente</span>
+          <div class="clientes" id="clientes" role="group" aria-labelledby="rot-cliente"></div>
+          <dl class="ficha">
+            <dt>Endereço MCP</dt><dd><code id="url-mcp"></code></dd>
+            <dt>Onde configurar</dt><dd id="receita-onde"></dd>
+          </dl>
+          <div class="codigo" id="receita-bloco"><pre id="receita-texto"></pre><button type="button" class="secundario copiar" data-copiar="receita-texto">Copiar</button></div>
+          <p class="apoio" id="receita-nota" style="margin-top:12px"></p>
+        </div>
+      </div>
+      <div class="folha">
+        <header><h2>Conferir a chave sem o agente</h2></header>
+        <div class="corpo">
+          <p class="apoio">Lista os pacotes que a chave enxerga. Uma resposta com <code>401</code> indica chave errada ou revogada.</p>
+          <div class="codigo"><pre id="cmd-conferir"></pre><button type="button" class="secundario copiar" data-copiar="cmd-conferir">Copiar</button></div>
+        </div>
+      </div>
     </section>
 
     <section class="painel" id="testar" role="tabpanel" aria-labelledby="tab-testar" hidden>
-      <h1>Testar a busca</h1>
-      <p class="lead">Pergunte como um agente perguntaria e veja os trechos que ele receberia, em todos os pacotes.</p>
-      <form id="teste" class="busca">
-        <label for="consulta" class="oculto">Pergunta</label>
-        <input id="consulta" type="text" required placeholder="Como tratar um incidente de segurança?">
-        <button type="submit" class="primario">Buscar</button>
-      </form>
-      <div id="resultado" aria-live="polite"></div>
+      <div class="cabeca">
+        <div>
+          <h1>Testar a busca</h1>
+          <p class="lead">Pergunte como um agente perguntaria e veja os trechos que ele receberia, na ordem em que receberia.</p>
+        </div>
+      </div>
+      <div class="folha">
+        <form id="teste" class="corpo">
+          <div class="busca">
+            <label for="consulta" class="oculto">Pergunta</label>
+            <input id="consulta" type="search" required placeholder="Ex.: como tratar um incidente de segurança?" autocomplete="off">
+            <label for="modo" class="oculto">Tipo de busca</label>
+            <select id="modo">
+              <option value="hibrida">Combinada</option>
+              <option value="semantica">Por significado</option>
+              <option value="textual">Por palavras</option>
+            </select>
+            <button type="submit" class="primario" id="buscar">Buscar</button>
+          </div>
+          <div class="filtros" id="filtros" role="group" aria-label="Pacotes pesquisados"></div>
+        </form>
+        <div id="resultado" aria-live="polite"></div>
+      </div>
     </section>
   </main>
   <script src="/app.js" type="module"></script>
