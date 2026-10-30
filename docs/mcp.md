@@ -37,6 +37,8 @@ Sem argumentos. Devolve os pacotes que a chave enxerga, com as instruções de u
 
 `restrito: true` aparece quando a chave enxerga só parte das normas do pacote. Nesse caso, `documentos` lista só as normas liberadas.
 
+Quando a chave tem o pacote `scf-strm`, ele vem também com `frameworks: [{ id, nome, itens }]`: são os ids a usar em `correlacionar`.
+
 ### `buscar_conhecimento`
 
 | Argumento | Tipo | Obrigatório | Descrição |
@@ -75,7 +77,7 @@ Dado um item de um framework, devolve os itens equivalentes em outros frameworks
 | --- | --- | --- | --- |
 | `item` | string | sim | Item de origem, como na norma: `8.16`, `DE.CM-01`. Com `de` = `scf`, é o id de um controle SCF (`MON-01`) |
 | `de` | string | sim | Id do framework de origem, ou `scf` |
-| `para` | string[] | sim | Ids dos frameworks de destino, até 10 |
+| `para` | string[] | sim | Ids dos frameworks de destino, até 10; excedentes, repetidos e o próprio `de` são descartados |
 
 O id do framework é o nome do arquivo da planilha sem `scf-strm-` e `.xlsx`: `general-iso-27002-2022`, `general-nist-csf-2-0`, `general-cis-csc-8-1`, `general-iec-62443-3-3-2013`, `usa-federal-nerc-cip-2024`.
 
@@ -88,6 +90,7 @@ Resposta:
   "origem": { "framework": "general-iso-27002-2022", "nome": "ISO 27002:2022", "item": "8.16", "item_nome": "Monitoring activities" },
   "versao_scf": "2026.1",
   "scf": [{ "scf": "MON-01", "nome": "Continuous Monitoring", "relacao": "subconjunto", "forca": 10 }],
+  "destinos_desconhecidos": [],
   "correspondencias": [
     { "framework": "general-nist-csf-2-0", "item": "DE.CM-01", "nome": null, "via": "MON-01", "relacao_origem": "subconjunto", "relacao_destino": "subconjunto", "forca": 10 }
   ],
@@ -107,8 +110,8 @@ Erros (resultado com `isError: true`):
 
 | Situação | Texto |
 | --- | --- |
-| Chave sem o pacote `scf-strm` | `pacote não liberado` |
-| `item`, `de` ou `para` ausente | pede o argumento que falta |
+| Chave sem o pacote `scf-strm` | `esta chave não libera o pacote scf-strm (correspondência entre frameworks)` |
+| `item`, `de` ou `para` ausente (inclui `para` vazio) | `informe item, de e para (ids em listar_pacotes, pacote scf-strm)` |
 | Id de `de` inexistente | `framework desconhecido` |
 | Controle SCF inexistente (`de` = `scf`) | `controle SCF desconhecido` |
 | O item não consta no framework | `item … sem correspondência …` (para o Anexo A da ISO 27001, a mensagem indica o framework da ISO 27002) |

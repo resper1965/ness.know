@@ -89,7 +89,7 @@ A ferramenta `correlacionar` (`src/strm.ts`) usa os dados do SCF STRM 2026.1: 18
 - **Força:** a de cada correspondência é a do elo mais fraco do caminho (mínimo entre origem → SCF e SCF → destino). Se um dos elos não informa força, o resultado é `null`.
 - **Limite do item numérico:** itens numéricos como `1.10` e `1.1` chegam da planilha como número e perdem o zero final (`1.10` vira `1.1`). Afeta sobretudo NIS2 e PCI DSS; está anotado em `scripts/strm.mjs`.
 - **Anexo A da ISO 27001:** não existe como framework; use a ISO 27002:2022.
-- **Conversor:** lê só a primeira aba de cada planilha. O ExcelJS não abriu 19 planilhas por causa dos relacionamentos de comentários; o conversor remove esses relacionamentos com JSZip (devDependency) antes da leitura.
+- **Conversor:** lê só a primeira aba de cada planilha. O ExcelJS não abriu 20 planilhas por causa dos relacionamentos de comentários; o conversor remove esses relacionamentos com JSZip (devDependency) antes da leitura.
 - **Acesso:** pacote `scf-strm`, tudo ou nada por chave; sem restrição por framework.
 
 ## Decisões
