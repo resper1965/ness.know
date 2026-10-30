@@ -36,6 +36,7 @@ const planilhas = [];
 for (const f of arquivos) {
   const wb = await abrirPlanilha(join(pasta, f));
   const ws = wb.worksheets[0]; // a primeira aba é a completa; as extras ("condensed", crosswalk) repetem ou resumem
+  if (!ws) throw new Error(`${f}: planilha sem abas`);
   const linhas = [];
   ws.eachRow({ includeEmpty: true }, (row) => linhas.push(Array.from({ length: row.cellCount }, (_, i) => valor(row.getCell(i + 1).value))));
   const p = lerPlanilha(linhas, f);
