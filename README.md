@@ -80,6 +80,7 @@ Detalhes e decisões: [docs/arquitetura.md](docs/arquitetura.md).
 | [docs/operacao.md](docs/operacao.md) | Implantação, carga de pacotes, rotina e solução de problemas |
 | [docs/seguranca.md](docs/seguranca.md) | Modelo de acesso, ameaças consideradas e limites |
 | [docs/spec.md](docs/spec.md) | Decisão de criar o serviço (30/10/2026) |
+| [docs/skills-plano.md](docs/skills-plano.md) | Plano de skills sobre a base (proposta) |
 
 ## Estrutura do repositório
 
