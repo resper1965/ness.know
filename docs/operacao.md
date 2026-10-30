@@ -86,6 +86,7 @@ npx wrangler deploy
 - O conversor lê só a primeira aba de cada planilha e para com `<arquivo>: cabeçalho não reconhecido (falta …)` ou `<arquivo>: planilha sem abas` se o formato mudar.
 - O SQL cria o pacote `scf-strm` ("Correspondência entre frameworks") e substitui todo o conteúdo anterior.
 - Para liberar a uma chave, gere uma chave nova com o pacote **Correspondência entre frameworks** marcado.
+- Rode o `d1 execute` fora do horário comercial: importar o SQL de ~6 MB pode deixar as consultas do /mcp lentas por instantes.
 - Uma versão nova do SCF repete os mesmos passos com o novo zip.
 
 ## Rotina

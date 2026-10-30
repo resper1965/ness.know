@@ -53,7 +53,7 @@ export function lerPlanilha(linhas, arquivo) {
   let item = "";
   let itemNome = null;
   for (const r of linhas.slice(h + 1)) {
-    // shortcut: item numérico (ex.: "1.10" no NIS2) chega como número e perde o zero final; para corrigir, ler o formato da célula.
+    // shortcut: número lido como a célula exibe; no STRM 2026.1 nenhum item numérico colide (2.698 conferidos); rever se vier "1.10" gravado como número.
     if (texto(r[c.item])) {
       item = texto(r[c.item]);
       const n = texto(r[c.nome]);

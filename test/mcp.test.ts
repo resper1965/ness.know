@@ -13,7 +13,7 @@ async function ambiente(pacotes = ["iso"], documentos: Record<string, string[]> 
       bind: (...binds: unknown[]) => {
         consultas.push({ sql, binds });
         return {
-          first: async () => (sql.includes("FROM chaves") && binds[0] === hash ? { id: "c1", nome: "n.posture", pacotes: JSON.stringify(pacotes), documentos: JSON.stringify(documentos) } : null),
+          first: async () => (sql.includes("FROM scf_controles") ? { scf: "AST-01", nome: "Inventário" } : sql.includes("FROM chaves") && binds[0] === hash ? { id: "c1", nome: "n.posture", pacotes: JSON.stringify(pacotes), documentos: JSON.stringify(documentos) } : null),
           run: async () => ({ meta: { changes: 1 } }),
           all: async () => ({
             results: sql.includes("trechos_fts MATCH")
@@ -112,6 +112,13 @@ describe("mcp", () => {
     const { env: env2 } = await ambiente(["scf-strm"]);
     const faltando = (await (await chamar(env2, { jsonrpc: "2.0", id: 9, method: "tools/call", params: { name: "correlacionar", arguments: { item: "8.16" } } })).json()) as { result: { isError?: boolean } };
     expect(faltando.result.isError).toBe(true);
+  });
+  it("correlacionar tira repetidos de para antes de limitar a 10 destinos", async () => {
+    const { env, consultas } = await ambiente(["scf-strm"]);
+    const para = ["a", "a", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"]; // 13 entradas, 11 distintas
+    await chamar(env, { jsonrpc: "2.0", id: 11, method: "tools/call", params: { name: "correlacionar", arguments: { item: "AST-01", de: "scf", para } } });
+    const q = consultas.find((c) => c.sql.includes("FROM strm_frameworks WHERE id IN"));
+    expect(q?.binds).toEqual(["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"]);
   });
   it("listar_pacotes traz frameworks só no pacote scf-strm", async () => {
     const ler = async (pacotes: string[]) => {
