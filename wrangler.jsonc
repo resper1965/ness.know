@@ -15,7 +15,7 @@
   "ai": { "binding": "AI" },
   "vars": {
     // Quem administra (chaves e pacotes). O login é o Cloudflare Access.
-    "ADMIN_EMAILS": "resper@bekaa.eu",
+    "ADMIN_EMAILS": "resper@bekaa.eu,resper@ness.com.br",
     "ACCESS_TEAM": "ness.cloudflareaccess.com",
     "ACCESS_AUD": "PREENCHER",
     // Busca calibrada com scripts/avaliar-busca.mjs (avaliação de 30/10/2026 no faBRAINzio).
