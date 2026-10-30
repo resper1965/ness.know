@@ -10,7 +10,7 @@ cd C:\dev\ness.know
 npm install
 ```
 
-2. **Índice de vetores** (antes do primeiro deploy; o índice de metadados precisa existir antes do primeiro vetor):
+2. **Índice de vetores** (antes do primeiro deploy; o índice de metadados precisa existir antes do primeiro vetor). Quando o wrangler perguntar se acrescenta o binding, responda **n**: o `wrangler.jsonc` já tem `VETORES`.
 
 ```powershell
 npx wrangler vectorize create ness-know-trechos --dimensions=1024 --metric=cosine
