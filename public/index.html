@@ -12,95 +12,187 @@
   <style>
     /* Sistema de design ness. (skill ness-brand): Montserrat, base branca, Tinta, um único acento ciano, sem sombra nem gradiente. */
     :root {
-      --ciano: #00ADE8; --ciano-escuro: #0090C4; --ciano-nevoa: #E5F6FD;
-      --tinta: #0E1116; --grafite: #2B333B; --cinza: #5A6473; --linha: #C7D2DE; --fio: #E4E8EC; --nevoa: #EEF3F8; --branco: #FFFFFF;
-      --erro: #B42318;
+      --ciano: #00ADE8; --ciano-nevoa: #E5F6FD;
+      --tinta: #0E1116; --grafite: #2B333B; --cinza: #5A6473; --cinza-claro: #8A94A0;
+      --linha: #C7D2DE; --fio: #E4E8EC; --nevoa: #F4F7FA; --branco: #FFFFFF; --erro: #B42318;
+      --mono: ui-monospace, Menlo, Consolas, monospace;
     }
     * { box-sizing: border-box; }
-    body { margin: 0; background: var(--branco); color: var(--tinta); font: 400 15px/1.55 Montserrat, sans-serif; }
+    html, body { height: 100%; }
+    body { margin: 0; background: var(--nevoa); color: var(--tinta); font: 400 15px/1.55 Montserrat, sans-serif; }
+    .larg { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
     header { background: var(--tinta); color: var(--branco); }
-    .topo { max-width: 1040px; margin: 0 auto; padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
-    .marca { display: flex; align-items: baseline; gap: 2px; text-decoration: none; color: var(--branco); }
-    .marca img { height: 30px; width: auto; display: block; }
-    .marca span { font-weight: 500; font-size: 22px; letter-spacing: .02em; }
-    .eu { color: #8A94A0; font-size: 13px; }
-    main { max-width: 1040px; margin: 0 auto; padding: 32px 24px 64px; }
-    .intro { color: var(--cinza); margin: 0 0 40px; max-width: 70ch; }
-    section { margin-bottom: 48px; }
-    h1 { font-weight: 600; font-size: 24px; letter-spacing: -.01em; margin: 0 0 16px; padding-bottom: 10px; border-bottom: 1px solid var(--fio); }
-    h1 .num { color: var(--ciano); margin-right: .6em; }
-    p { color: var(--grafite); }
+    .topo { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-top: 18px; padding-bottom: 14px; }
+    .marca { display: flex; align-items: baseline; gap: 4px; text-decoration: none; color: var(--branco); }
+    .marca img { height: 28px; width: auto; display: block; }
+    .marca span { font-weight: 500; font-size: 20px; letter-spacing: .02em; }
+    .eu { color: var(--cinza-claro); font-size: 13px; }
+
+    nav[role=tablist] { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+    nav[role=tablist] button {
+      background: none; border: 0; border-bottom: 3px solid transparent; color: var(--cinza-claro);
+      font: 500 14px Montserrat, sans-serif; padding: 12px 16px 11px; cursor: pointer; white-space: nowrap;
+    }
+    nav[role=tablist] button:hover { color: var(--branco); }
+    nav[role=tablist] button[aria-selected=true] { color: var(--branco); border-bottom-color: var(--ciano); }
+    nav[role=tablist] .cont { color: var(--cinza-claro); font-weight: 400; margin-left: 6px; }
+
+    main { padding-top: 28px; padding-bottom: 48px; }
+    #aviso:empty { display: none; }
+    #aviso { background: var(--branco); border-left: 4px solid var(--erro); color: var(--erro); padding: 12px 16px; margin-bottom: 20px; }
+    .painel { background: var(--branco); border: 1px solid var(--fio); padding: 28px; }
+    .painel[hidden] { display: none; }
+    h1 { font-weight: 600; font-size: 20px; letter-spacing: -.01em; margin: 0 0 4px; }
+    .lead { color: var(--cinza); margin: 0 0 24px; max-width: 68ch; }
+    h2 { font-weight: 600; font-size: 14px; margin: 0 0 10px; color: var(--grafite); }
     .apoio { color: var(--cinza); font-size: 13px; }
-    label { display: block; margin: 14px 0 6px; font-weight: 500; font-size: 13px; color: var(--grafite); }
-    input[type=text] { width: 100%; max-width: 560px; padding: 10px 12px; border: 1px solid var(--linha); background: var(--branco); color: var(--tinta); font: inherit; border-radius: 0; }
-    input[type=text]:focus-visible, button:focus-visible { outline: 2px solid var(--ciano); outline-offset: 2px; }
-    button { padding: 10px 18px; background: var(--tinta); color: var(--branco); border: 0; font: 500 14px Montserrat, sans-serif; cursor: pointer; border-radius: 0; }
-    button.secundario { background: transparent; color: var(--grafite); border: 1px solid var(--linha); padding: 6px 12px; }
+    p { margin: 0 0 12px; }
+
+    .duas { display: grid; grid-template-columns: minmax(280px, 360px) 1fr; gap: 32px; align-items: start; }
+    .coluna-form { border-right: 1px solid var(--fio); padding-right: 32px; }
+
+    label { display: block; margin: 0 0 6px; font-weight: 500; font-size: 13px; color: var(--grafite); }
+    input[type=text] { width: 100%; padding: 10px 12px; border: 1px solid var(--linha); background: var(--branco); color: var(--tinta); font: inherit; border-radius: 0; }
+    :focus-visible { outline: 2px solid var(--ciano); outline-offset: 2px; }
+    fieldset { border: 0; padding: 0; margin: 18px 0 20px; }
+    legend { padding: 0; margin-bottom: 8px; font-weight: 500; font-size: 13px; color: var(--grafite); }
+    .escolha { display: grid; gap: 8px; }
+    .escolha label { display: flex; gap: 10px; align-items: flex-start; margin: 0; font-weight: 400; font-size: 14px; color: var(--tinta); cursor: pointer; }
+    .escolha input { accent-color: var(--ciano); margin-top: 4px; }
+    .escolha small { display: block; color: var(--cinza); font-size: 12px; }
+
+    button.primario { padding: 10px 18px; background: var(--tinta); color: var(--branco); border: 0; font: 500 14px Montserrat, sans-serif; cursor: pointer; border-radius: 0; }
+    button.primario:hover { background: var(--grafite); }
+    button.secundario { background: var(--branco); color: var(--grafite); border: 1px solid var(--linha); padding: 5px 12px; font: 500 13px Montserrat, sans-serif; cursor: pointer; border-radius: 0; }
+    button.secundario:hover { border-color: var(--grafite); }
     button:disabled { opacity: .5; cursor: default; }
-    .marcas { display: flex; flex-wrap: wrap; gap: 6px 20px; }
-    .marcas label { display: flex; gap: 8px; align-items: center; margin: 0; font-weight: 400; }
-    .marcas input { accent-color: var(--ciano); }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
-    th { background: var(--tinta); color: var(--branco); font-weight: 600; font-size: 13px; text-align: left; padding: 10px 12px; }
+    .linha-acao { display: flex; gap: 10px; align-items: center; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th { background: var(--tinta); color: var(--branco); font-weight: 600; font-size: 13px; text-align: left; padding: 9px 12px; }
     td { border-bottom: 1px solid var(--fio); padding: 10px 12px; color: var(--grafite); vertical-align: top; }
-    .callout { margin-top: 16px; background: var(--ciano-nevoa); border-left: 4px solid var(--ciano); padding: 14px 18px; }
-    .callout strong { display: block; margin-bottom: 6px; }
-    pre { white-space: pre-wrap; word-break: break-all; background: var(--branco); border: 1px solid var(--fio); padding: 10px 12px; font: 13px/1.45 ui-monospace, Menlo, Consolas, monospace; color: var(--tinta); margin: 6px 0 12px; }
-    code { font: 13px ui-monospace, Menlo, Consolas, monospace; background: var(--nevoa); padding: 1px 5px; }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    td .rev { color: var(--cinza-claro); }
+    tr.inativa td { color: var(--cinza-claro); }
+    .vazio { color: var(--cinza); padding: 18px 12px; border-bottom: 1px solid var(--fio); }
+    .rolagem { max-height: 420px; overflow: auto; }
+
+    .callout { margin-top: 20px; background: var(--ciano-nevoa); border-left: 4px solid var(--ciano); padding: 14px 16px; }
+    .callout strong { display: block; margin-bottom: 8px; }
+    .bloco { position: relative; }
+    pre { white-space: pre-wrap; word-break: break-all; background: var(--nevoa); border: 1px solid var(--fio); padding: 12px 14px; padding-right: 84px; font: 13px/1.5 var(--mono); color: var(--tinta); margin: 0 0 12px; }
+    .callout pre { background: var(--branco); }
+    .bloco .copiar { position: absolute; top: 8px; right: 8px; }
+    code { font: 13px var(--mono); background: var(--nevoa); padding: 1px 5px; }
+    button.link { background: none; border: 0; padding: 0; color: var(--tinta); font: 500 14px Montserrat, sans-serif; text-decoration: underline; text-decoration-color: var(--ciano); text-underline-offset: 3px; text-decoration-thickness: 2px; cursor: pointer; }
+
+    .clientes { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
+    .clientes button { background: var(--branco); border: 1px solid var(--linha); color: var(--grafite); padding: 7px 14px; font: 500 13px Montserrat, sans-serif; cursor: pointer; border-radius: 0; }
+    .clientes button[aria-pressed=true] { background: var(--tinta); border-color: var(--tinta); color: var(--branco); }
+    .ficha { display: grid; grid-template-columns: 140px 1fr; gap: 6px 16px; font-size: 14px; margin: 0 0 18px; }
+    .ficha dt { color: var(--cinza); }
+    .ficha dd { margin: 0; }
+    .estado-chave { font-size: 13px; margin-bottom: 14px; }
+    .estado-chave b { font-weight: 600; }
+
+    .busca { display: flex; gap: 10px; margin-bottom: 20px; }
+    .busca input { flex: 1; }
+    .trecho { border-top: 1px solid var(--fio); padding: 14px 0; }
+    .trecho h3 { margin: 0; font-weight: 600; font-size: 14px; }
+    .trecho .meta { color: var(--cinza); font-size: 12px; }
+    .trecho p { margin: 6px 0 0; white-space: pre-wrap; font-size: 13px; color: var(--grafite); max-width: 90ch; }
     .erro { color: var(--erro); }
-    .receita { border-bottom: 1px solid var(--fio); padding: 14px 0; }
-    .receita h2 { margin: 0; font-weight: 600; font-size: 15px; }
-    .receita h2::before { content: "▸ "; color: var(--ciano); }
-    .receita p { margin: 4px 0 0; }
-    .trecho { border-bottom: 1px solid var(--fio); padding: 14px 0; }
-    .trecho h2 { margin: 0; font-weight: 600; font-size: 15px; color: var(--tinta); } /* ciano-escuro sobre branco não passa no contraste AA em texto pequeno */
-    .trecho h2::before { content: "▸ "; color: var(--ciano); }
-    .trecho p { margin: 6px 0 0; white-space: pre-wrap; font-size: 13px; }
-    @media (max-width: 640px) { .topo, main { padding-left: 16px; padding-right: 16px; } th:nth-child(3), td:nth-child(3) { display: none; } }
+    .oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+    @media (max-width: 760px) {
+      .larg { padding: 0 16px; }
+      .painel { padding: 20px 16px; }
+      .duas { grid-template-columns: 1fr; gap: 24px; }
+      .coluna-form { border-right: 0; padding-right: 0; }
+      .ficha { grid-template-columns: 1fr; }
+      .ficha dt { margin-top: 6px; }
+      .esconde-estreito { display: none; }
+      .busca { flex-direction: column; }
+    }
     @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
   </style>
 </head>
 <body>
   <header>
-    <div class="topo">
-      <a class="marca" href="/" aria-label="ness.KNOW"><img src="/ness-logo-white.svg" alt="ness." width="91" height="30"><span>KNOW</span></a>
+    <div class="larg topo">
+      <a class="marca" href="/" aria-label="ness.KNOW"><img src="/ness-logo-white.svg" alt="ness." width="85" height="28"><span>KNOW</span></a>
       <span class="eu" id="eu"></span>
     </div>
+    <div class="larg">
+      <nav role="tablist" aria-label="Seções">
+        <button role="tab" id="tab-chaves" aria-controls="chaves" aria-selected="true">Chaves<span class="cont" id="n-chaves"></span></button>
+        <button role="tab" id="tab-pacotes" aria-controls="pacotes" aria-selected="false" tabindex="-1">Pacotes<span class="cont" id="n-pacotes"></span></button>
+        <button role="tab" id="tab-conectar" aria-controls="conectar" aria-selected="false" tabindex="-1">Conectar um agente</button>
+        <button role="tab" id="tab-testar" aria-controls="testar" aria-selected="false" tabindex="-1">Testar a busca</button>
+      </nav>
+    </div>
   </header>
-  <main>
-    <p class="intro">Base de normas, leis e frameworks curada pela ness., consultada por agentes via MCP. Cada cliente recebe uma chave e só enxerga os pacotes liberados para ele.</p>
 
-    <section aria-labelledby="t-chaves">
-      <h1 id="t-chaves"><span class="num">01</span>Chaves de API</h1>
-      <form id="nova">
-        <label for="nome">Nome do cliente</label>
-        <input id="nome" type="text" required maxlength="100" placeholder="faBRAINzio, ness.brain, Claude do Ricardo">
-        <label>Pacotes liberados</label>
-        <div class="marcas" id="escolha"></div>
-        <p><button type="submit">Gerar chave</button></p>
-      </form>
-      <div id="nova-saida" aria-live="polite"></div>
-      <table><thead><tr><th>Cliente</th><th>Pacotes</th><th>Último uso</th><th></th></tr></thead><tbody id="chaves"></tbody></table>
+  <main class="larg">
+    <div id="aviso" role="alert"></div>
+
+    <section class="painel" id="chaves" role="tabpanel" aria-labelledby="tab-chaves">
+      <h1>Chaves de API</h1>
+      <p class="lead">Cada cliente recebe a sua chave e só enxerga os pacotes marcados nela. Para mudar os pacotes de uma chave, revogue e gere outra.</p>
+      <div class="duas">
+        <form id="nova" class="coluna-form">
+          <label for="nome">Nome do cliente</label>
+          <input id="nome" type="text" required maxlength="100" placeholder="faBRAINzio" autocomplete="off">
+          <fieldset>
+            <legend>Pacotes liberados</legend>
+            <div class="escolha" id="escolha"></div>
+          </fieldset>
+          <button type="submit" class="primario">Gerar chave</button>
+          <div id="nova-saida" aria-live="polite"></div>
+        </form>
+        <div>
+          <h2>Chaves emitidas</h2>
+          <div class="rolagem">
+            <table>
+              <thead><tr><th>Cliente</th><th>Pacotes</th><th class="esconde-estreito">Último uso</th><th></th></tr></thead>
+              <tbody id="lista-chaves"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </section>
 
-    <section aria-labelledby="t-pacotes">
-      <h1 id="t-pacotes"><span class="num">02</span>Pacotes</h1>
-      <table><thead><tr><th>Slug</th><th>Nome</th><th>Versão</th><th>Documentos</th></tr></thead><tbody id="pacotes"></tbody></table>
-      <p class="apoio">Carga de documentos: <code>node scripts/carregar-pacote.mjs &lt;pasta&gt; https://know.ness.com.br</code></p>
+    <section class="painel" id="pacotes" role="tabpanel" aria-labelledby="tab-pacotes" hidden>
+      <h1>Pacotes</h1>
+      <p class="lead">Conjuntos de normas, leis e frameworks que podem ser liberados por chave.</p>
+      <table>
+        <thead><tr><th>Nome</th><th class="esconde-estreito">Identificador</th><th>Versão</th><th class="num">Documentos</th></tr></thead>
+        <tbody id="lista-pacotes"></tbody>
+      </table>
+      <p class="apoio" style="margin-top:18px">Para carregar documentos num pacote, rode no repositório: <code>node scripts/carregar-pacote.mjs &lt;pasta&gt; https://know.ness.com.br</code></p>
     </section>
 
-    <section aria-labelledby="t-conectar">
-      <h1 id="t-conectar"><span class="num">03</span>Conectar um agente</h1>
-      <p class="apoio">Endereço MCP (HTTP): <code id="url-mcp"></code>. Gere uma chave acima e as receitas saem com ela preenchida; até lá aparecem com <code>SUA_CHAVE</code>. Ferramentas: <code>listar_pacotes</code> e <code>buscar_conhecimento</code>, só leitura.</p>
-      <div id="receitas"></div>
+    <section class="painel" id="conectar" role="tabpanel" aria-labelledby="tab-conectar" hidden>
+      <h1>Conectar um agente</h1>
+      <p class="lead">O agente acessa a base pelo protocolo MCP, só para leitura, com duas ferramentas: <code>listar_pacotes</code> e <code>buscar_conhecimento</code>.</p>
+      <p class="estado-chave" id="estado-chave"></p>
+      <div class="clientes" id="clientes" aria-label="Agente"></div>
+      <dl class="ficha">
+        <dt>Endereço MCP</dt><dd><code id="url-mcp"></code></dd>
+        <dt>Onde configurar</dt><dd id="receita-onde"></dd>
+      </dl>
+      <div class="bloco"><pre id="receita-texto"></pre><button type="button" class="secundario copiar" data-copiar="receita-texto">Copiar</button></div>
+      <p class="apoio" id="receita-nota"></p>
     </section>
 
-    <section aria-labelledby="t-teste">
-      <h1 id="t-teste"><span class="num">04</span>Testar a busca</h1>
-      <form id="teste">
-        <label for="consulta">Pergunta</label>
+    <section class="painel" id="testar" role="tabpanel" aria-labelledby="tab-testar" hidden>
+      <h1>Testar a busca</h1>
+      <p class="lead">Pergunte como um agente perguntaria e veja os trechos que ele receberia, em todos os pacotes.</p>
+      <form id="teste" class="busca">
+        <label for="consulta" class="oculto">Pergunta</label>
         <input id="consulta" type="text" required placeholder="Como tratar um incidente de segurança?">
-        <p><button type="submit">Buscar</button></p>
+        <button type="submit" class="primario">Buscar</button>
       </form>
       <div id="resultado" aria-live="polite"></div>
     </section>
