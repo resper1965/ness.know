@@ -145,7 +145,7 @@ async function chamar(env: EnvMcp, cliente: Cliente, nome: string, args: Record<
     if (!cliente.pacotes.includes(PACOTE_STRM)) return texto(`esta chave não libera o pacote ${PACOTE_STRM} (correspondência entre frameworks)`, true);
     const item = typeof args.item === "string" ? args.item.slice(0, 60) : "";
     const de = typeof args.de === "string" ? args.de.slice(0, 120) : "";
-    const para = Array.isArray(args.para) ? args.para.filter((x): x is string => typeof x === "string").slice(0, MAX_DESTINOS) : [];
+    const para = Array.isArray(args.para) ? args.para.filter((x): x is string => typeof x === "string").slice(0, MAX_DESTINOS).map((x) => x.slice(0, 120)) : [];
     if (!item.trim() || !de || !para.length) return texto("informe item, de e para (ids em listar_pacotes, pacote scf-strm)", true);
     const r = await correlacionar(env.DB, item, de, para);
     if ("erro" in r) return texto(r.erro, true);

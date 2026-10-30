@@ -8,6 +8,8 @@ async function ambiente(pacotes = ["iso"], documentos: Record<string, string[]> 
   const consultas: { sql: string; binds: unknown[] }[] = [];
   const DB = {
     prepare: (sql: string) => ({
+      // consultas sem parâmetros (lista de frameworks do STRM)
+      all: async () => ({ results: sql.includes("FROM strm_frameworks") ? [{ id: "iso", nome: "ISO 27002:2022", itens: 93 }] : [] }),
       bind: (...binds: unknown[]) => {
         consultas.push({ sql, binds });
         return {
@@ -17,8 +19,10 @@ async function ambiente(pacotes = ["iso"], documentos: Record<string, string[]> 
             results: sql.includes("trechos_fts MATCH")
               ? [{ documento_id: "d1", escopo: "pacote", titulo: "ISO 27001", versao: "2022", vigencia: null, fonte: null, trecho: "A.8.16 Atividades de monitoramento", rank: -3 }]
               : sql.includes("FROM pacotes")
-                ? [{ slug: "iso", nome: "Segurança e conformidade", descricao: null, versao: "2026-10", instrucoes: "Cite a cláusula." }]
-                : sql.includes("FROM documentos")
+                ? binds.map((slug) => ({ slug, nome: "Segurança e conformidade", descricao: null, versao: "2026-10", instrucoes: "Cite a cláusula." }))
+                : sql.includes("FROM strm_frameworks")
+                  ? [{ id: "iso", nome: "ISO 27002:2022", itens: 93 }]
+                  : sql.includes("FROM documentos")
                   ? [{ dono: "iso", titulo: "ISO 27001", versao: "2022" }, { dono: "iso", titulo: "NIST CSF", versao: "2.0" }]
                   : [],
           }),
@@ -108,5 +112,16 @@ describe("mcp", () => {
     const { env: env2 } = await ambiente(["scf-strm"]);
     const faltando = (await (await chamar(env2, { jsonrpc: "2.0", id: 9, method: "tools/call", params: { name: "correlacionar", arguments: { item: "8.16" } } })).json()) as { result: { isError?: boolean } };
     expect(faltando.result.isError).toBe(true);
+  });
+  it("listar_pacotes traz frameworks só no pacote scf-strm", async () => {
+    const ler = async (pacotes: string[]) => {
+      const { env } = await ambiente(pacotes);
+      const r = (await (await chamar(env, { jsonrpc: "2.0", id: 10, method: "tools/call", params: { name: "listar_pacotes" } })).json()) as { result: { content: { text: string }[] } };
+      return (JSON.parse(r.result.content[0].text) as { pacotes: { slug: string; frameworks?: unknown[] }[] }).pacotes;
+    };
+    const com = await ler(["iso", "scf-strm"]);
+    expect(com.find((x) => x.slug === "scf-strm")?.frameworks).toEqual([{ id: "iso", nome: "ISO 27002:2022", itens: 93 }]);
+    expect(com.find((x) => x.slug === "iso")).not.toHaveProperty("frameworks");
+    expect((await ler(["iso"]))[0]).not.toHaveProperty("frameworks");
   });
 });

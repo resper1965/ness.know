@@ -18,10 +18,15 @@ export interface Resultado {
   origem: { framework: string; nome: string; item: string; item_nome: string | null };
   versao_scf: string | null;
   scf: { scf: string; nome: string | null; relacao: string; forca: number | null }[];
+  /** Destinos pedidos (após deduplicar e limitar) que não existem em strm_frameworks. */
+  destinos_desconhecidos: string[];
   correspondencias: Correspondencia[];
 }
 
 type Linha = { framework: string; item: string; item_nome: string | null; relacao: string; forca: number | null; scf: string };
+/** D1 aceita no máximo 100 parâmetros por consulta: as listas de SCF vão em lotes. */
+const LOTE = 40;
+const lotes = <T>(xs: T[]) => Array.from({ length: Math.ceil(xs.length / LOTE) }, (_, i) => xs.slice(i * LOTE, (i + 1) * LOTE));
 const minimo = (a: number | null, b: number | null) => (a == null || b == null ? null : Math.min(a, b));
 
 export async function correlacionar(db: D1Database, itemPedido: string, de: string, para: string[]): Promise<Resultado | { erro: string }> {
@@ -45,17 +50,28 @@ export async function correlacionar(db: D1Database, itemPedido: string, de: stri
     ligacoes = r.results.map((x) => ({ scf: x.scf, relacao: x.relacao, forca: x.forca }));
   }
 
-  const nomes = new Map(
-    (await db.prepare(`SELECT scf, nome FROM scf_controles WHERE scf IN (${ligacoes.map(() => "?").join(", ")})`).bind(...ligacoes.map((l) => l.scf)).all<{ scf: string; nome: string | null }>()).results.map((x) => [x.scf, x.nome]),
-  );
+  const ids = ligacoes.map((l) => l.scf);
+  const nomes = new Map<string, string | null>();
+  for (const lote of lotes(ids)) {
+    const r = await db.prepare(`SELECT scf, nome FROM scf_controles WHERE scf IN (${lote.map(() => "?").join(", ")})`).bind(...lote).all<{ scf: string; nome: string | null }>();
+    for (const x of r.results) nomes.set(x.scf, x.nome);
+  }
   const scf = ligacoes.map((l) => ({ scf: l.scf, nome: nomes.get(l.scf) ?? null, relacao: l.relacao, forca: l.forca }));
 
   const destinos = [...new Set(para)].filter((p) => p !== de).slice(0, MAX_DESTINOS);
-  if (!destinos.length) return { origem, versao_scf: versao, scf, correspondencias: [] };
-  const alvo = await db
-    .prepare(`SELECT framework, item, item_nome, relacao, forca, scf FROM strm WHERE scf IN (${ligacoes.map(() => "?").join(", ")}) AND framework IN (${destinos.map(() => "?").join(", ")})`)
-    .bind(...ligacoes.map((l) => l.scf), ...destinos)
-    .all<Linha>();
+  if (!destinos.length) return { origem, versao_scf: versao, scf, destinos_desconhecidos: [], correspondencias: [] };
+  const conhecidos = new Set(
+    (await db.prepare(`SELECT id FROM strm_frameworks WHERE id IN (${destinos.map(() => "?").join(", ")})`).bind(...destinos).all<{ id: string }>()).results.map((x) => x.id),
+  );
+  const destinos_desconhecidos = destinos.filter((d) => !conhecidos.has(d));
+  const alvo: { results: Linha[] } = { results: [] };
+  for (const lote of lotes(ids)) {
+    const r = await db
+      .prepare(`SELECT framework, item, item_nome, relacao, forca, scf FROM strm WHERE scf IN (${lote.map(() => "?").join(", ")}) AND framework IN (${destinos.map(() => "?").join(", ")})`)
+      .bind(...lote, ...destinos)
+      .all<Linha>();
+    alvo.results.push(...r.results);
+  }
 
   // Um resultado por item de destino: o caminho de maior força (o elo mais fraco de cada caminho decide).
   const melhor = new Map<string, Correspondencia>();
@@ -68,5 +84,5 @@ export async function correlacionar(db: D1Database, itemPedido: string, de: stri
     }
   }
   const correspondencias = [...melhor.values()].sort((a, b) => (b.forca ?? -1) - (a.forca ?? -1) || a.framework.localeCompare(b.framework) || a.item.localeCompare(b.item, undefined, { numeric: true }));
-  return { origem, versao_scf: versao, scf, correspondencias };
+  return { origem, versao_scf: versao, scf, destinos_desconhecidos, correspondencias };
 }

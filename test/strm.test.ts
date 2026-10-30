@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import migracao from "../migrations/0003_strm.sql?raw";
 import { lerPlanilha, paraSql } from "../scripts/strm.mjs";
+import { correlacionar } from "../src/strm";
 import { bancoTeste } from "./sqlite";
 
 const CAB = ["FDE #", "FDE Name", "Focal Document Element (FDE) Description", "STRM\nRationale", "STRM\nRelationship", "SCF Control", "SCF #", "Secure Controls Framework (SCF)\nControl Description", "Strength of Relationship", "Notes"];
@@ -47,8 +48,6 @@ describe("leitura do STRM", () => {
   });
 });
 
-import { correlacionar } from "../src/strm";
-
 const BASE = `
 INSERT INTO strm_frameworks VALUES ('iso', 'ISO 27002:2022', '2026.1', 1), ('csf', 'NIST CSF 2.0', '2026.1', 1), ('cis', 'CIS v8.1', '2026.1', 1);
 INSERT INTO scf_controles VALUES ('MON-01', 'Continuous Monitoring', 'd'), ('MON-02.2', 'Central Review', 'd');
@@ -64,8 +63,9 @@ const banco = () => bancoTeste(migracao, BASE);
 
 describe("correlacionar", () => {
   it("vai do item ao SCF e do SCF aos destinos, com a força do elo mais fraco e um resultado por item", async () => {
-    const r = await correlacionar(banco(), " 8.16 ", "iso", ["csf", "cis", "iso"]);
+    const r = await correlacionar(banco(), " 8.16 ", "iso", ["csf", "cis", "iso", "nao-existe"]);
     if ("erro" in r) throw new Error(r.erro);
+    expect(r.destinos_desconhecidos).toEqual(["nao-existe"]);
     expect(r.origem).toEqual({ framework: "iso", nome: "ISO 27002:2022", item: "8.16", item_nome: "Monitoring activities" });
     expect(r.scf.map((s) => s.scf)).toEqual(["MON-01", "MON-02.2"]);
     expect(r.correspondencias).toEqual([
@@ -84,5 +84,18 @@ describe("correlacionar", () => {
   it("explica framework e item desconhecidos", async () => {
     expect(await correlacionar(banco(), "8.16", "nao-existe", ["cis"])).toEqual({ erro: expect.stringContaining("framework desconhecido") });
     expect(await correlacionar(banco(), "99.9", "iso", ["cis"])).toEqual({ erro: expect.stringContaining("sem correspondência") });
+  });
+
+  it("atravessa o limite de parâmetros do D1: item ligado a 45 controles SCF", async () => {
+    let sql = "INSERT INTO strm_frameworks VALUES ('big', 'Big', '2026.1', 1);";
+    for (let i = 0; i < 45; i++) {
+      const c = `X-${String(i).padStart(2, "0")}`;
+      sql += `INSERT INTO scf_controles VALUES ('${c}', 'Controle ${i}', 'd');INSERT INTO strm VALUES ('iso', '1.1', 'Origem', 'igual', 10, '${c}'), ('big', 'B${i}', NULL, 'igual', 10, '${c}');`;
+    }
+    const r = await correlacionar(bancoTeste(migracao, BASE, sql), "1.1", "iso", ["big"]);
+    if ("erro" in r) throw new Error(r.erro);
+    expect(r.scf).toHaveLength(45);
+    expect(r.scf.every((s) => s.nome)).toBe(true);
+    expect(r.correspondencias).toHaveLength(45);
   });
 });
