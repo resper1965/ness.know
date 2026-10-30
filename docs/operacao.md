@@ -68,6 +68,26 @@ node scripts/carregar-pacote.mjs "$p\gestao-servicos-ti" $app
 - **Pastas de acréscimo** (`-nist`, `-cis`) usam o mesmo `slug` do pacote base e somam documentos a ele.
 - **Títulos** são a identidade das normas nas chaves restritas. Mude um título só de propósito, porque a norma sai das chaves restritas a ele.
 
+## Carregar ou atualizar o SCF STRM
+
+O SCF STRM (planilhas Excel do SCF) vira SQL pelo conversor e entra direto no D1. A planilha e o SQL não vão para o Git.
+
+```powershell
+cd C:\dev\ness.know
+git pull
+npm install
+npx wrangler d1 migrations apply ness-know --remote
+Expand-Archive "C:\Users\resper\Downloads\STRM_2026-1_-_Excel.zip" "$env:TEMP\strm" -Force
+node scripts/strm-para-sql.mjs "$env:TEMP\strm\STRM 2026-1 - Excel" "$env:TEMP\strm.sql"
+npx wrangler d1 execute ness-know --remote --file="$env:TEMP\strm.sql"
+npx wrangler deploy
+```
+
+- O conversor lê só a primeira aba de cada planilha e para com `<arquivo>: cabeçalho não reconhecido (falta …)` ou `<arquivo>: planilha sem abas` se o formato mudar.
+- O SQL cria o pacote `scf-strm` ("Correspondência entre frameworks") e substitui todo o conteúdo anterior.
+- Para liberar a uma chave, gere uma chave nova com o pacote **Correspondência entre frameworks** marcado.
+- Uma versão nova do SCF repete os mesmos passos com o novo zip.
+
 ## Rotina
 
 | Tarefa | Como |

@@ -27,12 +27,15 @@ Roteamento (`src/worker.ts`):
 pacotes     slug PK, nome, descricao, instrucoes, versao, atualizado_em
 documentos  id PK, escopo='pacote', dono=slug, titulo, tipo, fonte, versao, vigencia, r2_key, status (ok|erro), erro, criado_por, criado_em
 trechos_fts FTS5(documento_id, escopo, dono, texto), tokenizador unicode61 sem acentos
+strm_frameworks  id PK (nome do arquivo sem "scf-strm-" e ".xlsx"), nome, versao_scf, itens
+scf_controles    scf PK, nome, descricao
+strm             framework, item, item_nome, relacao (igual|subconjunto|superconjunto|intersecao), forca (0 a 10, pode faltar), scf; índices (framework, item) e (scf, framework)
 chaves      id PK, nome, token_hash UNIQUE, pacotes JSON [slug], documentos JSON {slug: [título]}, ativo, criado_por, criado_em, usado_em
 ```
 
 As colunas `escopo` e `dono` existem porque o código de busca veio do faBRAINzio, que tem camadas pessoal, da organização e de pacote. Aqui `escopo` é sempre `pacote`.
 
-Migrações em `migrations/`: `0001_inicial.sql` e `0002_chave_documentos.sql`.
+Migrações em `migrations/`: `0001_inicial.sql`, `0002_chave_documentos.sql` e `0003_strm.sql` (as tabelas do SCF STRM).
 
 ## Ingestão
 
@@ -78,6 +81,17 @@ Ajustes por variável do Worker: `BUSCA_MINIMO` (nota mínima da semântica) e `
 
 A híbrida fica como padrão, mesmo um pouco abaixo da semântica pura, porque garante os códigos exatos.
 
+## Correspondência entre frameworks
+
+A ferramenta `correlacionar` (`src/strm.ts`) usa os dados do SCF STRM 2026.1: 183 frameworks, 54.220 vínculos e 1.365 controles SCF, carregados por `scripts/strm-para-sql.mjs` direto no D1.
+
+- **Caminho:** item de origem → controle(s) SCF → itens dos frameworks de destino. O SCF é o ponto de passagem; não há mapeamento direto entre dois frameworks.
+- **Força:** a de cada correspondência é a do elo mais fraco do caminho (mínimo entre origem → SCF e SCF → destino). Se um dos elos não informa força, o resultado é `null`.
+- **Limite do item numérico:** itens numéricos como `1.10` e `1.1` chegam da planilha como número e perdem o zero final (`1.10` vira `1.1`). Afeta sobretudo NIS2 e PCI DSS; está anotado em `scripts/strm.mjs`.
+- **Anexo A da ISO 27001:** não existe como framework; use a ISO 27002:2022.
+- **Conversor:** lê só a primeira aba de cada planilha. O ExcelJS não abriu 19 planilhas por causa dos relacionamentos de comentários; o conversor remove esses relacionamentos com JSZip (devDependency) antes da leitura.
+- **Acesso:** pacote `scf-strm`, tudo ou nada por chave; sem restrição por framework.
+
 ## Decisões
 
 | Decisão | Motivo |
@@ -87,4 +101,5 @@ A híbrida fica como padrão, mesmo um pouco abaixo da semântica pura, porque g
 | Chave em hash, mostrada uma vez | Vazamento do banco não expõe chaves usáveis |
 | Restrição por título, não por id | Recarregar uma norma troca o id; o título é estável |
 | Pacote inteiro como padrão | Normas novas entram nas chaves sem reemissão |
+| Mapeamento como dado estruturado, não como trecho de busca | A correspondência precisa ser exata e conferível |
 | `alvo` como hash curto | O Vectorize indexa só os 64 primeiros bytes de uma string e limita o filtro a 2.048 bytes |

@@ -21,6 +21,7 @@ A base é organizada em **pacotes**. Cada pacote reúne documentos de um domíni
 | Pacote (slug) | Conteúdo |
 | --- | --- |
 | `seguranca-conformidade` | ABNT NBR ISO/IEC 27001, 27017, 27018, 20000-1, 27701, 31000 e 42001; SCF (CDPAS, SCR-CAP, Quantum); NIST CSF 2.0 e SP 800-61r3; CIS Controls v8.1 |
+| `scf-strm` | Mapeamentos SCF STRM 2026.1, 183 frameworks, incluindo ISO 27001/27002/27017/27018/27701/42001/31000/22301, NIST CSF 2.0 e 800-53, CIS v8.1, IEC 62443, NIST 800-82, NERC CIP, C2M2, PCI DSS, SOC 2, DORA e NIS2; sem LGPD, BCB, REN 964, ISO 20000-1 nem ITIL |
 | `setor-eletrico` | ANEEL REN 964/2021 |
 | `gestao-servicos-ti` | ITIL 4 Foundation |
 
@@ -41,7 +42,7 @@ A relação exata de documentos e versões fica na aba **Pacotes** da interface,
 | --- | --- |
 | Endereço | `https://know.ness.com.br/mcp` (MCP Streamable HTTP, sem sessão) |
 | Autenticação | `Authorization: Bearer nesskb_…` |
-| Ferramentas | `listar_pacotes`, `buscar_conhecimento(consulta, pacotes?, limite?)`, só leitura |
+| Ferramentas | `listar_pacotes`, `buscar_conhecimento(consulta, pacotes?, limite?)`, `correlacionar(item, de, para)`, só leitura |
 
 Para conectar Claude Code, Codex, Cursor, VS Code ou Claude Desktop, use as receitas em [docs/conectar.md](docs/conectar.md) ou a aba **Conectar um agente** da interface; logo depois de gerar uma chave, a aba já mostra as receitas com ela. A referência completa das ferramentas está em [docs/mcp.md](docs/mcp.md).
 

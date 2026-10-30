@@ -10,7 +10,7 @@
 
 ## Ferramentas
 
-As duas ferramentas são só de leitura (`readOnlyHint: true`).
+As três ferramentas são só de leitura (`readOnlyHint: true`).
 
 ### `listar_pacotes`
 
@@ -66,6 +66,52 @@ Resposta:
 - `ref` é derivada do documento e do texto do trecho: o mesmo trecho tem sempre a mesma `ref`, então ela serve para citar e para conferir a citação depois.
 - `secao` traz a cláusula ou o título mais próximo quando é possível identificá-lo; caso contrário, vem `null`.
 - Sem resultado, a resposta mantém o formato: `{ "trechos": [], "aviso": "Nada encontrado nos pacotes liberados." }`.
+
+### `correlacionar`
+
+Dado um item de um framework, devolve os itens equivalentes em outros frameworks, passando pelo controle SCF que liga os dois (SCF STRM 2026.1). Exige que a chave tenha o pacote `scf-strm` (**Correspondência entre frameworks**).
+
+| Argumento | Tipo | Obrigatório | Descrição |
+| --- | --- | --- | --- |
+| `item` | string | sim | Item de origem, como na norma: `8.16`, `DE.CM-01`. Com `de` = `scf`, é o id de um controle SCF (`MON-01`) |
+| `de` | string | sim | Id do framework de origem, ou `scf` |
+| `para` | string[] | sim | Ids dos frameworks de destino, até 10 |
+
+O id do framework é o nome do arquivo da planilha sem `scf-strm-` e `.xlsx`: `general-iso-27002-2022`, `general-nist-csf-2-0`, `general-cis-csc-8-1`, `general-iec-62443-3-3-2013`, `usa-federal-nerc-cip-2024`.
+
+**Anexo A da ISO 27001:** o Anexo A reproduz os controles da ISO 27002. Para o Anexo A, use `general-iso-27002-2022` com o número do controle (por exemplo `8.16`).
+
+Resposta:
+
+```json
+{
+  "origem": { "framework": "general-iso-27002-2022", "nome": "ISO 27002:2022", "item": "8.16", "item_nome": "Monitoring activities" },
+  "versao_scf": "2026.1",
+  "scf": [{ "scf": "MON-01", "nome": "Continuous Monitoring", "relacao": "subconjunto", "forca": 10 }],
+  "correspondencias": [
+    { "framework": "general-nist-csf-2-0", "item": "DE.CM-01", "nome": null, "via": "MON-01", "relacao_origem": "subconjunto", "relacao_destino": "subconjunto", "forca": 10 }
+  ],
+  "fonte": { "sistema": "ness.KNOW", "base": "SCF STRM 2026.1", "consulta": "general-iso-27002-2022 8.16", "coletado_em": "…" }
+}
+```
+
+Como ler o resultado:
+
+- `igual` ou `subconjunto` com `forca` de 8 a 10 é correspondência forte.
+- `intersecao` é cobertura parcial: confira o texto dos dois itens antes de afirmar que um atende o outro.
+- `forca` de uma correspondência é a do elo mais fraco do caminho origem → SCF → destino.
+- `forca: null` significa que a planilha não informa a força.
+- `destinos_desconhecidos` lista os ids pedidos em `para` que não existem na base.
+
+Erros (resultado com `isError: true`):
+
+| Situação | Texto |
+| --- | --- |
+| Chave sem o pacote `scf-strm` | `pacote não liberado` |
+| `item`, `de` ou `para` ausente | pede o argumento que falta |
+| Id de `de` inexistente | `framework desconhecido` |
+| Controle SCF inexistente (`de` = `scf`) | `controle SCF desconhecido` |
+| O item não consta no framework | `item … sem correspondência …` (para o Anexo A da ISO 27001, a mensagem indica o framework da ISO 27002) |
 
 ## Erros
 
