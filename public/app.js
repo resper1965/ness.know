@@ -187,7 +187,7 @@ mostrarReceita();
 /* ---------- Pacotes ---------- */
 async function carregarPacotes() {
   $("#lista-pacotes").replaceChildren(...esqueleto(4));
-  pacotes = await api("/api/pacotes");
+  pacotes = (await api("/api/pacotes")).map((p) => ({ ...p, titulos: lerLista(p.titulos) }));
   nomes = Object.fromEntries(pacotes.map((p) => [p.slug, p.nome]));
   $("#n-pacotes").textContent = pacotes.length || "";
 
@@ -214,17 +214,7 @@ async function carregarPacotes() {
       : [vazio(4, "Nenhum pacote carregado", "Use o comando abaixo para carregar o primeiro.")]),
   );
 
-  $("#escolha").replaceChildren(
-    ...pacotes.map((p) => {
-      const l = el("label");
-      const c = el("input");
-      Object.assign(c, { type: "checkbox", value: p.slug, checked: true });
-      const t = el("span", p.nome);
-      t.append(el("small", plural(p.documentos, "documento", "documentos")));
-      l.append(c, t);
-      return l;
-    }),
-  );
+  $("#escolha").replaceChildren(...pacotes.map(blocoPacote));
   if (!pacotes.length) $("#escolha").append(el("p", "Carregue um pacote antes de gerar chaves.", "apoio vazio"));
   atualizarFormulario();
 
@@ -295,11 +285,19 @@ function desenharChaves() {
           if (!c.ativo) tr.className = "inativa";
           const criada = dataDe(c.criado_em);
           const nome = [el("span", c.nome, "nome"), el("span", `${c.ativo ? "Criada" : "Revogada; criada"} em ${criada ? fmtData.format(criada) : "—"}`, "sub")];
-          const lista = JSON.parse(c.pacotes || "[]").map((s) => nomes[s] ?? s);
+          const restricoes = lerObjeto(c.documentos);
+          const lista = lerLista(c.pacotes).map((s) => {
+            const d = el("div", null, "escopo");
+            d.append(el("span", nomes[s] ?? s));
+            const total = pacotes.find((p) => p.slug === s)?.titulos.length;
+            const so = restricoes[s];
+            d.append(el("span", so ? `${so.length}${total ? ` de ${total}` : ""} normas: ${so.join(", ")}` : "pacote inteiro", "sub"));
+            return d;
+          });
           const uso = c.usado_em ? el("span", quando(c.usado_em)) : el("span", "nunca", "apoio");
           if (c.usado_em) uso.title = fmtHora.format(dataDe(c.usado_em));
           const acao = celula(c.ativo ? botao("Revogar", "secundario pequeno", (e) => confirmarRevogacao(c, e.currentTarget.parentElement)) : null, "acao");
-          tr.append(celula(nome), celula(lista.join(", ")), celula(uso, "esconde-estreito"), acao);
+          tr.append(celula(nome), celula(lista), celula(uso, "esconde-estreito"), acao);
           return tr;
         })
       : [vazio(4, "Nenhuma chave ativa", "Gere a primeira ao lado para conectar um agente.")]),
@@ -329,20 +327,106 @@ function confirmarRevogacao(c, td) {
 }
 
 /* ---------- Nova chave ---------- */
-const marcados = () => [...document.querySelectorAll("#escolha input:checked")].map((c) => c.value);
+const lerLista = (x) => {
+  try {
+    const v = typeof x === "string" ? JSON.parse(x) : x;
+    return Array.isArray(v) ? v.filter((t) => typeof t === "string") : [];
+  } catch {
+    return [];
+  }
+};
+const lerObjeto = (x) => {
+  try {
+    const v = JSON.parse(x || "{}");
+    return v && typeof v === "object" && !Array.isArray(v) ? v : {};
+  } catch {
+    return {};
+  }
+};
+
+/** Um pacote no formulário: caixa do pacote inteiro e, aberta, a lista das normas para escolher uma a uma. */
+function blocoPacote(p) {
+  const bloco = el("div", null, "pac");
+  bloco.dataset.slug = p.slug;
+  const topo = el("div", null, "pac-topo");
+  const l = el("label");
+  const c = el("input");
+  Object.assign(c, { type: "checkbox", checked: true, className: "p" });
+  const t = el("span", p.nome);
+  const resumo = el("small");
+  t.append(resumo);
+  l.append(c, t);
+  const ver = botao(`Normas (${p.titulos.length})`, "texto");
+  ver.setAttribute("aria-expanded", "false");
+  const normas = el("div", null, "normas");
+  normas.hidden = true;
+  normas.id = `normas-${p.slug}`;
+  ver.setAttribute("aria-controls", normas.id);
+  if (!p.titulos.length) ver.hidden = true;
+  ver.addEventListener("click", () => {
+    normas.hidden = !normas.hidden;
+    ver.setAttribute("aria-expanded", String(!normas.hidden));
+  });
+  for (const titulo of p.titulos) {
+    const ln = el("label");
+    const cn = el("input");
+    Object.assign(cn, { type: "checkbox", checked: true, value: titulo, className: "n" });
+    ln.append(cn, el("span", titulo));
+    normas.append(ln);
+  }
+  c.addEventListener("change", () => normas.querySelectorAll("input").forEach((x) => (x.checked = c.checked)));
+  topo.append(l, ver);
+  bloco.append(topo, normas);
+  return bloco;
+}
+
+/** Lê o formulário: pacotes com ao menos uma norma marcada e, para os parciais, os títulos escolhidos. */
+function escolha() {
+  const pacotesEscolhidos = [];
+  const documentos = {};
+  for (const b of document.querySelectorAll("#escolha .pac")) {
+    const todas = [...b.querySelectorAll("input.n")];
+    const sim = todas.filter((x) => x.checked).map((x) => x.value);
+    const inteiro = todas.length ? sim.length === todas.length : b.querySelector("input.p").checked;
+    if (!inteiro && !sim.length) continue;
+    pacotesEscolhidos.push(b.dataset.slug);
+    if (!inteiro) documentos[b.dataset.slug] = sim;
+  }
+  return { pacotes: pacotesEscolhidos, documentos };
+}
+
 function atualizarFormulario() {
-  const todas = document.querySelectorAll("#escolha input");
-  const n = marcados().length;
-  $("#todos").hidden = !todas.length;
-  $("#todos").textContent = n === todas.length ? "Desmarcar todos" : "Marcar todos";
-  $("#gerar").disabled = !$("#nome").value.trim() || !n;
+  const blocos = [...document.querySelectorAll("#escolha .pac")];
+  for (const b of blocos) {
+    const todas = [...b.querySelectorAll("input.n")];
+    const n = todas.filter((x) => x.checked).length;
+    const p = b.querySelector("input.p");
+    if (todas.length) {
+      p.checked = n === todas.length;
+      p.indeterminate = n > 0 && n < todas.length;
+    }
+    b.querySelector("small").textContent = !todas.length
+      ? "sem normas carregadas"
+      : p.checked
+        ? "pacote inteiro, inclusive normas futuras"
+        : n
+          ? `${n} de ${todas.length} normas`
+          : "fora desta chave";
+  }
+  const { pacotes: escolhidos } = escolha();
+  const tudo = blocos.every((b) => b.querySelector("input.p").checked);
+  $("#todos").hidden = !blocos.length;
+  $("#todos").textContent = tudo ? "Desmarcar todos" : "Marcar todos";
+  $("#gerar").disabled = !$("#nome").value.trim() || !escolhidos.length;
 }
 $("#nome").addEventListener("input", atualizarFormulario);
 $("#escolha").addEventListener("change", atualizarFormulario);
 $("#todos").addEventListener("click", () => {
-  const todas = [...document.querySelectorAll("#escolha input")];
-  const marcar = marcados().length !== todas.length;
-  todas.forEach((c) => (c.checked = marcar));
+  const marcar = !document.querySelectorAll("#escolha .pac").length || ![...document.querySelectorAll("#escolha input.p")].every((x) => x.checked);
+  document.querySelectorAll("#escolha input").forEach((c) => {
+    c.checked = marcar;
+    c.indeterminate = false;
+  });
   atualizarFormulario();
 });
 
@@ -351,13 +435,13 @@ $("#nova").addEventListener("submit", async (e) => {
   const erro = $("#nova-erro");
   erro.hidden = true;
   const nome = $("#nome").value.trim();
-  const pacotesEscolhidos = marcados();
+  const { pacotes: pacotesEscolhidos, documentos } = escolha();
   if (!nome || !pacotesEscolhidos.length) return;
   const b = $("#gerar");
   b.disabled = true;
   b.textContent = "Gerando…";
   try {
-    const r = await api("/api/chaves", { method: "POST", body: JSON.stringify({ nome, pacotes: pacotesEscolhidos }) });
+    const r = await api("/api/chaves", { method: "POST", body: JSON.stringify({ nome, pacotes: pacotesEscolhidos, documentos }) });
     chaveAtual = { nome, token: r.token };
     mostrarReceita();
     const caixa = el("div", null, "callout");

@@ -15,6 +15,19 @@ export interface Cliente {
   id: string;
   nome: string;
   pacotes: string[];
+  /** Pacotes restritos a algumas normas: slug → títulos. Pacote fora do mapa vale inteiro. */
+  documentos: Record<string, string[]>;
+}
+
+/** Lê o JSON {slug: [títulos]} da chave, descartando o que não for lista de textos. */
+export function restricoesDe(json: string | null | undefined): Record<string, string[]> {
+  try {
+    const o = JSON.parse(json || "{}") as unknown;
+    if (!o || typeof o !== "object" || Array.isArray(o)) return {};
+    return Object.fromEntries(Object.entries(o).flatMap(([k, v]) => (Array.isArray(v) ? [[k, v.filter((x): x is string => typeof x === "string")]] : [])));
+  } catch {
+    return {};
+  }
 }
 
 export async function hashToken(token: string): Promise<string> {
@@ -31,19 +44,22 @@ export function novoToken(): string {
 async function clienteDe(req: Request, db: D1Database): Promise<Cliente | null> {
   const token = req.headers.get("authorization")?.match(/^Bearer\s+(\S+)$/i)?.[1];
   if (!token) return null;
-  const c = await db.prepare("SELECT id, nome, pacotes FROM chaves WHERE token_hash = ? AND ativo = 1").bind(await hashToken(token)).first<{ id: string; nome: string; pacotes: string }>();
+  const c = await db
+    .prepare("SELECT id, nome, pacotes, documentos FROM chaves WHERE token_hash = ? AND ativo = 1")
+    .bind(await hashToken(token))
+    .first<{ id: string; nome: string; pacotes: string; documentos?: string }>();
   if (!c) return null;
   let pacotes: string[] = [];
   try {
     pacotes = (JSON.parse(c.pacotes) as unknown[]).filter((x): x is string => typeof x === "string");
   } catch {}
-  return { id: c.id, nome: c.nome, pacotes };
+  return { id: c.id, nome: c.nome, pacotes, documentos: restricoesDe(c.documentos) };
 }
 
 const FERRAMENTAS = [
   {
     name: "listar_pacotes",
-    description: "Lista os pacotes liberados (normas, leis, frameworks) em JSON: slug, nome, versão, instruções de uso e documentos com versão.",
+    description: "Lista os pacotes liberados (normas, leis, frameworks) em JSON: slug, nome, versão, instruções de uso e os documentos que esta chave enxerga, com versão. restrito: true indica que a chave vê só parte do pacote.",
     inputSchema: { type: "object", properties: {} },
     annotations: { readOnlyHint: true },
   },
@@ -79,7 +95,11 @@ async function chamar(env: EnvMcp, cliente: Cliente, nome: string, args: Record<
         .bind(...cliente.pacotes)
         .all<{ dono: string; titulo: string; versao: string | null }>(),
     ]);
-    const pacotes = p.results.map((x) => ({ ...x, documentos: d.results.filter((y) => y.dono === x.slug).map((y) => ({ titulo: y.titulo, versao: y.versao })) }));
+    const pacotes = p.results.map((x) => {
+      const so = cliente.documentos[x.slug];
+      const documentos = d.results.filter((y) => y.dono === x.slug && (!so || so.includes(y.titulo))).map((y) => ({ titulo: y.titulo, versao: y.versao }));
+      return { ...x, ...(so ? { restrito: true } : {}), documentos };
+    });
     return texto(JSON.stringify({ pacotes }, null, 1));
   }
   if (nome === "buscar_conhecimento") {
@@ -89,7 +109,8 @@ async function chamar(env: EnvMcp, cliente: Cliente, nome: string, args: Record<
     const pedidos = Array.isArray(args.pacotes) ? args.pacotes.filter((x): x is string => typeof x === "string") : [];
     const slugs = pedidos.length ? cliente.pacotes.filter((s) => pedidos.includes(s)) : cliente.pacotes;
     const limite = Math.min(Math.max(Math.floor(Number(args.limite)) || 8, 1), 20); // inteiro: vai para o LIMIT do SQLite
-    const r = await buscarEm(env, slugs.map((dono) => ({ escopo: "pacote" as const, dono })), consulta, { limite, rerank: env.BUSCA_RERANK === "1", minimo: env.BUSCA_MINIMO && Number.isFinite(Number(env.BUSCA_MINIMO)) ? Number(env.BUSCA_MINIMO) : undefined });
+    const alvos = slugs.map((dono) => ({ escopo: "pacote" as const, dono, ...(cliente.documentos[dono] ? { titulos: cliente.documentos[dono] } : {}) }));
+    const r = await buscarEm(env, alvos, consulta, { limite, rerank: env.BUSCA_RERANK === "1", minimo: env.BUSCA_MINIMO && Number.isFinite(Number(env.BUSCA_MINIMO)) ? Number(env.BUSCA_MINIMO) : undefined });
     if (!r.length) return texto(JSON.stringify({ trechos: [], aviso: "Nada encontrado nos pacotes liberados." })); // mesmo formato do resultado
     // JSON com uma fonte por trecho ({sistema, consulta, ref, coletado_em}): quem cita (ex.: ness.brain) confere a ref.
     const coletado_em = new Date().toISOString();

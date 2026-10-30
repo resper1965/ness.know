@@ -1,6 +1,6 @@
 // API de administração (atrás do Access, só ADMIN_EMAILS): chaves de API, pacotes, documentos, busca de teste e revetorização.
 import { apagarDocumento, buscarEm, type EnvConhecimento, ingerir, LIMITE_ARQUIVO, revetorizar } from "./busca";
-import { hashToken, novoToken } from "./mcp";
+import { hashToken, novoToken, restricoesDe } from "./mcp";
 
 const SLUG = /^[a-z0-9][a-z0-9-]{1,62}$/;
 type Valido<T> = { ok: true; v: T } | { ok: false; erro: string };
@@ -29,6 +29,25 @@ async function pacotesQueExistem(db: D1Database, slugs: string[]): Promise<strin
   return r.results.map((x) => x.slug);
 }
 
+/**
+ * Restrição por norma: {slug: [títulos]}, só para pacotes da chave, com títulos que existem no pacote. Lista com todas as
+ * normas do pacote vira "pacote inteiro" (sem restrição), para incluir normas carregadas depois.
+ */
+export async function validarRestricoes(db: D1Database, pacotes: string[], bruto: unknown): Promise<Valido<Record<string, string[]>>> {
+  const pedido = bruto && typeof bruto === "object" && !Array.isArray(bruto) ? restricoesDe(JSON.stringify(bruto)) : {};
+  const v: Record<string, string[]> = {};
+  for (const [slug, lista] of Object.entries(pedido)) {
+    if (!pacotes.includes(slug)) return { ok: false, erro: `restrição para pacote fora da chave: ${slug}` };
+    const titulos = [...new Set(lista.map((t) => t.trim()).filter(Boolean))];
+    if (!titulos.length) return { ok: false, erro: `escolha ao menos uma norma de ${slug}, ou tire o pacote da chave` };
+    const existem = (await db.prepare("SELECT DISTINCT titulo FROM documentos WHERE escopo = 'pacote' AND dono = ? AND status = 'ok'").bind(slug).all<{ titulo: string }>()).results.map((x) => x.titulo);
+    const faltam = titulos.filter((t) => !existem.includes(t));
+    if (faltam.length) return { ok: false, erro: `norma não existe em ${slug}: ${faltam.join(", ")}` };
+    if (titulos.length < existem.length) v[slug] = titulos;
+  }
+  return { ok: true, v };
+}
+
 export async function admin(req: Request, env: EnvConhecimento, email: string, caminho: string): Promise<Response> {
   const db = env.DB;
   const rota = `${req.method} ${caminho}`;
@@ -36,7 +55,7 @@ export async function admin(req: Request, env: EnvConhecimento, email: string, c
   if (rota === "GET /api/eu") return Response.json({ email });
 
   // Chaves de API: o token aparece uma vez, na criação; no banco fica só o hash.
-  if (rota === "GET /api/chaves") return Response.json((await db.prepare("SELECT id, nome, pacotes, ativo, criado_por, criado_em, usado_em FROM chaves ORDER BY ativo DESC, nome").all()).results);
+  if (rota === "GET /api/chaves") return Response.json((await db.prepare("SELECT id, nome, pacotes, documentos, ativo, criado_por, criado_em, usado_em FROM chaves ORDER BY ativo DESC, nome").all()).results);
   if (rota === "POST /api/chaves") {
     const b = await corpo(req);
     const nome = txt(b.nome, 100);
@@ -45,10 +64,15 @@ export async function admin(req: Request, env: EnvConhecimento, email: string, c
     const existem = await pacotesQueExistem(db, pacotes);
     const faltam = pacotes.filter((p) => !existem.includes(p));
     if (faltam.length) return erro(`pacote não existe: ${faltam.join(", ")}`, 404);
+    const r = await validarRestricoes(db, pacotes, b.documentos);
+    if (!r.ok) return erro(r.erro);
     const id = crypto.randomUUID();
     const token = novoToken();
-    await db.prepare("INSERT INTO chaves (id, nome, token_hash, pacotes, criado_por) VALUES (?, ?, ?, ?, ?)").bind(id, nome, await hashToken(token), JSON.stringify(pacotes), email).run();
-    return Response.json({ id, nome, pacotes, token });
+    await db
+      .prepare("INSERT INTO chaves (id, nome, token_hash, pacotes, documentos, criado_por) VALUES (?, ?, ?, ?, ?, ?)")
+      .bind(id, nome, await hashToken(token), JSON.stringify(pacotes), JSON.stringify(r.v), email)
+      .run();
+    return Response.json({ id, nome, pacotes, documentos: r.v, token });
   }
   const ch = caminho.match(/^\/api\/chaves\/([0-9a-f-]{36})$/);
   if (ch && req.method === "DELETE") {
@@ -62,7 +86,7 @@ export async function admin(req: Request, env: EnvConhecimento, email: string, c
       (
         await db
           .prepare(
-            "SELECT p.slug, p.nome, p.descricao, p.versao, p.atualizado_em, (SELECT count(*) FROM documentos d WHERE d.escopo = 'pacote' AND d.dono = p.slug AND d.status = 'ok') AS documentos FROM pacotes p ORDER BY p.slug",
+            "SELECT p.slug, p.nome, p.descricao, p.versao, p.atualizado_em, (SELECT count(*) FROM documentos d WHERE d.escopo = 'pacote' AND d.dono = p.slug AND d.status = 'ok') AS documentos, (SELECT json_group_array(titulo) FROM (SELECT d.titulo FROM documentos d WHERE d.escopo = 'pacote' AND d.dono = p.slug AND d.status = 'ok' ORDER BY d.titulo)) AS titulos FROM pacotes p ORDER BY p.slug",
           )
           .all()
       ).results,

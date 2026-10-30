@@ -3,7 +3,7 @@ import { hashToken, mcp, novoToken } from "../src/mcp";
 
 const TOKEN = "nesskb_teste";
 
-async function ambiente(pacotes = ["iso"]) {
+async function ambiente(pacotes = ["iso"], documentos: Record<string, string[]> = {}) {
   const hash = await hashToken(TOKEN);
   const consultas: { sql: string; binds: unknown[] }[] = [];
   const DB = {
@@ -11,7 +11,7 @@ async function ambiente(pacotes = ["iso"]) {
       bind: (...binds: unknown[]) => {
         consultas.push({ sql, binds });
         return {
-          first: async () => (sql.includes("FROM chaves") && binds[0] === hash ? { id: "c1", nome: "n.posture", pacotes: JSON.stringify(pacotes) } : null),
+          first: async () => (sql.includes("FROM chaves") && binds[0] === hash ? { id: "c1", nome: "n.posture", pacotes: JSON.stringify(pacotes), documentos: JSON.stringify(documentos) } : null),
           run: async () => ({ meta: { changes: 1 } }),
           all: async () => ({
             results: sql.includes("trechos_fts MATCH")
@@ -19,7 +19,7 @@ async function ambiente(pacotes = ["iso"]) {
               : sql.includes("FROM pacotes")
                 ? [{ slug: "iso", nome: "Segurança e conformidade", descricao: null, versao: "2026-10", instrucoes: "Cite a cláusula." }]
                 : sql.includes("FROM documentos")
-                  ? [{ dono: "iso", titulo: "ISO 27001", versao: "2022" }]
+                  ? [{ dono: "iso", titulo: "ISO 27001", versao: "2022" }, { dono: "iso", titulo: "NIST CSF", versao: "2.0" }]
                   : [],
           }),
         };
@@ -76,7 +76,7 @@ describe("mcp", () => {
     expect(consultas.some((c) => c.sql.includes("trechos_fts MATCH"))).toBe(false);
     const p = (await (await chamar(env, { jsonrpc: "2.0", id: 5, method: "tools/call", params: { name: "listar_pacotes" } })).json()) as { result: { content: { text: string }[] } };
     expect(JSON.parse(p.result.content[0].text)).toEqual({
-      pacotes: [{ slug: "iso", nome: "Segurança e conformidade", descricao: null, versao: "2026-10", instrucoes: "Cite a cláusula.", documentos: [{ titulo: "ISO 27001", versao: "2022" }] }],
+      pacotes: [{ slug: "iso", nome: "Segurança e conformidade", descricao: null, versao: "2026-10", instrucoes: "Cite a cláusula.", documentos: [{ titulo: "ISO 27001", versao: "2022" }, { titulo: "NIST CSF", versao: "2.0" }] }],
     });
   });
 
@@ -85,5 +85,17 @@ describe("mcp", () => {
     expect(t).toMatch(/^nesskb_[A-Za-z0-9_-]{43}$/);
     expect(await hashToken(t)).toBe(await hashToken(t));
     expect(await hashToken(t)).not.toBe(await hashToken(novoToken()));
+  });
+
+  it("chave restrita: busca e lista só as normas escolhidas", async () => {
+    const { env, consultas } = await ambiente(["iso"], { iso: ["NIST CSF"] });
+    await chamar(env, { jsonrpc: "2.0", id: 6, method: "tools/call", params: { name: "buscar_conhecimento", arguments: { consulta: "monitoramento" } } });
+    const fts = consultas.find((c) => c.sql.includes("trechos_fts MATCH"))!;
+    expect(fts.sql).toContain("d.titulo IN (?)");
+    expect(fts.binds).toContain("NIST CSF");
+    const p = (await (await chamar(env, { jsonrpc: "2.0", id: 7, method: "tools/call", params: { name: "listar_pacotes" } })).json()) as { result: { content: { text: string }[] } };
+    const { pacotes } = JSON.parse(p.result.content[0].text) as { pacotes: { restrito?: boolean; documentos: { titulo: string }[] }[] };
+    expect(pacotes[0].restrito).toBe(true);
+    expect(pacotes[0].documentos.map((d) => d.titulo)).toEqual(["NIST CSF"]);
   });
 });

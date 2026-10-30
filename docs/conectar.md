@@ -1,7 +1,7 @@
 # Conectar um agente ao ness.KNOW
 
 Endereço MCP (Streamable HTTP, sem sessão): `https://know.ness.com.br/mcp`
-Autenticação: `Authorization: Bearer <chave>` (gere em https://know.ness.com.br, seção 01; a chave aparece uma vez).
+Autenticação: `Authorization: Bearer <chave>` (gere na aba Chaves de https://know.ness.com.br; a chave aparece uma vez).
 Ferramentas, só leitura: `listar_pacotes` (pacotes, instruções de uso, documentos) e `buscar_conhecimento(consulta, pacotes?, limite?)` (JSON com trechos, seção e `ref: know-…` para citar).
 
 A interface mostra estas receitas já com a chave preenchida, logo depois de gerá-la.
@@ -39,9 +39,9 @@ A chave vai na variável de ambiente (Windows: `setx NESS_KNOW_TOKEN "<chave>"`;
 ```
 
 ## ChatGPT e Claude na web (conectores)
-Esses conectores só aceitam OAuth ou "sem autenticação": não mandam cabeçalho com chave. Ainda não suportado (ver decisão pendente no README).
+Esses conectores só aceitam OAuth ou "sem autenticação": não mandam cabeçalho com chave. Ainda não suportado (ver `docs/seguranca.md`, limites conhecidos).
 
 ## Boas práticas
-- Uma chave por pessoa ou projeto, com só os pacotes necessários; revogue na interface quando não usar mais.
+- Uma chave por pessoa ou projeto, com só os pacotes ou as normas necessários; revogue na interface quando não usar mais.
 - Nunca versione a chave (use variável de ambiente ou o cofre da ferramenta).
 - Peça ao agente para citar documento, versão e seção (vêm em cada trecho).

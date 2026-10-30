@@ -110,6 +110,40 @@ describe("busca semântica", () => {
     expect(r).toEqual([{ documento_id: "d1", escopo: "pacote", titulo: "NIST 800-61", versao: "r3", vigencia: null, fonte: "NIST", secao: null, trecho: "incident response é resposta a incidentes", origem: "semantica", nota: 0.8 }]);
   });
 
+  it("pacote restrito a algumas normas: filtra pelos ids delas e descarta as outras normas do pacote", async () => {
+    const filtros: unknown[] = [];
+    const VETORES = {
+      query: vi.fn(async (_v: number[], o: { filter: unknown }) => {
+        filtros.push(o.filter);
+        return {
+          matches: [
+            { id: "d1:0", score: 0.9, metadata: { documento_id: "d1", texto: "NIST" } },
+            { id: "d3:0", score: 0.8, metadata: { documento_id: "d3", texto: "outra norma do pacote" } },
+          ],
+        };
+      }),
+    } as unknown as Vectorize;
+    const DB = {
+      prepare: (sql: string) => ({
+        bind: () => ({
+          all: async () => ({
+            results: sql.startsWith("SELECT id FROM documentos")
+              ? [{ id: "d1" }]
+              : sql.includes("FROM documentos")
+                ? [
+                    { id: "d1", escopo: "pacote", dono: "iso", titulo: "NIST CSF", versao: "2.0", vigencia: null, fonte: null },
+                    { id: "d3", escopo: "pacote", dono: "iso", titulo: "ISO 27001", versao: "2022", vigencia: null, fonte: null },
+                  ]
+                : [],
+          }),
+        }),
+      }),
+    } as unknown as D1Database;
+    const r = await buscarEm({ DB, AI: ai, VETORES }, [{ escopo: "pacote", dono: "iso", titulos: ["NIST CSF"] }, { escopo: "pacote", dono: "cis" }], "x", { modo: "semantica" });
+    expect(filtros).toEqual([{ alvo: { $in: [await chaveAlvo({ escopo: "pacote", dono: "cis" })] } }, { documento_id: { $in: ["d1"] } }]);
+    expect(r.map((x) => x.titulo)).toEqual(["NIST CSF"]);
+  });
+
   it("índice fora do ar: fica a textual", async () => {
     const VETORES = { query: vi.fn(async () => { throw new Error("503"); }) } as unknown as Vectorize;
     const { db } = dbSimulado([]);

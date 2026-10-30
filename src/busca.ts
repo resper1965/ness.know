@@ -15,6 +15,8 @@ export type Escopo = "pessoal" | "org" | "pacote";
 export interface Alvo {
   escopo: Escopo;
   dono: string;
+  /** Só estes documentos da camada (por título). Ausente = a camada inteira. */
+  titulos?: string[];
 }
 export interface MetaDocumento {
   titulo: string;
@@ -124,8 +126,8 @@ export function ehRuido(trecho: string): boolean {
 }
 
 const filtroEscopo = (alvos: Alvo[]) => ({
-  sql: alvos.map(() => "(t.escopo = ? AND t.dono = ?)").join(" OR "),
-  binds: alvos.flatMap((a) => [a.escopo, a.dono]),
+  sql: alvos.map((a) => `(t.escopo = ? AND t.dono = ?${a.titulos ? ` AND d.titulo IN (${a.titulos.map(() => "?").join(", ") || "NULL"})` : ""})`).join(" OR "),
+  binds: alvos.flatMap((a) => [a.escopo, a.dono, ...(a.titulos ?? [])]),
 });
 
 /** Trecho com a origem e a nota de cada busca, para a fusão e para a avaliação. */
@@ -166,6 +168,18 @@ export async function chaveAlvo(a: Alvo): Promise<string> {
 }
 /** Camadas por consulta: 50 hashes de 16 caracteres ficam bem abaixo dos 2048 bytes do filtro. */
 const CAMADAS_POR_CONSULTA = 50;
+/** Ids de documento (uuid, 36 bytes) por consulta, abaixo dos 2048 bytes do filtro. */
+const DOCUMENTOS_POR_CONSULTA = 40;
+const emGrupos = <T>(xs: T[], n: number) => Array.from({ length: Math.ceil(xs.length / n) }, (_, i) => xs.slice(i * n, (i + 1) * n));
+
+/** Ids dos documentos escolhidos nas camadas restritas a alguns títulos. */
+async function idsRestritos(db: D1Database, alvos: Alvo[]): Promise<string[]> {
+  const restritos = alvos.filter((a) => a.titulos?.length);
+  if (!restritos.length) return [];
+  const sql = restritos.map((a) => `(escopo = ? AND dono = ? AND titulo IN (${a.titulos!.map(() => "?").join(", ")}))`).join(" OR ");
+  const r = await db.prepare(`SELECT id FROM documentos WHERE ${sql}`).bind(...restritos.flatMap((a) => [a.escopo, a.dono, ...a.titulos!])).all<{ id: string }>();
+  return r.results.map((x) => x.id);
+}
 
 async function embutir(ai: Ai, textos: string[]): Promise<number[][]> {
   const r = (await ai.run(MODELO_VETOR, { text: textos, truncate_inputs: true })) as { data?: number[][] };
@@ -199,22 +213,25 @@ export async function vetorizar(env: EnvBusca, documentoId: string, alvo: Alvo, 
 async function buscaSemantica(env: EnvBusca, alvos: Alvo[], consulta: string, limite: number, minimo: number): Promise<Candidato[]> {
   if (!env.VETORES || !consulta.trim()) return [];
   const [v] = await embutir(env.AI, [consulta.slice(0, 2000)]);
-  const chaves = await Promise.all(alvos.map(chaveAlvo));
-  const grupos = Array.from({ length: Math.ceil(chaves.length / CAMADAS_POR_CONSULTA) }, (_, i) => chaves.slice(i * CAMADAS_POR_CONSULTA, (i + 1) * CAMADAS_POR_CONSULTA));
-  const respostas = await Promise.all(grupos.map((g) => env.VETORES!.query(v, { topK: Math.min(limite, CANDIDATOS), returnMetadata: "all", filter: { alvo: { $in: g } } })));
+  // Camada inteira filtra pelo hash da camada; camada restrita a algumas normas filtra pelos ids delas (índice documento_id).
+  const chaves = await Promise.all(alvos.filter((a) => !a.titulos).map(chaveAlvo));
+  const ids = await idsRestritos(env.DB, alvos);
+  const filtros = [...emGrupos(chaves, CAMADAS_POR_CONSULTA).map((g) => ({ alvo: { $in: g } })), ...emGrupos(ids, DOCUMENTOS_POR_CONSULTA).map((g) => ({ documento_id: { $in: g } }))];
+  const respostas = await Promise.all(filtros.map((filter) => env.VETORES!.query(v, { topK: Math.min(limite, CANDIDATOS), returnMetadata: "all", filter })));
+  const vistos = new Set<string>();
   const hits = respostas
     .flatMap((r) => r.matches)
-    .filter((m) => m.score >= minimo && m.metadata)
+    .filter((m) => m.score >= minimo && m.metadata && !vistos.has(m.id) && vistos.add(m.id))
     .sort((a, b) => b.score - a.score)
     .slice(0, limite);
   if (!hits.length) return [];
-  const ids = [...new Set(hits.map((m) => String(m.metadata?.documento_id)))];
-  const docs = await env.DB.prepare(`SELECT id, escopo, dono, titulo, versao, vigencia, fonte FROM documentos WHERE id IN (${ids.map(() => "?").join(", ")})`)
-    .bind(...ids)
+  const achados = [...new Set(hits.map((m) => String(m.metadata?.documento_id)))];
+  const docs = await env.DB.prepare(`SELECT id, escopo, dono, titulo, versao, vigencia, fonte FROM documentos WHERE id IN (${achados.map(() => "?").join(", ")})`)
+    .bind(...achados)
     .all<{ id: string; escopo: Escopo; dono: string; titulo: string; versao: string | null; vigencia: string | null; fonte: string | null }>();
   // O filtro do índice já limita as camadas; conferir de novo no banco evita vazamento se o índice de metadados faltar.
-  const permitidos = new Set(alvos.map((a) => `${a.escopo}:${a.dono}`));
-  const porId = new Map(docs.results.filter((d) => permitidos.has(`${d.escopo}:${d.dono}`)).map((d) => [d.id, d]));
+  const permitido = (d: { escopo: string; dono: string; titulo: string }) => alvos.some((a) => a.escopo === d.escopo && a.dono === d.dono && (!a.titulos || a.titulos.includes(d.titulo)));
+  const porId = new Map(docs.results.filter(permitido).map((d) => [d.id, d]));
   return hits.flatMap((m) => {
     const d = porId.get(String(m.metadata?.documento_id));
     if (!d) return [];

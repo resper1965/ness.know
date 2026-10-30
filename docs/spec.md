@@ -1,5 +1,7 @@
 # ness.KNOW como serviço independente
 
+> Atualização (30/10/2026, mais tarde): a chave também pode ser restrita a normas específicas de um pacote (`chaves.documentos`). Ver `docs/arquitetura.md`.
+
 ## Decisão (30/10/2026)
 A base de pacotes saiu do faBRAINzio e virou serviço próprio (alternativa C). Motivo: é reaproveitável por qualquer projeto ou agente da ness. e não deve depender do assistente de um cliente.
 

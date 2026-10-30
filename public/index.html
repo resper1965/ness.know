@@ -82,11 +82,20 @@
     .escolha-topo { display: flex; justify-content: space-between; align-items: baseline; }
     .escolha { border: 1px solid var(--line); }
     .escolha label { display: grid; grid-template-columns: 16px 1fr; gap: 10px; align-items: start; margin: 0; padding: 10px 12px; font: 400 13px/1.4 var(--font-body); color: var(--ink); cursor: pointer; transition: background var(--rapido) var(--ease); }
-    .escolha label + label { border-top: 1px solid var(--line); }
     .escolha label:hover { background: var(--surface-2); }
-    .escolha label:has(input:checked) { box-shadow: inset 2px 0 0 var(--accent); }
     .escolha input { accent-color: var(--accent); width: 14px; height: 14px; margin: 2px 0 0; }
-    .escolha small { display: block; margin-top: 2px; font: 400 11px/1 var(--font-mono); color: var(--ink-4); }
+    .escolha small { display: block; margin-top: 4px; font: 400 11px/1.4 var(--font-mono); color: var(--ink-4); }
+    .pac + .pac { border-top: 1px solid var(--line); }
+    .pac-topo { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding-right: 12px; }
+    .pac-topo label { flex: 1; }
+    .pac-topo .texto { flex: none; margin-top: 11px; }
+    .pac:has(input.p:checked) .pac-topo label, .pac:has(input.p:indeterminate) .pac-topo label { box-shadow: inset 2px 0 0 var(--accent); }
+    .normas { padding: 4px 0 8px 26px; border-top: 1px solid var(--line); background: var(--paper); }
+    .normas[hidden] { display: none; }
+    .escolha .normas label { padding: 6px 12px; font-size: 12px; color: var(--ink-2); }
+    .escolha .normas label + label { border-top: 0; }
+    .escolha label:has(input:checked) { box-shadow: none; }
+    .escopo + .escopo { margin-top: 8px; }
 
     /* Botões */
     .primario, .secundario, .perigo { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: var(--control-h); padding: 0 14px; font: 500 12px/1 var(--font-body); white-space: nowrap; border: 1px solid transparent; transition: border-color var(--rapido) var(--ease), background var(--rapido) var(--ease), color var(--rapido) var(--ease); }
