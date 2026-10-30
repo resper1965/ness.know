@@ -38,14 +38,14 @@ async function carregarPacotes() {
       return l;
     }),
   );
-  if (!pacotes.length) $("#escolha").append(el("span", "Nenhum pacote carregado ainda.", "suave"));
+  if (!pacotes.length) $("#escolha").append(el("span", "Nenhum pacote carregado ainda.", "apoio"));
 }
 
 async function carregarChaves() {
   const chaves = await api("/api/chaves");
   $("#chaves").replaceChildren(
     ...chaves.map((c) => {
-      const acao = c.ativo ? el("button", "Revogar", "secundario") : el("span", "revogada", "suave");
+      const acao = c.ativo ? el("button", "Revogar", "secundario") : el("span", "revogada", "apoio");
       if (c.ativo)
         acao.addEventListener("click", async () => {
           if (!confirm(`Revogar a chave "${c.nome}"? Quem usa para de acessar na hora.`)) return;
@@ -63,13 +63,13 @@ $("#nova").addEventListener("submit", async (e) => {
   const pacotes = [...document.querySelectorAll("#escolha input:checked")].map((c) => c.value);
   try {
     const r = await api("/api/chaves", { method: "POST", body: JSON.stringify({ nome: $("#nome").value, pacotes }) });
-    const caixa = el("div", null, "token");
+    const caixa = el("div", null, "callout");
     caixa.append(
       el("strong", "Copie agora: esta chave não aparece de novo."),
       el("pre", r.token),
-      el("p", "Endereço MCP (HTTP):", "suave"),
+      el("p", "Endereço MCP (HTTP):", "apoio"),
       el("pre", URL_MCP),
-      el("p", "Claude Code:", "suave"),
+      el("p", "Claude Code:", "apoio"),
       el("pre", `claude mcp add --transport http ness-know ${URL_MCP} --header "Authorization: Bearer ${r.token}"`),
     );
     saida.replaceChildren(caixa);
@@ -83,14 +83,14 @@ $("#nova").addEventListener("submit", async (e) => {
 $("#teste").addEventListener("submit", async (e) => {
   e.preventDefault();
   const out = $("#resultado");
-  out.replaceChildren(el("p", "Buscando…", "suave"));
+  out.replaceChildren(el("p", "Buscando…", "apoio"));
   try {
     const r = await api("/api/busca", { method: "POST", body: JSON.stringify({ consulta: $("#consulta").value, limite: 8 }) });
-    if (!r.length) return out.replaceChildren(el("p", "Nada encontrado.", "suave"));
+    if (!r.length) return out.replaceChildren(el("p", "Nada encontrado.", "apoio"));
     out.replaceChildren(
       ...r.map((t) => {
         const d = el("div", null, "trecho");
-        d.append(el("strong", `${t.titulo}${t.versao ? ` (${t.versao})` : ""}${t.secao ? ` › ${t.secao}` : ""}`), el("span", ` · ${t.origem}`, "suave"), el("p", t.trecho));
+        d.append(el("h2", `${t.titulo}${t.versao ? ` (${t.versao})` : ""}${t.secao ? ` · ${t.secao}` : ""}`), el("span", `busca ${t.origem}`, "apoio"), el("p", t.trecho));
         return d;
       }),
     );

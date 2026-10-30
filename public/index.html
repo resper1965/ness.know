@@ -5,60 +5,94 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <title>ness.KNOW</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    :root { --fundo: #0B1326; --cartao: #111c33; --linha: #24304a; --texto: #e6ebf5; --suave: #9aa6bd; --ponto: #00ADE8; --erro: #ff6b6b; }
+    /* Sistema de design ness. (skill ness-brand): Montserrat, base branca, Tinta, um único acento ciano, sem sombra nem gradiente. */
+    :root {
+      --ciano: #00ADE8; --ciano-escuro: #0090C4; --ciano-nevoa: #E5F6FD;
+      --tinta: #0E1116; --grafite: #2B333B; --cinza: #5A6473; --linha: #C7D2DE; --fio: #E4E8EC; --nevoa: #EEF3F8; --branco: #FFFFFF;
+      --erro: #B42318;
+    }
     * { box-sizing: border-box; }
-    body { margin: 0; background: var(--fundo); color: var(--texto); font: 15px/1.5 Inter, system-ui, sans-serif; }
-    header { display: flex; justify-content: space-between; align-items: baseline; padding: 16px 20px; border-bottom: 1px solid var(--linha); }
-    h1 { margin: 0; font: 600 20px Montserrat, Inter, sans-serif; }
-    h1 b { color: var(--ponto); }
-    main { max-width: 960px; margin: 0 auto; padding: 16px; display: grid; gap: 16px; }
-    section { background: var(--cartao); border: 1px solid var(--linha); padding: 16px; }
-    h2 { margin: 0 0 12px; font: 600 16px Montserrat, Inter, sans-serif; }
-    label { display: block; margin: 8px 0 4px; color: var(--suave); font-size: 13px; }
-    input[type=text], textarea { width: 100%; padding: 8px; background: var(--fundo); color: var(--texto); border: 1px solid var(--linha); font: inherit; }
-    button { padding: 8px 14px; background: var(--ponto); color: #001018; border: 0; font: 600 14px Inter, sans-serif; cursor: pointer; }
-    button.secundario { background: transparent; color: var(--suave); border: 1px solid var(--linha); }
+    body { margin: 0; background: var(--branco); color: var(--tinta); font: 400 15px/1.55 Montserrat, sans-serif; }
+    header { background: var(--tinta); color: var(--branco); }
+    .topo { max-width: 1040px; margin: 0 auto; padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+    .marca { display: flex; align-items: baseline; gap: 2px; text-decoration: none; color: var(--branco); }
+    .marca img { height: 30px; width: auto; display: block; }
+    .marca span { font-weight: 500; font-size: 22px; letter-spacing: .02em; }
+    .eu { color: #8A94A0; font-size: 13px; }
+    main { max-width: 1040px; margin: 0 auto; padding: 32px 24px 64px; }
+    .intro { color: var(--cinza); margin: 0 0 40px; max-width: 70ch; }
+    section { margin-bottom: 48px; }
+    h1 { font-weight: 600; font-size: 24px; letter-spacing: -.01em; margin: 0 0 16px; padding-bottom: 10px; border-bottom: 1px solid var(--fio); }
+    h1 .num { color: var(--ciano); margin-right: .6em; }
+    p { color: var(--grafite); }
+    .apoio { color: var(--cinza); font-size: 13px; }
+    label { display: block; margin: 14px 0 6px; font-weight: 500; font-size: 13px; color: var(--grafite); }
+    input[type=text] { width: 100%; max-width: 560px; padding: 10px 12px; border: 1px solid var(--linha); background: var(--branco); color: var(--tinta); font: inherit; border-radius: 0; }
+    input[type=text]:focus-visible, button:focus-visible { outline: 2px solid var(--ciano); outline-offset: 2px; }
+    button { padding: 10px 18px; background: var(--tinta); color: var(--branco); border: 0; font: 500 14px Montserrat, sans-serif; cursor: pointer; border-radius: 0; }
+    button.secundario { background: transparent; color: var(--grafite); border: 1px solid var(--linha); padding: 6px 12px; }
     button:disabled { opacity: .5; cursor: default; }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--linha); vertical-align: top; }
-    th { color: var(--suave); font-weight: 500; }
-    .marcas { display: flex; flex-wrap: wrap; gap: 4px 16px; }
-    .marcas label { display: flex; gap: 6px; align-items: center; margin: 0; color: var(--texto); }
-    .token { margin-top: 12px; padding: 12px; border: 1px solid var(--ponto); }
-    pre { white-space: pre-wrap; word-break: break-all; background: var(--fundo); padding: 8px; font: 13px/1.4 "JetBrains Mono", ui-monospace, monospace; }
+    .marcas { display: flex; flex-wrap: wrap; gap: 6px 20px; }
+    .marcas label { display: flex; gap: 8px; align-items: center; margin: 0; font-weight: 400; }
+    .marcas input { accent-color: var(--ciano); }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+    th { background: var(--tinta); color: var(--branco); font-weight: 600; font-size: 13px; text-align: left; padding: 10px 12px; }
+    td { border-bottom: 1px solid var(--fio); padding: 10px 12px; color: var(--grafite); vertical-align: top; }
+    .callout { margin-top: 16px; background: var(--ciano-nevoa); border-left: 4px solid var(--ciano); padding: 14px 18px; }
+    .callout strong { display: block; margin-bottom: 6px; }
+    pre { white-space: pre-wrap; word-break: break-all; background: var(--branco); border: 1px solid var(--fio); padding: 10px 12px; font: 13px/1.45 ui-monospace, Menlo, Consolas, monospace; color: var(--tinta); margin: 6px 0 12px; }
+    code { font: 13px ui-monospace, Menlo, Consolas, monospace; background: var(--nevoa); padding: 1px 5px; }
     .erro { color: var(--erro); }
-    .suave { color: var(--suave); font-size: 13px; }
-    .trecho { border-top: 1px solid var(--linha); padding: 8px 0; }
-    .trecho p { margin: 4px 0 0; white-space: pre-wrap; font-size: 13px; }
+    .trecho { border-bottom: 1px solid var(--fio); padding: 14px 0; }
+    .trecho h2 { margin: 0; font-weight: 600; font-size: 15px; color: var(--tinta); } /* ciano-escuro sobre branco não passa no contraste AA em texto pequeno */
+    .trecho h2::before { content: "▸ "; color: var(--ciano); }
+    .trecho p { margin: 6px 0 0; white-space: pre-wrap; font-size: 13px; }
+    @media (max-width: 640px) { .topo, main { padding-left: 16px; padding-right: 16px; } th:nth-child(3), td:nth-child(3) { display: none; } }
     @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
   </style>
 </head>
 <body>
-  <header><h1>ness<b>.</b>KNOW</h1><span class="suave" id="eu"></span></header>
+  <header>
+    <div class="topo">
+      <a class="marca" href="/" aria-label="ness.KNOW"><img src="/ness-logo-white.svg" alt="ness." width="91" height="30"><span>KNOW</span></a>
+      <span class="eu" id="eu"></span>
+    </div>
+  </header>
   <main>
-    <section>
-      <h2>Chaves de API</h2>
-      <p class="suave">Cada projeto ou agente recebe uma chave e só enxerga os pacotes marcados. A chave aparece uma vez, na criação.</p>
+    <p class="intro">Base de normas, leis e frameworks curada pela ness., consultada por agentes via MCP. Cada cliente recebe uma chave e só enxerga os pacotes liberados para ele.</p>
+
+    <section aria-labelledby="t-chaves">
+      <h1 id="t-chaves"><span class="num">01</span>Chaves de API</h1>
       <form id="nova">
         <label for="nome">Nome do cliente</label>
-        <input id="nome" type="text" required maxlength="100" placeholder="ex.: faBRAINzio, ness.brain, Claude do Ricardo">
+        <input id="nome" type="text" required maxlength="100" placeholder="faBRAINzio, ness.brain, Claude do Ricardo">
         <label>Pacotes liberados</label>
         <div class="marcas" id="escolha"></div>
         <p><button type="submit">Gerar chave</button></p>
       </form>
-      <div id="nova-saida"></div>
-      <table><thead><tr><th>Nome</th><th>Pacotes</th><th>Último uso</th><th></th></tr></thead><tbody id="chaves"></tbody></table>
+      <div id="nova-saida" aria-live="polite"></div>
+      <table><thead><tr><th>Cliente</th><th>Pacotes</th><th>Último uso</th><th></th></tr></thead><tbody id="chaves"></tbody></table>
     </section>
-    <section>
-      <h2>Pacotes</h2>
+
+    <section aria-labelledby="t-pacotes">
+      <h1 id="t-pacotes"><span class="num">02</span>Pacotes</h1>
       <table><thead><tr><th>Slug</th><th>Nome</th><th>Versão</th><th>Documentos</th></tr></thead><tbody id="pacotes"></tbody></table>
-      <p class="suave">Para carregar documentos: <code>node scripts/carregar-pacote.mjs &lt;pasta&gt; https://know.ness.com.br</code></p>
+      <p class="apoio">Carga de documentos: <code>node scripts/carregar-pacote.mjs &lt;pasta&gt; https://know.ness.com.br</code></p>
     </section>
-    <section>
-      <h2>Testar a busca</h2>
-      <form id="teste"><label for="consulta">Pergunta</label><input id="consulta" type="text" required placeholder="ex.: como tratar um incidente de segurança?"><p><button type="submit">Buscar</button></p></form>
-      <div id="resultado"></div>
+
+    <section aria-labelledby="t-teste">
+      <h1 id="t-teste"><span class="num">03</span>Testar a busca</h1>
+      <form id="teste">
+        <label for="consulta">Pergunta</label>
+        <input id="consulta" type="text" required placeholder="Como tratar um incidente de segurança?">
+        <p><button type="submit">Buscar</button></p>
+      </form>
+      <div id="resultado" aria-live="polite"></div>
     </section>
   </main>
   <script src="/app.js" type="module"></script>
