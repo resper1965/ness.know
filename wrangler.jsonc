@@ -17,7 +17,7 @@
     // Quem administra (chaves e pacotes). O login é o Cloudflare Access.
     "ADMIN_EMAILS": "resper@bekaa.eu,resper@ness.com.br",
     "ACCESS_TEAM": "ness.cloudflareaccess.com",
-    "ACCESS_AUD": "PREENCHER",
+    "ACCESS_AUD": "8524d5f8a831523bc0878f8444825341f6bb025dd4e14b0d3d1331c887553a7a",
     // Busca calibrada com scripts/avaliar-busca.mjs (avaliação de 30/10/2026 no faBRAINzio).
     "BUSCA_RERANK": "0",
     "BUSCA_MINIMO": "0.4"
