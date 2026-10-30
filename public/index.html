@@ -4,346 +4,357 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
-  <title>ness.KNOW</title>
+  <meta name="theme-color" content="#00ade8">
+  <title>ness.know</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    /* Sistema de design ness.: Montserrat, base branca e Névoa, Tinta, um único acento ciano, sem sombra nem gradiente. */
+    /* Design system de produto ness. (família n.*): tema escuro, BlueDot como único accent, raio 0, hairlines, sem gradiente, blur ou sombra fora do que flutua. */
     :root {
-      --ciano: #00ADE8; --ciano-escuro: #0090C4; --ciano-nevoa: #E5F6FD;
-      --tinta: #0E1116; --grafite: #2B333B; --cinza: #5A6473; --cinza-claro: #8A94A0;
-      --linha: #C7D2DE; --fio: #E4E8EC; --nevoa: #EEF3F8; --branco: #FFFFFF;
-      --erro: #B42318; --erro-fundo: #FDF0EF; --ok: #0F7B4F;
-      --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-      --rapido: 160ms cubic-bezier(.2, .8, .2, 1);
+      --accent: #00ade8; --accent-hover: #008ebf; --accent-ink: #04121c; --accent-tint: rgba(0, 173, 232, .12); --accent-claro: #7fd6f6;
+      --paper: #0b1326; --surface: #162244; --surface-2: #1e2d52; --line: rgba(255, 255, 255, .10);
+      --ink: #f1f5f9; --ink-2: #cbd5e1; --ink-3: #94a3b8; --ink-4: #8fa0b6;
+      --ok: #10b981; --warn: #f59e0b; --bad: #ef4444;
+      --font-head: "Montserrat", system-ui, sans-serif; --font-body: "Inter", system-ui, sans-serif; --font-mono: "JetBrains Mono", ui-monospace, monospace;
+      --ease: cubic-bezier(.16, 1, .3, 1); --rapido: 150ms;
+      --shell-h: 64px; --side-w: 232px; --control-h: 34px; --control-h-sm: 30px;
+      color-scheme: dark;
     }
-    * { box-sizing: border-box; }
-    ::selection { background: var(--ciano-nevoa); color: var(--tinta); }
-    html { scrollbar-color: var(--linha) transparent; }
-    body { margin: 0; min-height: 100vh; background: var(--nevoa); color: var(--tinta); font: 400 15px/1.55 Montserrat, sans-serif; caret-color: var(--ciano); font-variant-numeric: tabular-nums; -webkit-font-smoothing: antialiased; }
-    .larg { max-width: 1120px; margin: 0 auto; padding: 0 32px; }
+    *, *::before, *::after { box-sizing: border-box; }
+    ::selection { background: rgba(0, 173, 232, .28); color: var(--ink); }
+    html { scrollbar-color: var(--surface-2) var(--paper); }
+    body { margin: 0; background: var(--paper); color: var(--ink); font: 400 13px/1.5 var(--font-body); caret-color: var(--accent); -webkit-font-smoothing: antialiased; }
+    button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; border-radius: 0; }
+    input, select { font: inherit; color: inherit; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 
-    /* Cabeçalho escuro com o logo e as abas */
-    header { background: var(--tinta); color: var(--branco); }
-    .topo { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-top: 22px; padding-bottom: 18px; }
-    .marca { display: flex; align-items: baseline; gap: 6px; text-decoration: none; color: var(--branco); }
-    .marca img { height: 32px; width: auto; display: block; }
-    .marca span { font-weight: 500; font-size: 22px; letter-spacing: .03em; }
-    .conta { display: flex; align-items: center; gap: 16px; font-size: 13px; color: var(--cinza-claro); }
-    .conta a { color: var(--branco); text-decoration: none; border-bottom: 1px solid var(--grafite); padding-bottom: 1px; transition: border-color var(--rapido); }
-    .conta a:hover { border-bottom-color: var(--ciano); }
+    /* Marca: caixa baixa, ponto em BlueDot, alinhada pela linha de base */
+    .marca { display: inline-flex; align-items: baseline; font: 500 22px/1 var(--font-head); letter-spacing: -.015em; text-transform: lowercase; color: var(--ink); text-decoration: none; white-space: nowrap; }
+    .marca .ponto { color: var(--accent); }
 
-    nav[role=tablist] { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 -14px; }
-    nav[role=tablist] button {
-      position: relative; background: none; border: 0; color: var(--cinza-claro);
-      font: 500 14px Montserrat, sans-serif; padding: 12px 14px 14px; cursor: pointer; white-space: nowrap; transition: color var(--rapido);
-    }
-    nav[role=tablist] button::after { content: ""; position: absolute; left: 14px; right: 14px; bottom: 0; height: 3px; background: var(--ciano); transform: scaleX(0); transition: transform var(--rapido); }
-    nav[role=tablist] button:hover { color: var(--branco); }
-    nav[role=tablist] button[aria-selected=true] { color: var(--branco); }
-    nav[role=tablist] button[aria-selected=true]::after { transform: none; }
-    .cont { display: inline-block; min-width: 20px; margin-left: 8px; padding: 0 6px; font-size: 12px; line-height: 20px; text-align: center; color: var(--branco); background: var(--grafite); }
-    .cont:empty { display: none; }
+    /* Shell: sidebar fixa + área de trabalho */
+    .shell { display: grid; grid-template-columns: var(--side-w) 1fr; min-height: 100vh; }
+    .lateral { background: var(--surface); border-right: 1px solid var(--line); }
+    .lateral-fixa { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; }
+    .banda-marca { height: var(--shell-h); flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 1px solid var(--line); }
+    nav[role=tablist] { flex: 1; display: flex; flex-direction: column; gap: 2px; padding: 16px 0; overflow-y: auto; }
+    nav[role=tablist] button { display: flex; align-items: center; gap: 12px; height: 32px; padding: 0 20px; font-size: 13px; color: var(--ink-3); transition: color var(--rapido) var(--ease); }
+    nav[role=tablist] button .i { opacity: .5; }
+    nav[role=tablist] button:hover { color: var(--ink); }
+    nav[role=tablist] button[aria-selected=true] { color: var(--ink); font-weight: 500; box-shadow: inset 2px 0 0 var(--accent); }
+    nav[role=tablist] button[aria-selected=true] .i { color: var(--accent); opacity: 1; }
+    .cont { margin-left: auto; font: 400 11px/1 var(--font-mono); color: var(--ink-4); }
+    .conta { flex: none; border-top: 1px solid var(--line); padding: 16px 20px; display: grid; gap: 10px; }
+    .conta .quem { font-size: 12px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sair { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: var(--control-h-sm); padding: 0 12px; border: 1px solid var(--line); color: var(--ink-2); font: 500 12px/1 var(--font-body); text-decoration: none; transition: border-color var(--rapido) var(--ease), color var(--rapido) var(--ease); }
+    .sair:hover { border-color: rgba(255, 255, 255, .28); color: var(--ink); }
+    .banda-marca .sair { display: none; }
 
-    main.larg { padding-top: 32px; padding-bottom: 64px; }
+    .trabalho { min-width: 0; }
+    .banda { position: sticky; top: 0; z-index: 4; height: var(--shell-h); display: flex; align-items: center; gap: 16px; padding: 0 28px; background: var(--paper); border-bottom: 1px solid var(--line); }
+    h1 { flex: 1; min-width: 0; margin: 0; font: 600 20px/1.1 var(--font-head); letter-spacing: -.02em; }
+    .conteudo { padding: 24px 28px 64px; max-width: 1180px; }
     .painel[hidden] { display: none; }
-    .cabeca { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; margin-bottom: 24px; }
-    h1 { font-weight: 600; font-size: 26px; line-height: 1.2; letter-spacing: -.015em; margin: 0 0 6px; }
-    .lead { color: var(--cinza); margin: 0; max-width: 64ch; }
-    h2 { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; margin: 0; color: var(--tinta); }
-    h2::before { content: ""; width: 0; height: 0; border-left: 6px solid var(--ciano); border-top: 4.5px solid transparent; border-bottom: 4.5px solid transparent; }
-    .apoio { color: var(--cinza); font-size: 13px; }
+    .lead { color: var(--ink-3); margin: 0 0 24px; max-width: 72ch; }
+    h2 { margin: 0; font: 600 15px/1.2 var(--font-head); letter-spacing: -.01em; }
     p { margin: 0 0 12px; }
-    code { font: 13px var(--mono); background: var(--nevoa); padding: 1px 6px; color: var(--tinta); }
+    .apoio { color: var(--ink-3); font-size: 12px; }
+    code { font: 400 12px var(--font-mono); color: var(--ink-2); background: var(--surface-2); padding: 1px 6px; }
 
-    .folha { background: var(--branco); border: 1px solid var(--fio); }
-    .painel > .folha + .folha { margin-top: 16px; }
-    .folha > header, .faixa { background: none; color: inherit; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 18px 24px; border-bottom: 1px solid var(--fio); }
-    .corpo { padding: 24px; }
+    /* Cartões: hairline, sem raio, sem sombra */
+    .folha { background: var(--surface); border: 1px solid var(--line); }
+    .pilha > .folha + .folha { margin-top: 16px; }
+    .folha > .topo { display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 52px; padding: 0 20px; border-bottom: 1px solid var(--line); }
+    .corpo { padding: 20px; }
+    .duas { display: grid; grid-template-columns: 320px 1fr; gap: 16px; align-items: start; }
 
-    .duas { display: grid; grid-template-columns: 340px 1fr; gap: 16px; align-items: start; }
-
-    /* Formulários */
-    label, .rotulo { display: block; margin: 0 0 6px; font-weight: 500; font-size: 13px; color: var(--grafite); }
-    input[type=text], input[type=search], select { width: 100%; height: 42px; padding: 0 12px; border: 1px solid var(--linha); background: var(--branco); color: var(--tinta); font: inherit; border-radius: 0; transition: border-color var(--rapido); }
-    input[type=text]:hover, input[type=search]:hover, select:hover { border-color: var(--cinza-claro); }
-    input::placeholder { color: var(--cinza); }
-    :focus-visible { outline: 2px solid var(--ciano); outline-offset: 2px; }
-    input:focus-visible, select:focus-visible { outline-offset: 0; border-color: var(--tinta); }
+    /* Campos */
+    label, .rotulo { display: block; margin: 0 0 8px; font: 500 12px/1 var(--font-body); color: var(--ink-2); }
+    input[type=text], input[type=search], select { width: 100%; height: var(--control-h); padding: 0 10px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); border-radius: 0; transition: border-color var(--rapido) var(--ease); }
+    input[type=text]:hover, input[type=search]:hover, select:hover { border-color: rgba(255, 255, 255, .22); }
+    input::placeholder { color: var(--ink-4); }
+    input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+    select { appearance: none; padding-right: 28px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
     .campo + .campo { margin-top: 20px; }
     .escolha-topo { display: flex; justify-content: space-between; align-items: baseline; }
-    .escolha { display: grid; gap: 2px; border: 1px solid var(--fio); }
-    .escolha label { display: grid; grid-template-columns: 18px 1fr; gap: 12px; align-items: start; margin: 0; padding: 10px 12px; font-weight: 400; font-size: 14px; color: var(--tinta); cursor: pointer; transition: background var(--rapido); }
-    .escolha label:hover { background: var(--nevoa); }
-    .escolha label:has(input:checked) { background: var(--ciano-nevoa); }
-    .escolha input { accent-color: var(--ciano); width: 16px; height: 16px; margin: 2px 0 0; }
-    .escolha small { display: block; color: var(--cinza); font-size: 12px; }
+    .escolha { border: 1px solid var(--line); }
+    .escolha label { display: grid; grid-template-columns: 16px 1fr; gap: 10px; align-items: start; margin: 0; padding: 10px 12px; font: 400 13px/1.4 var(--font-body); color: var(--ink); cursor: pointer; transition: background var(--rapido) var(--ease); }
+    .escolha label + label { border-top: 1px solid var(--line); }
+    .escolha label:hover { background: var(--surface-2); }
+    .escolha label:has(input:checked) { box-shadow: inset 2px 0 0 var(--accent); }
+    .escolha input { accent-color: var(--accent); width: 14px; height: 14px; margin: 2px 0 0; }
+    .escolha small { display: block; margin-top: 2px; font: 400 11px/1 var(--font-mono); color: var(--ink-4); }
 
-    button { font: 500 14px Montserrat, sans-serif; border-radius: 0; cursor: pointer; transition: background var(--rapido), border-color var(--rapido), color var(--rapido); }
-    .primario { height: 42px; padding: 0 20px; background: var(--tinta); color: var(--branco); border: 1px solid var(--tinta); }
-    .primario:hover:not(:disabled) { background: var(--grafite); border-color: var(--grafite); }
-    .secundario { height: 32px; padding: 0 12px; background: var(--branco); color: var(--grafite); border: 1px solid var(--linha); font-size: 13px; }
-    .secundario:hover:not(:disabled) { border-color: var(--tinta); color: var(--tinta); }
-    .perigo { height: 32px; padding: 0 12px; background: var(--erro); color: var(--branco); border: 1px solid var(--erro); font-size: 13px; }
-    .perigo:hover { background: #8F1C13; }
-    .texto { background: none; border: 0; padding: 0; color: var(--grafite); font-size: 13px; text-decoration: underline; text-decoration-color: var(--linha); text-underline-offset: 3px; }
-    .texto:hover { color: var(--tinta); text-decoration-color: var(--ciano); }
-    button:disabled { opacity: .45; cursor: not-allowed; }
-    .acoes { display: flex; gap: 8px; align-items: center; margin-top: 24px; }
+    /* Botões */
+    .primario, .secundario, .perigo { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: var(--control-h); padding: 0 14px; font: 500 12px/1 var(--font-body); white-space: nowrap; border: 1px solid transparent; transition: border-color var(--rapido) var(--ease), background var(--rapido) var(--ease), color var(--rapido) var(--ease); }
+    .primario { background: var(--accent); color: var(--accent-ink); }
+    .primario:hover:not(:disabled) { background: var(--accent-hover); }
+    .secundario { border-color: var(--line); color: var(--ink-2); }
+    .secundario:hover:not(:disabled) { border-color: rgba(255, 255, 255, .28); color: var(--ink); }
+    .perigo { border-color: var(--bad); color: var(--bad); }
+    .perigo:hover:not(:disabled) { background: color-mix(in oklab, var(--bad) 16%, transparent); }
+    .pequeno { height: var(--control-h-sm); padding: 0 12px; }
+    .primario:disabled, .secundario:disabled, .perigo:disabled { background: none; border-color: var(--line); color: var(--ink-4); cursor: not-allowed; }
+    .texto { font-size: 12px; color: var(--accent); }
+    .texto:hover { color: var(--accent-claro); }
+    .acoes { display: flex; gap: 8px; align-items: center; margin-top: 20px; }
 
-    /* Tabelas leves */
-    table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    th { background: var(--tinta); color: var(--branco); font-weight: 600; font-size: 12px; letter-spacing: .02em; text-align: left; padding: 10px 16px; white-space: nowrap; }
-    td { border-bottom: 1px solid var(--fio); padding: 14px 16px; color: var(--grafite); vertical-align: top; }
+    /* Tabelas: cabeçalho mono, réguas entre linhas, a última termina em ar */
+    table { width: 100%; border-collapse: collapse; }
+    th { font: 500 10px/1 var(--font-mono); letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); white-space: nowrap; background: var(--surface); }
+    td { padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; color: var(--ink-2); }
     tbody tr:last-child td { border-bottom: 0; }
-    td.num, th.num { text-align: right; }
+    .num { text-align: right; font-variant-numeric: tabular-nums; }
     td.acao { text-align: right; white-space: nowrap; width: 1%; }
-    .nome { color: var(--tinta); font-weight: 500; }
-    .sub { display: block; color: var(--cinza); font-size: 12px; margin-top: 2px; }
-    code.sub { display: inline-block; font-size: 11px; margin-top: 6px; }
-    tr.inativa td, tr.inativa .nome { color: var(--cinza-claro); }
-    .estado { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
-    .estado::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--cinza-claro); }
-    .estado.vivo::before { background: var(--ok); }
-    .estado.falha { color: var(--erro); }
-    .estado.falha::before { background: var(--erro); }
-    .esqueleto td span { display: block; height: 12px; background: var(--nevoa); animation: pulso 1.2s ease-in-out infinite alternate; }
-    @keyframes pulso { to { opacity: .45; } }
-    .vazio { padding: 40px 24px; text-align: center; color: var(--cinza); }
-    .vazio strong { display: block; color: var(--tinta); font-weight: 600; margin-bottom: 4px; }
-
+    .nome { color: var(--ink); font-weight: 500; }
+    .sub { display: block; color: var(--ink-4); font-size: 12px; margin-top: 2px; }
+    code.sub { display: inline-block; font-size: 11px; margin-top: 6px; color: var(--ink-3); }
+    tr.inativa td, tr.inativa .nome { color: var(--ink-4); }
+    .badge { display: inline-block; font: 500 10px/1.7 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; padding: 1px 8px; color: var(--ink-3); background: color-mix(in oklab, var(--ink-3) 16%, transparent); }
+    .badge.ok { color: var(--ok); background: color-mix(in oklab, var(--ok) 16%, transparent); }
+    .badge.bad { color: var(--bad); background: color-mix(in oklab, var(--bad) 16%, transparent); }
+    .esqueleto td span { display: block; height: 10px; background: var(--surface-2); animation: pulso 1400ms ease-in-out infinite; }
+    @keyframes pulso { 50% { opacity: .45; } }
+    .vazio { padding: 40px 20px; text-align: center; color: var(--ink-3); }
+    .vazio strong { display: block; color: var(--ink); font-weight: 500; margin-bottom: 4px; }
     .confirma { display: inline-flex; gap: 6px; align-items: center; }
-    .confirma span { font-size: 13px; color: var(--grafite); margin-right: 4px; }
 
-    /* Linha expansível dos pacotes */
-    .abre { display: inline-flex; align-items: center; gap: 8px; background: none; border: 0; padding: 0; color: var(--tinta); font-weight: 500; text-align: left; }
-    .abre svg { flex: none; color: var(--cinza); transition: transform var(--rapido); }
-    .abre[aria-expanded=true] svg { transform: rotate(90deg); color: var(--ciano); }
-    tr.detalhe td { background: var(--nevoa); padding: 0; }
-    .docs { padding: 8px 16px 16px 40px; }
-    .docs table { background: var(--branco); border: 1px solid var(--fio); }
-    .docs th { background: var(--branco); color: var(--cinza); border-bottom: 1px solid var(--fio); font-weight: 500; }
-    .docs table td { padding: 10px 16px; font-size: 13px; background: var(--branco); }
+    /* Pacote expansível */
+    .abre { display: inline-flex; align-items: center; gap: 8px; color: var(--ink); font-weight: 500; }
+    .abre .i { width: 14px; height: 14px; color: var(--ink-4); transition: transform var(--rapido) var(--ease); }
+    .abre[aria-expanded=true] .i { transform: rotate(90deg); color: var(--accent); }
+    tr.detalhe > td { padding: 0 16px 16px 40px; background: var(--surface); }
+    .docs table { border: 1px solid var(--line); }
+    .docs th, .docs table td { background: var(--paper); }
+    .docs table td { padding: 10px 14px; font-size: 12px; }
+    .docs > .apoio, .docs > .erro { padding: 12px 0 0; margin: 0; }
 
     /* Avisos */
-    .callout { background: var(--ciano-nevoa); border-left: 4px solid var(--ciano); padding: 16px 18px; }
-    .callout strong { display: block; margin-bottom: 10px; font-weight: 600; }
-    .callout .texto { margin-top: 12px; color: var(--tinta); text-decoration-color: var(--ciano); font-weight: 500; font-size: 14px; }
-    .alerta { display: flex; gap: 12px; align-items: flex-start; background: var(--erro-fundo); border: 1px solid #F3C7C2; color: var(--erro); padding: 12px 16px; font-size: 14px; margin-bottom: 20px; }
+    .callout { margin: 0 20px 20px; padding: 16px; background: var(--surface-2); box-shadow: inset 2px 0 0 var(--accent); animation: sobe 200ms var(--ease); }
+    @keyframes sobe { from { transform: translateY(8px); opacity: 0; } }
+    .callout strong { display: block; margin-bottom: 12px; font-weight: 500; color: var(--ink); }
+    .callout .texto { margin-top: 12px; display: inline-block; }
+    .alerta { margin-bottom: 16px; padding: 12px 16px; background: color-mix(in oklab, var(--bad) 12%, var(--paper)); box-shadow: inset 2px 0 0 var(--bad); color: var(--ink); }
     .alerta:empty { display: none; }
-    .erro { color: var(--erro); font-size: 13px; margin: 10px 0 0; }
+    .erro { color: #fca5a5; font-size: 12px; margin: 12px 0 0; }
 
-    /* Blocos de código copiáveis */
-    .codigo { display: flex; align-items: stretch; border: 1px solid var(--fio); background: var(--nevoa); }
-    .callout .codigo { background: var(--branco); }
-    .codigo pre { flex: 1; margin: 0; padding: 12px 14px; overflow-x: auto; white-space: pre; font: 13px/1.6 var(--mono); color: var(--tinta); scrollbar-width: thin; }
-    .codigo .copiar { flex: none; height: auto; border: 0; border-left: 1px solid var(--fio); background: transparent; padding: 0 16px; }
-    .codigo .copiar:hover { background: var(--branco); }
+    /* Código copiável */
+    .codigo { display: flex; border: 1px solid var(--line); background: var(--paper); }
+    .codigo pre { flex: 1; min-width: 0; margin: 0; padding: 12px 14px; overflow-x: auto; white-space: pre; font: 400 12px/1.65 var(--font-mono); color: var(--ink-2); scrollbar-width: thin; }
+    .codigo .copiar { flex: none; height: auto; border: 0; border-left: 1px solid var(--line); padding: 0 14px; }
     .codigo .copiar.feito { color: var(--ok); }
 
     /* Conectar */
-    .clientes { display: flex; flex-wrap: wrap; gap: 0; border: 1px solid var(--linha); width: fit-content; max-width: 100%; }
-    .clientes button { height: 38px; padding: 0 16px; background: var(--branco); border: 0; border-right: 1px solid var(--linha); color: var(--grafite); font-size: 13px; }
-    .clientes button:last-child { border-right: 0; }
-    .clientes button:hover { background: var(--nevoa); }
-    .clientes button[aria-pressed=true] { background: var(--tinta); color: var(--branco); }
-    .ficha { display: grid; grid-template-columns: 150px 1fr; gap: 10px 24px; font-size: 14px; margin: 24px 0; }
-    .ficha dt { color: var(--cinza); }
-    .ficha dd { margin: 0; color: var(--grafite); }
-    .faixa-chave { display: flex; justify-content: space-between; gap: 16px; align-items: center; padding: 12px 24px; background: var(--ciano-nevoa); font-size: 13px; border-bottom: 1px solid var(--fio); }
-    .faixa-chave.sem { background: var(--nevoa); }
-    .faixa-chave b { font-weight: 600; }
+    .clientes { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip { display: inline-flex; align-items: center; height: var(--control-h-sm); padding: 0 12px; font-size: 12px; white-space: nowrap; border: 1px solid var(--line); color: var(--ink-3); transition: border-color var(--rapido) var(--ease), color var(--rapido) var(--ease); }
+    .chip:hover { color: var(--ink); border-color: rgba(255, 255, 255, .22); }
+    .chip[aria-pressed=true] { border-color: var(--accent); color: var(--accent-claro); background: var(--accent-tint); }
+    .ficha { display: grid; grid-template-columns: 140px 1fr; gap: 10px 20px; margin: 20px 0; }
+    .ficha dt { color: var(--ink-3); }
+    .ficha dd { margin: 0; color: var(--ink-2); }
+    .faixa-chave { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 12px 20px; border-bottom: 1px solid var(--line); background: var(--accent-tint); color: var(--ink-2); }
+    .faixa-chave.sem { background: none; }
+    .faixa-chave b { color: var(--ink); font-weight: 500; }
 
     /* Teste de busca */
-    .busca { display: grid; grid-template-columns: 1fr 160px auto; gap: 8px; }
-    .filtros { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
-    .filtro { height: 30px; padding: 0 12px; border: 1px solid var(--linha); background: var(--branco); color: var(--grafite); font-size: 12px; }
-    .filtro[aria-pressed=true] { border-color: var(--ciano); background: var(--ciano-nevoa); color: var(--tinta); }
-    .resumo { display: flex; justify-content: space-between; color: var(--cinza); font-size: 13px; padding: 14px 24px; border-bottom: 1px solid var(--fio); }
-    .trecho { display: grid; grid-template-columns: 32px 1fr; gap: 0 12px; padding: 18px 24px; border-bottom: 1px solid var(--fio); }
+    .busca { display: grid; grid-template-columns: 1fr 180px auto; gap: 8px; }
+    .filtros { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+    .resumo { display: flex; justify-content: space-between; gap: 16px; padding: 12px 20px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); color: var(--ink-3); font: 400 11px/1.4 var(--font-mono); }
+    .trecho { display: grid; grid-template-columns: 28px 1fr; gap: 0 12px; padding: 16px 20px; border-bottom: 1px solid var(--line); }
     .trecho:last-child { border-bottom: 0; }
-    .trecho .pos { color: var(--ciano-escuro); font-weight: 600; font-size: 13px; padding-top: 1px; }
-    .trecho h3 { margin: 0; font-weight: 600; font-size: 14px; }
-    .trecho .meta { display: flex; flex-wrap: wrap; gap: 4px 14px; color: var(--cinza); font-size: 12px; margin-top: 2px; }
-    .trecho p { margin: 10px 0 0; white-space: pre-wrap; font-size: 13px; line-height: 1.6; color: var(--grafite); max-width: 92ch; }
-    .marca-origem { color: var(--tinta); }
+    .trecho .pos { font: 500 12px/1.5 var(--font-mono); color: var(--accent); }
+    .trecho h3 { margin: 0; font: 600 13px/1.4 var(--font-body); color: var(--ink); }
+    .trecho .info { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 4px; color: var(--ink-4); font: 400 11px/1.4 var(--font-mono); }
+    .trecho p { margin: 10px 0 0; white-space: pre-wrap; line-height: 1.6; color: var(--ink-2); max-width: 96ch; }
 
-    /* Estado sem acesso */
-    .portao { max-width: 480px; margin: 48px auto; background: var(--branco); border: 1px solid var(--fio); padding: 40px; text-align: left; }
-    .portao h1 { font-size: 22px; }
-    .portao p { color: var(--grafite); margin: 8px 0 24px; }
-    body.fora nav[role=tablist], body.fora .painel, body.fora .conta { display: none; }
+    /* Sem acesso */
+    .portao { max-width: 440px; margin: 15vh auto 0; padding: 32px; background: var(--surface); border: 1px solid var(--line); }
+    .portao .marca { margin-bottom: 28px; }
+    .portao h1 { font-size: 20px; margin-bottom: 8px; }
+    .portao p { color: var(--ink-2); margin-bottom: 24px; }
+    .portao .acoes { margin-top: 0; }
+    body.fora .shell { display: none; }
     body:not(.fora) .portao { display: none; }
 
-    .oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    .oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
-    @media (max-width: 860px) {
-      .duas { grid-template-columns: 1fr; }
-    }
-    @media (max-width: 640px) {
-      .larg { padding: 0 16px; }
-      .topo { padding-top: 16px; padding-bottom: 12px; }
-      .marca img { height: 26px; }
-      .marca span { font-size: 18px; }
-      .conta .quem { display: none; }
-      nav[role=tablist] { margin: 0 -16px; padding: 0 2px; }
-      main.larg { padding-top: 20px; }
-      h1 { font-size: 22px; }
-      .cabeca { flex-direction: column; align-items: flex-start; gap: 12px; }
-      .corpo, .folha > header, .faixa, .resumo, .trecho { padding-left: 16px; padding-right: 16px; }
-      .faixa-chave { padding: 12px 16px; flex-direction: column; align-items: flex-start; }
+    @media (max-width: 960px) { .duas { grid-template-columns: 1fr; } }
+    @media (max-width: 760px) {
+      .shell { grid-template-columns: 1fr; }
+      .lateral { border-right: 0; border-bottom: 1px solid var(--line); }
+      .lateral-fixa { position: static; height: auto; }
+      .banda-marca { height: 56px; padding: 0 16px; }
+      .banda-marca .sair { display: inline-flex; }
+      nav[role=tablist] { flex-direction: row; padding: 0 8px; overflow-x: auto; scrollbar-width: none; }
+      nav[role=tablist] button { flex: none; height: 44px; padding: 0 12px; gap: 8px; }
+      nav[role=tablist] button[aria-selected=true] { box-shadow: inset 0 -2px 0 var(--accent); }
+      .cont { margin-left: 2px; }
+      .conta { display: none; }
+      .banda { position: static; height: 56px; padding: 0 16px; }
+      .conteudo { padding: 16px 16px 48px; }
+      .folha > .topo, .corpo, .faixa-chave, .resumo, .trecho { padding-left: 16px; padding-right: 16px; }
+      .callout { margin: 0 16px 16px; }
+      .faixa-chave { flex-direction: column; align-items: flex-start; }
       .esconde-estreito { display: none; }
       th, td { padding-left: 12px; padding-right: 12px; }
+      tr.detalhe > td { padding: 0 8px 12px; }
       .ficha { grid-template-columns: 1fr; gap: 2px; }
-      .ficha dd { margin-bottom: 10px; }
+      .ficha dd { margin-bottom: 12px; }
       .busca { grid-template-columns: 1fr; }
-      .docs { padding: 8px 8px 12px; }
-      .portao { padding: 28px 20px; margin: 24px 0; }
+      .portao { margin: 24px 16px; padding: 24px 20px; }
     }
-    @media (prefers-reduced-motion: reduce) { *, *::after { transition: none !important; animation: none !important; } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
   </style>
 </head>
 <body>
-  <header>
-    <div class="larg topo">
-      <a class="marca" href="/" aria-label="ness.KNOW, início"><img src="/ness-logo-white.svg" alt="ness." width="97" height="32"><span>KNOW</span></a>
-      <div class="conta"><span class="quem" id="eu"></span><a href="/cdn-cgi/access/logout">Sair</a></div>
-    </div>
-    <div class="larg">
-      <nav role="tablist" aria-label="Seções">
-        <button role="tab" id="tab-chaves" aria-controls="chaves" aria-selected="true">Chaves<span class="cont" id="n-chaves"></span></button>
-        <button role="tab" id="tab-pacotes" aria-controls="pacotes" aria-selected="false" tabindex="-1">Pacotes<span class="cont" id="n-pacotes"></span></button>
-        <button role="tab" id="tab-conectar" aria-controls="conectar" aria-selected="false" tabindex="-1">Conectar um agente</button>
-        <button role="tab" id="tab-testar" aria-controls="testar" aria-selected="false" tabindex="-1">Testar a busca</button>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-chave" viewBox="0 0 24 24"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5"/></symbol>
+    <symbol id="i-pacotes" viewBox="0 0 24 24"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></symbol>
+    <symbol id="i-plug" viewBox="0 0 24 24"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/></symbol>
+    <symbol id="i-busca" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+    <symbol id="i-sair" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></symbol>
+    <symbol id="i-seta" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  </svg>
+
+  <div class="portao" id="portao">
+    <span class="marca">ness<span class="ponto">.</span>know</span>
+    <h1>Sua sessão expirou</h1>
+    <p>Entre de novo com o e-mail corporativo. Se o acesso continuar recusado, este e-mail não está na lista de administradores; peça a inclusão ao responsável.</p>
+    <div class="acoes"><button type="button" class="primario" id="entrar">Entrar de novo</button><a class="sair" href="/cdn-cgi/access/logout">Sair</a></div>
+  </div>
+
+  <div class="shell">
+    <aside class="lateral"><div class="lateral-fixa">
+      <div class="banda-marca">
+        <a class="marca" href="/" aria-label="ness.know, início">ness<span class="ponto">.</span>know</a>
+        <a class="sair" href="/cdn-cgi/access/logout"><svg class="i"><use href="#i-sair"/></svg>Sair</a>
+      </div>
+      <nav role="tablist" aria-label="Seções" aria-orientation="vertical">
+        <button role="tab" id="tab-chaves" aria-controls="chaves" aria-selected="true"><svg class="i"><use href="#i-chave"/></svg>Chaves<span class="cont" id="n-chaves"></span></button>
+        <button role="tab" id="tab-pacotes" aria-controls="pacotes" aria-selected="false" tabindex="-1"><svg class="i"><use href="#i-pacotes"/></svg>Pacotes<span class="cont" id="n-pacotes"></span></button>
+        <button role="tab" id="tab-conectar" aria-controls="conectar" aria-selected="false" tabindex="-1"><svg class="i"><use href="#i-plug"/></svg>Conectar um agente</button>
+        <button role="tab" id="tab-testar" aria-controls="testar" aria-selected="false" tabindex="-1"><svg class="i"><use href="#i-busca"/></svg>Testar a busca</button>
       </nav>
-    </div>
-  </header>
-
-  <main class="larg">
-    <div class="alerta" id="aviso" role="alert"></div>
-
-    <div class="portao" id="portao">
-      <h1>Entre para continuar</h1>
-      <p>Sua sessão expirou ou este e-mail não está na lista de administradores do ness.KNOW. Entre de novo com o e-mail da ness.; se o problema continuar, peça acesso ao responsável.</p>
-      <button type="button" class="primario" id="entrar">Entrar de novo</button>
-    </div>
-
-    <section class="painel" id="chaves" role="tabpanel" aria-labelledby="tab-chaves">
-      <div class="cabeca">
-        <div>
-          <h1>Chaves de API</h1>
-          <p class="lead">Cada agente recebe a sua chave e só enxerga os pacotes marcados nela. Para mudar os pacotes, revogue a chave e gere outra.</p>
-        </div>
+      <div class="conta">
+        <span class="quem" id="eu"></span>
+        <a class="sair" href="/cdn-cgi/access/logout"><svg class="i"><use href="#i-sair"/></svg>Sair</a>
       </div>
-      <div class="duas">
-        <form id="nova" class="folha" novalidate>
-          <header><h2>Nova chave</h2></header>
-          <div class="corpo">
-            <div class="campo">
-              <label for="nome">Quem vai usar</label>
-              <input id="nome" type="text" required maxlength="100" placeholder="Ex.: faBRAINzio" autocomplete="off">
+    </div></aside>
+
+    <main class="trabalho">
+      <section class="painel" id="chaves" role="tabpanel" aria-labelledby="tab-chaves">
+        <header class="banda"><h1>Chaves de API</h1></header>
+        <div class="conteudo">
+          <div class="alerta" role="alert"></div>
+          <p class="lead">Cada agente recebe a sua chave e só enxerga os pacotes marcados nela. Para mudar os pacotes de uma chave, revogue e gere outra.</p>
+          <div class="duas">
+            <form id="nova" class="folha" novalidate>
+              <div class="topo"><h2>Nova chave</h2></div>
+              <div class="corpo">
+                <div class="campo">
+                  <label for="nome">Quem vai usar</label>
+                  <input id="nome" type="text" required maxlength="100" placeholder="Ex.: faBRAINzio" autocomplete="off">
+                </div>
+                <div class="campo">
+                  <div class="escolha-topo"><span class="rotulo" id="rot-pacotes">Pacotes liberados</span><button type="button" class="texto" id="todos">Desmarcar todos</button></div>
+                  <div class="escolha" id="escolha" role="group" aria-labelledby="rot-pacotes"></div>
+                </div>
+                <div class="acoes"><button type="submit" class="primario" id="gerar">Gerar chave</button></div>
+                <p class="erro" id="nova-erro" role="alert" hidden></p>
+              </div>
+              <div id="nova-saida" aria-live="polite"></div>
+            </form>
+            <div class="folha">
+              <div class="topo"><h2>Chaves emitidas</h2><button type="button" class="texto" id="ver-revogadas" hidden></button></div>
+              <table>
+                <thead><tr><th>Agente</th><th>Pacotes</th><th class="esconde-estreito">Último uso</th><th><span class="oculto">Ações</span></th></tr></thead>
+                <tbody id="lista-chaves"></tbody>
+              </table>
             </div>
-            <div class="campo">
-              <div class="escolha-topo"><span class="rotulo" id="rot-pacotes">Pacotes liberados</span><button type="button" class="texto" id="todos">Desmarcar todos</button></div>
-              <div class="escolha" id="escolha" role="group" aria-labelledby="rot-pacotes"></div>
-            </div>
-            <div class="acoes"><button type="submit" class="primario" id="gerar">Gerar chave</button></div>
-            <p class="erro" id="nova-erro" role="alert" hidden></p>
           </div>
-          <div id="nova-saida" aria-live="polite"></div>
-        </form>
-        <div class="folha">
-          <header>
-            <h2>Chaves emitidas</h2>
-            <button type="button" class="texto" id="ver-revogadas" hidden></button>
-          </header>
-          <table>
-            <thead><tr><th>Agente</th><th>Pacotes</th><th class="esconde-estreito">Último uso</th><th><span class="oculto">Ações</span></th></tr></thead>
-            <tbody id="lista-chaves"></tbody>
-          </table>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <section class="painel" id="pacotes" role="tabpanel" aria-labelledby="tab-pacotes" hidden>
-      <div class="cabeca">
-        <div>
-          <h1>Pacotes</h1>
+      <section class="painel" id="pacotes" role="tabpanel" aria-labelledby="tab-pacotes" hidden>
+        <header class="banda"><h1>Pacotes</h1></header>
+        <div class="conteudo">
+          <div class="alerta" role="alert"></div>
           <p class="lead">Conjuntos de normas, leis e frameworks. Abra um pacote para ver os documentos e a situação de cada um.</p>
-        </div>
-      </div>
-      <div class="folha">
-        <table>
-          <thead><tr><th>Pacote</th><th class="esconde-estreito">Versão</th><th class="esconde-estreito">Atualizado</th><th class="num">Documentos</th></tr></thead>
-          <tbody id="lista-pacotes"></tbody>
-        </table>
-      </div>
-      <div class="folha">
-        <header><h2>Carregar ou atualizar um pacote</h2></header>
-        <div class="corpo">
-          <p class="apoio">Rode no repositório <code>ness.know</code>. Recarregar um documento com o mesmo título substitui a versão anterior.</p>
-          <div class="codigo"><pre id="cmd-carga">node scripts/carregar-pacote.mjs &lt;pasta-do-pacote&gt; https://know.ness.com.br</pre><button type="button" class="secundario copiar" data-copiar="cmd-carga">Copiar</button></div>
-        </div>
-      </div>
-    </section>
-
-    <section class="painel" id="conectar" role="tabpanel" aria-labelledby="tab-conectar" hidden>
-      <div class="cabeca">
-        <div>
-          <h1>Conectar um agente</h1>
-          <p class="lead">O agente consulta a base pelo protocolo MCP, só para leitura, com duas ferramentas: <code>listar_pacotes</code> e <code>buscar_conhecimento</code>.</p>
-        </div>
-      </div>
-      <div class="folha">
-        <div class="faixa-chave" id="estado-chave"></div>
-        <div class="corpo">
-          <span class="rotulo" id="rot-cliente">Agente</span>
-          <div class="clientes" id="clientes" role="group" aria-labelledby="rot-cliente"></div>
-          <dl class="ficha">
-            <dt>Endereço MCP</dt><dd><code id="url-mcp"></code></dd>
-            <dt>Onde configurar</dt><dd id="receita-onde"></dd>
-          </dl>
-          <div class="codigo" id="receita-bloco"><pre id="receita-texto"></pre><button type="button" class="secundario copiar" data-copiar="receita-texto">Copiar</button></div>
-          <p class="apoio" id="receita-nota" style="margin-top:12px"></p>
-        </div>
-      </div>
-      <div class="folha">
-        <header><h2>Conferir a chave sem o agente</h2></header>
-        <div class="corpo">
-          <p class="apoio">Lista os pacotes que a chave enxerga. Uma resposta com <code>401</code> indica chave errada ou revogada.</p>
-          <div class="codigo"><pre id="cmd-conferir"></pre><button type="button" class="secundario copiar" data-copiar="cmd-conferir">Copiar</button></div>
-        </div>
-      </div>
-    </section>
-
-    <section class="painel" id="testar" role="tabpanel" aria-labelledby="tab-testar" hidden>
-      <div class="cabeca">
-        <div>
-          <h1>Testar a busca</h1>
-          <p class="lead">Pergunte como um agente perguntaria e veja os trechos que ele receberia, na ordem em que receberia.</p>
-        </div>
-      </div>
-      <div class="folha">
-        <form id="teste" class="corpo">
-          <div class="busca">
-            <label for="consulta" class="oculto">Pergunta</label>
-            <input id="consulta" type="search" required placeholder="Ex.: como tratar um incidente de segurança?" autocomplete="off">
-            <label for="modo" class="oculto">Tipo de busca</label>
-            <select id="modo">
-              <option value="hibrida">Combinada</option>
-              <option value="semantica">Por significado</option>
-              <option value="textual">Por palavras</option>
-            </select>
-            <button type="submit" class="primario" id="buscar">Buscar</button>
+          <div class="pilha">
+            <div class="folha">
+              <table>
+                <thead><tr><th>Pacote</th><th class="esconde-estreito">Versão</th><th class="esconde-estreito">Atualizado</th><th class="num">Documentos</th></tr></thead>
+                <tbody id="lista-pacotes"></tbody>
+              </table>
+            </div>
+            <div class="folha">
+              <div class="topo"><h2>Carregar ou atualizar um pacote</h2></div>
+              <div class="corpo">
+                <p class="apoio">Rode no repositório <code>ness.know</code>. Recarregar um documento com o mesmo título substitui a versão anterior.</p>
+                <div class="codigo"><pre id="cmd-carga">node scripts/carregar-pacote.mjs &lt;pasta-do-pacote&gt; https://know.ness.com.br</pre><button type="button" class="secundario copiar" data-copiar="cmd-carga">Copiar</button></div>
+              </div>
+            </div>
           </div>
-          <div class="filtros" id="filtros" role="group" aria-label="Pacotes pesquisados"></div>
-        </form>
-        <div id="resultado" aria-live="polite"></div>
-      </div>
-    </section>
-  </main>
+        </div>
+      </section>
+
+      <section class="painel" id="conectar" role="tabpanel" aria-labelledby="tab-conectar" hidden>
+        <header class="banda"><h1>Conectar um agente</h1></header>
+        <div class="conteudo">
+          <p class="lead">O agente consulta a base pelo protocolo MCP, só para leitura, com duas ferramentas: <code>listar_pacotes</code> e <code>buscar_conhecimento</code>.</p>
+          <div class="pilha">
+            <div class="folha">
+              <div class="faixa-chave" id="estado-chave"></div>
+              <div class="corpo">
+                <span class="rotulo" id="rot-cliente">Agente</span>
+                <div class="clientes" id="clientes" role="group" aria-labelledby="rot-cliente"></div>
+                <dl class="ficha">
+                  <dt>Endereço MCP</dt><dd><code id="url-mcp"></code></dd>
+                  <dt>Onde configurar</dt><dd id="receita-onde"></dd>
+                </dl>
+                <div class="codigo" id="receita-bloco"><pre id="receita-texto"></pre><button type="button" class="secundario copiar" data-copiar="receita-texto">Copiar</button></div>
+                <p class="apoio" id="receita-nota" style="margin:12px 0 0"></p>
+              </div>
+            </div>
+            <div class="folha">
+              <div class="topo"><h2>Conferir a chave sem o agente</h2></div>
+              <div class="corpo">
+                <p class="apoio">Lista os pacotes que a chave enxerga. Resposta <code>401</code> indica chave errada ou revogada.</p>
+                <div class="codigo"><pre id="cmd-conferir"></pre><button type="button" class="secundario copiar" data-copiar="cmd-conferir">Copiar</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="painel" id="testar" role="tabpanel" aria-labelledby="tab-testar" hidden>
+        <header class="banda"><h1>Testar a busca</h1></header>
+        <div class="conteudo">
+          <p class="lead">Pergunte como um agente perguntaria e veja os trechos que ele receberia, na ordem em que receberia.</p>
+          <div class="folha">
+            <form id="teste" class="corpo">
+              <div class="busca">
+                <label for="consulta" class="oculto">Pergunta</label>
+                <input id="consulta" type="search" required placeholder="Ex.: como tratar um incidente de segurança?" autocomplete="off">
+                <label for="modo" class="oculto">Tipo de busca</label>
+                <select id="modo">
+                  <option value="hibrida">Combinada</option>
+                  <option value="semantica">Por significado</option>
+                  <option value="textual">Por palavras</option>
+                </select>
+                <button type="submit" class="primario" id="buscar">Buscar</button>
+              </div>
+              <div class="filtros" id="filtros" role="group" aria-label="Pacotes pesquisados"></div>
+            </form>
+            <div id="resultado" aria-live="polite"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
   <script src="/app.js" type="module"></script>
 </body>
 </html>

@@ -68,7 +68,7 @@ function falhou(err, destino) {
   if (destino) {
     destino.textContent = err.message;
     destino.hidden = false;
-  } else $("#aviso").textContent = err.message;
+  } else (document.querySelector(".painel:not([hidden]) .alerta") ?? document.querySelector(".alerta")).textContent = err.message;
 }
 $("#entrar").addEventListener("click", () => location.reload());
 
@@ -88,7 +88,7 @@ function abrir(id, foco = false) {
 abas.forEach((a, i) => {
   a.addEventListener("click", () => abrir(a.getAttribute("aria-controls")));
   a.addEventListener("keydown", (e) => {
-    const alvo = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: abas.length - 1 }[e.key];
+    const alvo = { ArrowRight: i + 1, ArrowDown: i + 1, ArrowLeft: i - 1, ArrowUp: i - 1, Home: 0, End: abas.length - 1 }[e.key];
     if (alvo == null) return;
     e.preventDefault();
     abrir(abas[(alvo + abas.length) % abas.length].getAttribute("aria-controls"), true);
@@ -176,7 +176,7 @@ function mostrarReceita() {
 }
 $("#clientes").append(
   ...receitas("").map((r) => {
-    const b = botao(r.nome, null, () => ((clienteAtual = r.id), mostrarReceita()));
+    const b = botao(r.nome, "chip", () => ((clienteAtual = r.id), mostrarReceita()));
     b.dataset.id = r.id;
     return b;
   }),
@@ -199,7 +199,7 @@ async function carregarPacotes() {
           detalhe.hidden = true;
           const abre = botao(null, "abre");
           abre.setAttribute("aria-expanded", "false");
-          abre.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M4 2l4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+          abre.innerHTML = '<svg class="i" aria-hidden="true"><use href="#i-seta"/></svg>';
           abre.append(p.nome);
           abre.addEventListener("click", () => alternarDocumentos(p, abre, detalhe));
           const nome = [abre];
@@ -230,7 +230,7 @@ async function carregarPacotes() {
 
   $("#filtros").replaceChildren(
     ...pacotes.map((p) => {
-      const b = botao(p.nome, "filtro", () => {
+      const b = botao(p.nome, "chip", () => {
         filtro.has(p.slug) ? filtro.delete(p.slug) : filtro.add(p.slug);
         b.setAttribute("aria-pressed", String(filtro.has(p.slug)));
       });
@@ -258,7 +258,7 @@ async function alternarDocumentos(p, abre, detalhe) {
     for (const d of docs) {
       const tr = el("tr");
       const ok = d.status === "ok";
-      const situacao = el("span", ok ? "Pronto para busca" : d.status === "erro" ? "Falhou" : "Processando", `estado ${ok ? "vivo" : d.status === "erro" ? "falha" : ""}`);
+      const situacao = el("span", ok ? "Pronto" : d.status === "erro" ? "Falhou" : "Processando", `badge ${ok ? "ok" : d.status === "erro" ? "bad" : ""}`);
       const s = [situacao];
       if (d.erro) s.push(el("span", d.erro, "sub"));
       const titulo = [el("span", d.titulo, "nome")];
@@ -298,7 +298,7 @@ function desenharChaves() {
           const lista = JSON.parse(c.pacotes || "[]").map((s) => nomes[s] ?? s);
           const uso = c.usado_em ? el("span", quando(c.usado_em)) : el("span", "nunca", "apoio");
           if (c.usado_em) uso.title = fmtHora.format(dataDe(c.usado_em));
-          const acao = celula(c.ativo ? botao("Revogar", "secundario", (e) => confirmarRevogacao(c, e.currentTarget.parentElement)) : null, "acao");
+          const acao = celula(c.ativo ? botao("Revogar", "secundario pequeno", (e) => confirmarRevogacao(c, e.currentTarget.parentElement)) : null, "acao");
           tr.append(celula(nome), celula(lista.join(", ")), celula(uso, "esconde-estreito"), acao);
           return tr;
         })
@@ -310,7 +310,7 @@ $("#ver-revogadas").addEventListener("click", () => ((verRevogadas = !verRevogad
 function confirmarRevogacao(c, td) {
   const caixa = el("span", null, "confirma");
   const voltar = () => desenharChaves();
-  const sim = botao("Confirmar", "perigo", async () => {
+  const sim = botao("Confirmar", "perigo pequeno", async () => {
     sim.disabled = true;
     sim.textContent = "Revogando…";
     try {
@@ -322,7 +322,7 @@ function confirmarRevogacao(c, td) {
     }
   });
   sim.title = "O agente perde o acesso na hora.";
-  caixa.append(botao("Cancelar", "secundario", voltar), sim);
+  caixa.append(botao("Cancelar", "secundario pequeno", voltar), sim);
   td.replaceChildren(caixa);
   caixa.addEventListener("keydown", (e) => e.key === "Escape" && voltar());
   sim.focus();
@@ -401,7 +401,7 @@ $("#teste").addEventListener("submit", async (e) => {
       ...r.map((t, i) => {
         const d = el("article", null, "trecho");
         const corpo = el("div");
-        const meta = el("div", null, "meta");
+        const meta = el("div", null, "info");
         if (t.versao) meta.append(el("span", `versão ${t.versao}`));
         meta.append(el("span", `encontrado ${ORIGEM[t.origem] ?? t.origem}`));
         corpo.append(el("h3", t.secao ? `${t.titulo}, ${t.secao}` : t.titulo), meta, el("p", t.trecho));
