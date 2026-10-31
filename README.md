@@ -25,6 +25,7 @@ A base é organizada em **pacotes**. Cada pacote reúne documentos de um domíni
 | `setor-eletrico` | ANEEL REN 964/2021 |
 | `gestao-servicos-ti` | ITIL 4 Foundation |
 | `legislacao-digital` | LGPD (Lei 13.709/2018) e Marco Civil da Internet (Lei 12.965/2014), texto compilado; Decreto 8.771/2016; pasta [`pacotes/legislacao-digital`](pacotes/legislacao-digital) |
+| `crimes-ciberneticos-e-ti` | Código Penal compilado (crimes cibernéticos), Lei 14.478/2022 (ativos virtuais), Decretos 11.856/2023, 12.573/2025, 10.748/2021 e 9.637/2018 (cibersegurança e segurança da informação), LC 116/2003, Decreto 7.174/2010, Lei 6.019/1974 e CDC; pasta [`pacotes/crimes-ciberneticos-e-ti`](pacotes/crimes-ciberneticos-e-ti) |
 
 A relação exata de documentos e versões fica na aba **Pacotes** da interface, e o agente a consulta com a ferramenta `listar_pacotes`. Recarregar um pacote atualiza essa relação.
 

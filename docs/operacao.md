@@ -62,6 +62,7 @@ node scripts/carregar-pacote.mjs "C:\Users\resper\Downloads\seguranca-conformida
 node scripts/carregar-pacote.mjs "$p\setor-eletrico" $app
 node scripts/carregar-pacote.mjs "$p\gestao-servicos-ti" $app
 node scripts/carregar-pacote.mjs pacotes\legislacao-digital $app   # neste repositório (ctresb/leis)
+node scripts/carregar-pacote.mjs pacotes\crimes-ciberneticos-e-ti $app
 ```
 
 - Cada documento imprime `ok <título>: N trechos` ou `ERRO <título>: motivo`.
