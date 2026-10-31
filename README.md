@@ -24,6 +24,7 @@ A base é organizada em **pacotes**. Cada pacote reúne documentos de um domíni
 | `scf-strm` | SCF 2026.3: mapeamentos STRM de 268 frameworks (ISO 27001/27002/27017/27018/27701/42001/31000/22301, NIST CSF 2.0 e 800-53, CIS v8.1, IEC 62443, NIST 800-82, NERC CIP, C2M2, PCI DSS, SOC 2, DORA, NIS2, LGPD, C5, ISM…) e o catálogo dos 1.591 controles (objetivos de avaliação, evidências, maturidade). Sem BCB, REN 964, ISO 20000-1 nem ITIL |
 | `setor-eletrico` | ANEEL REN 964/2021 |
 | `gestao-servicos-ti` | ITIL 4 Foundation |
+| `legislacao-digital` | LGPD (Lei 13.709/2018) e Marco Civil da Internet (Lei 12.965/2014), texto compilado; pasta [`pacotes/legislacao-digital`](pacotes/legislacao-digital) |
 
 A relação exata de documentos e versões fica na aba **Pacotes** da interface, e o agente a consulta com a ferramenta `listar_pacotes`. Recarregar um pacote atualiza essa relação.
 
