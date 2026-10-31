@@ -24,6 +24,8 @@ A base é organizada em **pacotes**. Cada pacote reúne documentos de um domíni
 | `scf-strm` | SCF 2026.3: mapeamentos STRM de 268 frameworks (ISO 27001/27002/27017/27018/27701/42001/31000/22301, NIST CSF 2.0 e 800-53, CIS v8.1, IEC 62443, NIST 800-82, NERC CIP, C2M2, PCI DSS, SOC 2, DORA, NIS2, LGPD, C5, ISM…) e o catálogo dos 1.591 controles (objetivos de avaliação, evidências, maturidade). Sem BCB, REN 964, ISO 20000-1 nem ITIL |
 | `setor-eletrico` | ANEEL REN 964/2021 |
 | `gestao-servicos-ti` | ITIL 4 Foundation |
+| `dispositivos-medicos` | IEC 62304 (software de dispositivo médico) |
+| `forense-digital` | ISO/IEC 27037 (evidência digital); carga pendente |
 
 A relação exata de documentos e versões fica na aba **Pacotes** da interface, e o agente a consulta com a ferramenta `listar_pacotes`. Recarregar um pacote atualiza essa relação.
 
@@ -82,6 +84,7 @@ Detalhes e decisões: [docs/arquitetura.md](docs/arquitetura.md).
 | [docs/seguranca.md](docs/seguranca.md) | Modelo de acesso, ameaças consideradas e limites |
 | [docs/spec.md](docs/spec.md) | Decisão de criar o serviço (30/10/2026) |
 | [docs/skills-plano.md](docs/skills-plano.md) | Plano de skills sobre a base (proposta) |
+| [docs/lacunas.md](docs/lacunas.md) | Lacunas conhecidas, pendências de produção e ordem recomendada |
 
 ## Estrutura do repositório
 
@@ -94,7 +97,7 @@ src/
   busca.ts      corte em trechos, seções, ingestão, vetores e busca híbrida
   fts.ts        montagem da consulta FTS5
 public/         interface de administração (HTML e JS, sem build)
-scripts/        carregar-pacote, vetorizar, avaliar-busca
+scripts/        carregar-pacote, vetorizar, avaliar-busca, conversores do SCF (strm-*, scf-catalogo-*)
 migrations/     esquema do D1
 test/           testes (Vitest)
 ```

@@ -28,14 +28,16 @@ pacotes     slug PK, nome, descricao, instrucoes, versao, atualizado_em
 documentos  id PK, escopo='pacote', dono=slug, titulo, tipo, fonte, versao, vigencia, r2_key, status (ok|erro), erro, criado_por, criado_em
 trechos_fts FTS5(documento_id, escopo, dono, texto), tokenizador unicode61 sem acentos
 strm_frameworks  id PK (nome do arquivo sem "scf-strm-" e ".xlsx"), nome, versao_scf, itens
-scf_controles    scf PK, nome, descricao
+scf_controles    scf PK, nome, descricao, dominio, pergunta, peso, cadencia, funcao_csf, maturidade, evidencias, legado
+scf_objetivos    ao_id, scf, objetivo
+scf_evidencias   erl_id, area, artefato, descricao
 strm             framework, item, item_nome, relacao (igual|subconjunto|superconjunto|intersecao), forca (0 a 10, pode faltar), scf; índices (framework, item) e (scf, framework)
 chaves      id PK, nome, token_hash UNIQUE, pacotes JSON [slug], documentos JSON {slug: [título]}, ativo, criado_por, criado_em, usado_em
 ```
 
 As colunas `escopo` e `dono` existem porque o código de busca veio do faBRAINzio, que tem camadas pessoal, da organização e de pacote. Aqui `escopo` é sempre `pacote`.
 
-Migrações em `migrations/`: `0001_inicial.sql`, `0002_chave_documentos.sql` e `0003_strm.sql` (as tabelas do SCF STRM).
+Migrações em `migrations/`: `0001_inicial.sql`, `0002_chave_documentos.sql`, `0003_strm.sql` (as tabelas do SCF STRM) e `0004_scf_catalogo.sql` (catálogo de controles, objetivos e evidências).
 
 ## Ingestão
 
@@ -64,7 +66,7 @@ Migrações em `migrations/`: `0001_inicial.sql`, `0002_chave_documentos.sql` e 
    - Resultados abaixo da nota 0,4 são descartados.
    - Cada documento é conferido de novo no D1: um vetor fora do que a chave libera nunca chega à resposta.
 3. **Fusão.** RRF com k = 60, peso 1 para a semântica e 0,5 para a textual. O melhor resultado textual fica com a última vaga se ainda não estiver no resultado, para que um código exato como `A.8.16` não se perca.
-4. **Rerank** opcional (`BUSCA_RERANK = "1"`). Fica desligado: na avaliação, o primeiro lugar caiu de 64% para 58%.
+4. **Rerank** opcional (`BUSCA_RERANK = "1"`). Fica desligado: na avaliação abaixo, não melhorou o primeiro lugar (67%) e baixou o MRR (0,77 para 0,75).
 
 Ajustes por variável do Worker: `BUSCA_MINIMO` (nota mínima da semântica) e `BUSCA_RERANK`.
 
