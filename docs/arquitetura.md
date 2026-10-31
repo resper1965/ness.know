@@ -66,7 +66,7 @@ Migrações em `migrations/`: `0001_inicial.sql`, `0002_chave_documentos.sql`, `
    - Resultados abaixo da nota 0,4 são descartados.
    - Cada documento é conferido de novo no D1: um vetor fora do que a chave libera nunca chega à resposta.
 3. **Fusão.** RRF com k = 60, peso 1 para a semântica e 0,5 para a textual. O melhor resultado textual fica com a última vaga se ainda não estiver no resultado, para que um código exato como `A.8.16` não se perca.
-4. **Rerank** opcional (`BUSCA_RERANK = "1"`). Fica desligado: na avaliação, o primeiro lugar caiu de 64% para 58%.
+4. **Rerank** opcional (`BUSCA_RERANK = "1"`). Fica desligado: na avaliação abaixo, não melhorou o primeiro lugar (67%) e baixou o MRR (0,77 para 0,75).
 
 Ajustes por variável do Worker: `BUSCA_MINIMO` (nota mínima da semântica) e `BUSCA_RERANK`.
 

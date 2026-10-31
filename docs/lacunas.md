@@ -67,7 +67,7 @@ O código do `main` já tem o SCF 2026.3 e a ferramenta `detalhar_controle`, mas
 | --- | --- | --- | --- | --- |
 | 6.1 | Avaliação com 36 perguntas, antes dos pacotes novos e do SCF | Não se sabe a qualidade em 62304, 27037, 31000 nem em perguntas de correspondência | Ampliar o gabarito por pacote e rodar `avaliar-busca.mjs` | P2 |
 | 6.2 | `BUSCA_MINIMO` (0,4) escolhido sem calibração | Trechos irrelevantes passam ou relevantes caem | Calibrar com as notas que `avaliar-busca.mjs` mostra | P3 |
-| 6.3 | Rerank desligado (piorou o 1º lugar de 64% para 58%) | — | Reavaliar com o gabarito ampliado | P3 |
+| 6.3 | Rerank desligado (na avaliação de 30/10, o 1º lugar ficou igual, 67%, e o MRR caiu de 0,77 para 0,75) | — | Reavaliar com o gabarito ampliado | P3 |
 
 ## 7. Documentação e operação
 
