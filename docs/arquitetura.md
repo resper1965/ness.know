@@ -28,14 +28,16 @@ pacotes     slug PK, nome, descricao, instrucoes, versao, atualizado_em
 documentos  id PK, escopo='pacote', dono=slug, titulo, tipo, fonte, versao, vigencia, r2_key, status (ok|erro), erro, criado_por, criado_em
 trechos_fts FTS5(documento_id, escopo, dono, texto), tokenizador unicode61 sem acentos
 strm_frameworks  id PK (nome do arquivo sem "scf-strm-" e ".xlsx"), nome, versao_scf, itens
-scf_controles    scf PK, nome, descricao
+scf_controles    scf PK, nome, descricao, dominio, pergunta, peso, cadencia, funcao_csf, maturidade, evidencias, legado
+scf_objetivos    ao_id, scf, objetivo
+scf_evidencias   erl_id, area, artefato, descricao
 strm             framework, item, item_nome, relacao (igual|subconjunto|superconjunto|intersecao), forca (0 a 10, pode faltar), scf; índices (framework, item) e (scf, framework)
 chaves      id PK, nome, token_hash UNIQUE, pacotes JSON [slug], documentos JSON {slug: [título]}, ativo, criado_por, criado_em, usado_em
 ```
 
 As colunas `escopo` e `dono` existem porque o código de busca veio do faBRAINzio, que tem camadas pessoal, da organização e de pacote. Aqui `escopo` é sempre `pacote`.
 
-Migrações em `migrations/`: `0001_inicial.sql`, `0002_chave_documentos.sql` e `0003_strm.sql` (as tabelas do SCF STRM).
+Migrações em `migrations/`: `0001_inicial.sql`, `0002_chave_documentos.sql`, `0003_strm.sql` (as tabelas do SCF STRM) e `0004_scf_catalogo.sql` (catálogo de controles, objetivos e evidências).
 
 ## Ingestão
 
