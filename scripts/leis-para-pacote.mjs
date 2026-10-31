@@ -56,13 +56,16 @@ if (!raiz || !pasta || !caminhos.length) {
 await mkdir(join(pasta, "textos"), { recursive: true });
 const documentos = [];
 const titulos = new Set();
-let revogadas = 0;
+const vistos = new Set(); // caminhos sobrepostos (pasta + arquivo dela) não repetem a norma
+const revogadas = [];
 for (const c of caminhos)
   for (const f of await arquivosDe(raiz, c)) {
     const rel = relative(raiz, f).replaceAll("\\", "/");
+    if (vistos.has(rel)) continue;
+    vistos.add(rel);
     const { meta, corpo } = lerNorma(await readFile(f, "utf8"));
     if (meta.revogada === true) {
-      revogadas++;
+      revogadas.push(tituloDe(meta, rel));
       continue;
     }
     if (Buffer.byteLength(corpo) > LIMITE) {
@@ -78,5 +81,7 @@ for (const c of caminhos)
     documentos.push({ arquivo, titulo, tipo: meta.tipo ?? undefined, versao: meta.versao_texto ?? undefined, vigencia: meta.data ?? meta.ano ?? undefined, fonte: meta.fonte ?? undefined });
   }
 await writeFile(join(pasta, "documentos.json"), JSON.stringify(documentos, null, 2));
-console.log(`${documentos.length} norma(s) em ${pasta}${revogadas ? `; ${revogadas} revogada(s) fora` : ""}`);
+console.log(`${documentos.length} norma(s) em ${pasta}${revogadas.length ? `; ${revogadas.length} revogada(s) fora` : ""}`);
+// A recarga não apaga o que já está no pacote: uma norma que passou a revogada sai à mão (docs/operacao.md).
+for (const t of revogadas) console.log(`revogada, fora do pacote (apague se já estava carregada): ${t}`);
 for (const f of ["pacote.json", "instrucoes.md"]) if (!existsSync(join(pasta, f))) console.log(`falta ${f} na pasta (escreva antes de carregar)`);

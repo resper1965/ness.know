@@ -34,6 +34,7 @@ describe("dividir", () => {
     expect(p[1].startsWith("5.2.4 Change control")).toBe(true);
     expect(secoesDe(p)).toEqual(p.map((x) => (x.startsWith("5.2.4") || !x.includes("service desk") ? "5.2.4 Change control" : "5.2.3 Service desk")));
     expect(secoesDe(["Art. 6º Os agentes devem notificar\n§ 1º A notificação", "§ 2º continuação"])).toEqual(["Art. 6º", "Art. 6º"]);
+    expect(secoesDe(["Art. 154-A\nInvadir dispositivo informático", "Art. 55-A Fica criada a ANPD"])).toEqual(["Art. 154-A", "Art. 55-A"]);
   });
   it("sumário é ruído; texto normal não", () => {
     expect(ehRuido("Sumário\n1 Escopo........ 1\n2 Termos........ 2\n3 Contexto........ 3")).toBe(true);

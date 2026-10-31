@@ -25,7 +25,9 @@ describe("conversor do acervo ctresb/leis", () => {
     writeFileSync(join(raiz, "estaduais/SP/b.md"), norma('titulo: "Lei nº 1 de 01/01/2000"\nuf: "SP"\ntipo: "Lei Ordinária"\ndata: 2000-01-01', "Outro."));
     writeFileSync(join(raiz, "estaduais/SP/c.md"), norma('titulo: "Lei nº 2 de 01/01/2000"\nuf: "SP"\nrevogada: true', "Revogada."));
 
-    execFileSync("node", ["scripts/leis-para-pacote.mjs", raiz, pasta, "federal", "estaduais/SP"]);
+    // "estaduais/SP/a.md" repete um arquivo da pasta: não pode virar outra norma.
+    const saida = execFileSync("node", ["scripts/leis-para-pacote.mjs", raiz, pasta, "federal", "estaduais/SP", "estaduais/SP/a.md"], { encoding: "utf8" });
+    expect(saida).toContain("revogada, fora do pacote (apague se já estava carregada): Lei nº 2 de 01/01/2000 (SP)");
     const docs = JSON.parse(readFileSync(join(pasta, "documentos.json"), "utf8"));
 
     expect(docs).toHaveLength(3);
