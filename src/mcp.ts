@@ -1,7 +1,7 @@
 // ness.KNOW: base de conhecimento por MCP (Streamable HTTP, sem sessão): outros projetos consultam os pacotes que lhes foram liberados.
 // Autenticação por chave de API (Bearer), guardada só em hash na tabela `chaves`; /mcp fica fora do Cloudflare Access.
 import { buscarEm, type EnvBusca } from "./busca";
-import { cobertura, correlacionar, MAX_DESTINOS, MAX_IMPLEMENTADOS, PACOTE_STRM } from "./strm";
+import { cobertura, correlacionar, detalharControle, MAX_DESTINOS, MAX_IMPLEMENTADOS, PACOTE_STRM } from "./strm";
 
 export interface EnvMcp extends EnvBusca {
   /** Ajustes medidos com scripts/avaliar-busca.mjs: "1" liga o rerank; número troca a nota mínima da semântica. */
@@ -109,6 +109,13 @@ const FERRAMENTAS = [
     },
     annotations: { readOnlyHint: true },
   },
+  {
+    name: "detalhar_controle",
+    description:
+      "Como avaliar um controle do SCF: descrição, pergunta de avaliação, objetivos de avaliação (o que verificar), lista de evidências a pedir, critérios de maturidade de 0 a 5, peso, periodicidade e função do NIST CSF. Use para cada lacuna de cobertura ou correlacionar (campos scf, via, scf_sem_cobertura). Aceita id antigo do SCF e diz o atual.",
+    inputSchema: { type: "object", properties: { scf: { type: "string", description: "id do controle SCF (ex.: MON-02, IAC-06)" } }, required: ["scf"] },
+    annotations: { readOnlyHint: true },
+  },
 ];
 
 type Resposta = { content: { type: "text"; text: string }[]; isError?: boolean };
@@ -175,6 +182,14 @@ async function chamar(env: EnvMcp, cliente: Cliente, nome: string, args: Record<
     const r = await cobertura(env.DB, de, implementados, alvo);
     if ("erro" in r) return texto(r.erro, true);
     return texto(JSON.stringify({ ...r, fonte: { sistema: "ness.KNOW", base: `SCF STRM ${r.versao_scf ?? ""}`.trim(), consulta: `${de} → ${alvo} (${implementados.length} implementados)`, coletado_em: new Date().toISOString() } }, null, 1));
+  }
+  if (nome === "detalhar_controle") {
+    if (!cliente.pacotes.includes(PACOTE_STRM)) return texto(`esta chave não libera o pacote ${PACOTE_STRM} (correspondência entre frameworks)`, true);
+    const scf = typeof args.scf === "string" ? args.scf.slice(0, 30) : "";
+    if (!scf.trim()) return texto("informe scf (ex.: MON-02)", true);
+    const r = await detalharControle(env.DB, scf);
+    if ("erro" in r) return texto(r.erro, true);
+    return texto(JSON.stringify({ ...r, fonte: { sistema: "ness.KNOW", base: "Secure Controls Framework (SCF)", consulta: scf, coletado_em: new Date().toISOString() } }, null, 1));
   }
   return texto(`ferramenta desconhecida: ${nome}`, true);
 }

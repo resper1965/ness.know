@@ -10,7 +10,7 @@
 
 ## Ferramentas
 
-As quatro ferramentas são só de leitura (`readOnlyHint: true`).
+As cinco ferramentas são só de leitura (`readOnlyHint: true`).
 
 ### `listar_pacotes`
 
@@ -71,7 +71,7 @@ Resposta:
 
 ### `correlacionar`
 
-Dado um item de um framework, devolve os itens equivalentes em outros frameworks, passando pelo controle SCF que liga os dois (SCF STRM 2026.1). Exige que a chave tenha o pacote `scf-strm` (**Correspondência entre frameworks**).
+Dado um item de um framework, devolve os itens equivalentes em outros frameworks, passando pelo controle SCF que liga os dois (SCF STRM 2026.3). Exige que a chave tenha o pacote `scf-strm` (**Correspondência entre frameworks**).
 
 | Argumento | Tipo | Obrigatório | Descrição |
 | --- | --- | --- | --- |
@@ -88,13 +88,13 @@ Resposta:
 ```json
 {
   "origem": { "framework": "general-iso-27002-2022", "nome": "ISO 27002:2022", "item": "8.16", "item_nome": "Monitoring activities" },
-  "versao_scf": "2026.1",
-  "scf": [{ "scf": "MON-01", "nome": "Continuous Monitoring", "relacao": "subconjunto", "forca": 10 }],
+  "versao_scf": "2026.3",
+  "scf": [{ "scf": "MON-02", "nome": "Continuous Monitoring", "relacao": "subconjunto", "forca": 10 }],
   "destinos_desconhecidos": [],
   "correspondencias": [
-    { "framework": "general-nist-csf-2-0", "item": "DE.CM-01", "nome": null, "via": "MON-01", "relacao_origem": "subconjunto", "relacao_destino": "subconjunto", "forca": 10 }
+    { "framework": "general-nist-csf-2-0", "item": "DE.CM-01", "nome": null, "via": "MON-02", "relacao_origem": "subconjunto", "relacao_destino": "subconjunto", "forca": 10 }
   ],
-  "fonte": { "sistema": "ness.KNOW", "base": "SCF STRM 2026.1", "consulta": "general-iso-27002-2022 8.16", "coletado_em": "…" }
+  "fonte": { "sistema": "ness.KNOW", "base": "SCF STRM 2026.3", "consulta": "general-iso-27002-2022 8.16", "coletado_em": "…" }
 }
 ```
 
@@ -129,16 +129,28 @@ Avaliação de lacunas: a partir do que a organização já implementou num fram
 Resposta: `resumo` (`coberto`, `parcial`, `sem_cobertura`), `implementados_desconhecidos` e `itens`, um por item do alvo:
 
 ```json
-{ "item": "AC-02 (05)", "nome": "Account Management | Inactivity Logout", "situacao": "sem_cobertura", "forca": null, "via": null, "scf_sem_cobertura": ["IAC-24"] }
+{ "item": "AC-02 (05)", "nome": "Account Management | Inactivity Logout", "situacao": "sem_cobertura", "forca": null, "via": null, "scf_sem_cobertura": ["CFG-04.3"] }
 ```
 
 - `coberto`: o melhor caminho implementado → SCF → item tem força 8 ou mais.
 - `parcial`: há caminho, com força menor.
 - `sem_cobertura`: nenhum controle SCF do item é alcançado pelo que está implementado; `scf_sem_cobertura` diz quais faltam.
 
-O resultado é indicativo e segue a granularidade do SCF. Um item do alvo ligado a um subcontrole SCF (ex.: `IAC-24`) só conta como alcançado se algo implementado ligar ao mesmo subcontrole. Exemplo real (SCF 2026.1): o Anexo A inteiro dá, no TX-RAMP 2.0 Level 2, 21 itens cobertos, 108 parciais e 94 sem cobertura. Confirme cada lacuna no texto da norma com `buscar_conhecimento`.
+O resultado é indicativo e segue a granularidade do SCF. Um item do alvo ligado a um subcontrole SCF (ex.: `CFG-04.3`) só conta como alcançado se algo implementado ligar ao mesmo subcontrole. Exemplo real (SCF 2026.3): o Anexo A inteiro dá, no TX-RAMP 2.0 Level 2, 21 itens cobertos, 110 parciais e 92 sem cobertura. Use `detalhar_controle` em cada controle de `scf_sem_cobertura` para saber como avaliá-lo. Confirme cada lacuna no texto da norma com `buscar_conhecimento`.
 
 Erros: os mesmos de `correlacionar`, mais `informe de, implementados e alvo (ids em listar_pacotes, pacote scf-strm)`.
+
+### `detalhar_controle`
+
+Como avaliar um controle do SCF. Exige o pacote `scf-strm`.
+
+| Argumento | Tipo | Obrigatório | Descrição |
+| --- | --- | --- | --- |
+| `scf` | string | sim | Id do controle (ex.: `MON-02`). Um id da versão anterior do SCF também é aceito; a resposta traz `aviso` com o id atual |
+
+Resposta: `scf`, `nome`, `dominio`, `descricao`, `pergunta` (pergunta de avaliação), `peso` (1 a 10), `cadencia`, `funcao_csf`, `legado` (ids anteriores), `objetivos` (`[{ id, objetivo }]`: o que verificar), `evidencias` (`[{ id, area, artefato, descricao }]`: o que pedir) e `maturidade` (`[{ nivel, rotulo, criterio }]`, de 0 a 5).
+
+Erros: chave sem o pacote, `informe scf (ex.: MON-02)` e `controle SCF desconhecido`.
 
 ## Erros
 

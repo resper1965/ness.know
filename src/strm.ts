@@ -163,3 +163,64 @@ export async function cobertura(db: D1Database, de: string, implementados: strin
   for (const c of itens) resumo[c.situacao]++;
   return { de, alvo: { framework: alvoId, nome: alvo.nome }, versao_scf: alvo.versao_scf, implementados_desconhecidos: desconhecidos, resumo, itens };
 }
+
+export interface DetalheControle {
+  scf: string;
+  nome: string | null;
+  dominio: string | null;
+  descricao: string | null;
+  pergunta: string | null;
+  peso: number | null;
+  cadencia: string | null;
+  funcao_csf: string[];
+  legado: string[];
+  objetivos: { id: string; objetivo: string }[];
+  evidencias: { id: string; area: string | null; artefato: string; descricao: string | null }[];
+  maturidade: { nivel: number; rotulo: string; criterio: string }[];
+  /** Presente quando o pedido veio com um id da versão anterior do SCF. */
+  aviso?: string;
+}
+
+const lista = <T>(s: string | null): T[] => {
+  try {
+    return s ? (JSON.parse(s) as T[]) : [];
+  } catch {
+    return [];
+  }
+};
+
+/** Como avaliar um controle SCF: pergunta, objetivos de avaliação, evidências a pedir e critérios de maturidade. */
+export async function detalharControle(db: D1Database, pedido: string): Promise<DetalheControle | { erro: string }> {
+  const id = pedido.trim();
+  type Linha = { scf: string; nome: string | null; dominio: string | null; descricao: string | null; pergunta: string | null; peso: number | null; cadencia: string | null; funcao_csf: string | null; maturidade: string | null; evidencias: string | null; legado: string | null };
+  const colunas = "scf, nome, dominio, descricao, pergunta, peso, cadencia, funcao_csf, maturidade, evidencias, legado";
+  let c = await db.prepare(`SELECT ${colunas} FROM scf_controles WHERE lower(scf) = lower(?)`).bind(id).first<Linha>();
+  let aviso: string | undefined;
+  if (!c) {
+    // Ids da versão anterior (o SCF 2026.3 renumerou a maioria dos controles).
+    const r = await db.prepare(`SELECT ${colunas} FROM scf_controles WHERE legado LIKE ?`).bind(`%"${id.toUpperCase().replace(/[%_"]/g, "")}"%`).all<Linha>();
+    if (!r.results.length) return { erro: `controle SCF desconhecido: ${id}` };
+    c = r.results[0];
+    aviso = `${id} é um id da versão anterior do SCF; hoje corresponde a ${r.results.map((x) => x.scf).join(", ")}`;
+  }
+  const objetivos = (await db.prepare("SELECT ao_id AS id, objetivo FROM scf_objetivos WHERE scf = ? ORDER BY ao_id").bind(c.scf).all<{ id: string; objetivo: string }>()).results;
+  const ids = lista<string>(c.evidencias);
+  const evidencias = ids.length
+    ? (await db.prepare(`SELECT erl_id AS id, area, artefato, descricao FROM scf_evidencias WHERE erl_id IN (${ids.map(() => "?").join(", ")}) ORDER BY erl_id`).bind(...ids).all<DetalheControle["evidencias"][number]>()).results
+    : [];
+  return {
+    scf: c.scf,
+    nome: c.nome,
+    dominio: c.dominio,
+    descricao: c.descricao,
+    pergunta: c.pergunta,
+    peso: c.peso,
+    cadencia: c.cadencia,
+    funcao_csf: lista<string>(c.funcao_csf),
+    legado: lista<string>(c.legado),
+    objetivos,
+    evidencias,
+    maturidade: lista<DetalheControle["maturidade"][number]>(c.maturidade),
+    ...(aviso ? { aviso } : {}),
+  };
+}

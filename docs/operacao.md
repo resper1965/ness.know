@@ -70,23 +70,31 @@ node scripts/carregar-pacote.mjs "$p\gestao-servicos-ti" $app
 
 ## Carregar ou atualizar o SCF STRM
 
-O SCF STRM (planilhas Excel do SCF) vira SQL pelo conversor e entra direto no D1. A planilha e o SQL não vão para o Git.
+Duas cargas, sempre da mesma versão do SCF (a numeração dos controles muda entre versões): o catálogo (`scf-full-<versão>.json`) e o STRM. Os arquivos do SCF e o SQL gerado não vão para o Git.
 
 ```powershell
 cd C:\dev\ness.know
 git pull
-npm install
+npm install --include=dev
 npx wrangler d1 migrations apply ness-know --remote
-Expand-Archive "C:\Users\resper\Downloads\STRM_2026-1_-_Excel.zip" "$env:TEMP\strm" -Force
-node scripts/strm-para-sql.mjs "$env:TEMP\strm\STRM 2026-1 - Excel" "$env:TEMP\strm.sql"
+$scf = "$env:TEMP\scf"
+Expand-Archive "<caminho>\SCF-2026-3.zip" $scf -Force
+node scripts/scf-catalogo-para-sql.mjs "$scf\SCF-2026-3\JSON\scf-full-2026.3.json" "$env:TEMP\scf-catalogo.sql"
+pip install pdfplumber
+python scripts/strm-pdf-para-json.py "$scf\SCF-2026-3\Set Theory Relatiohship Mapping (STRM)" "$env:TEMP\strm.json"
+node scripts/strm-para-sql.mjs "$env:TEMP\strm.json" "$env:TEMP\strm.sql"
+npx wrangler d1 execute ness-know --remote --file="$env:TEMP\scf-catalogo.sql"
 npx wrangler d1 execute ness-know --remote --file="$env:TEMP\strm.sql"
 npx wrangler deploy
 ```
 
+- Quando a versão trouxer o STRM em Excel (pasta de `scf-strm-*.xlsx`), passe a pasta direto ao `strm-para-sql.mjs`, sem o passo do Python.
+- A extração dos PDFs leva de 20 a 40 minutos (268 arquivos).
+
 - O conversor lê só a primeira aba de cada planilha e para com `<arquivo>: cabeçalho não reconhecido (falta …)` ou `<arquivo>: planilha sem abas` se o formato mudar.
 - O SQL cria o pacote `scf-strm` ("Correspondência entre frameworks") e substitui todo o conteúdo anterior.
 - Para liberar a uma chave, gere uma chave nova com o pacote **Correspondência entre frameworks** marcado.
-- Rode o `d1 execute` fora do horário comercial: importar o SQL de ~6 MB pode deixar as consultas do /mcp lentas por instantes.
+- Rode os `d1 execute` fora do horário comercial: importar os SQL (cerca de 8 e 11 MB) pode deixar as consultas do /mcp lentas por instantes.
 - Uma versão nova do SCF repete os mesmos passos com o novo zip.
 
 ## Rotina

@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Converte o pacote STRM do SCF (pasta com os scf-strm-*.xlsx) em SQL para o D1.
 //
-// Uso: node scripts/strm-para-sql.mjs <pasta-dos-xlsx> <saida.sql>
+// Uso: node scripts/strm-para-sql.mjs <pasta-dos-xlsx | extraido.json> <saida.sql>
+//   (o .json vem de scripts/strm-pdf-para-json.py, quando a versão do STRM só sai em PDF)
 // Depois: npx wrangler d1 execute ness-know --remote --file=<saida.sql>
 // O SQL apaga e recarrega tudo: rodar de novo com uma versão nova do SCF substitui a anterior.
 import { readFile, readdir, writeFile } from "node:fs/promises";
@@ -27,12 +28,17 @@ if (!pasta || !saida) {
   console.error("uso: node scripts/strm-para-sql.mjs <pasta-dos-xlsx> <saida.sql>");
   process.exit(1);
 }
+const planilhas = [];
+if (pasta.endsWith(".json")) {
+  for (const [f, linhas] of Object.entries(JSON.parse(await readFile(pasta, "utf8")))) planilhas.push(lerPlanilha(linhas, f));
+  await gravar();
+  process.exit(0);
+}
 const arquivos = (await readdir(pasta)).filter((f) => /^scf-strm-.+\.xlsx$/i.test(f)).sort();
 if (!arquivos.length) {
   console.error(`nenhum scf-strm-*.xlsx em ${pasta}`);
   process.exit(1);
 }
-const planilhas = [];
 for (const f of arquivos) {
   const wb = await abrirPlanilha(join(pasta, f));
   const ws = wb.worksheets[0]; // a primeira aba é a completa; as extras ("condensed", crosswalk) repetem ou resumem
@@ -43,7 +49,11 @@ for (const f of arquivos) {
   if (!p.ligacoes.length) console.warn(`aviso: ${f} sem ligações (cabeçalho não reconhecido?)`);
   planilhas.push(p);
 }
-await writeFile(saida, paraSql(planilhas), "utf8");
-const total = planilhas.reduce((n, p) => n + p.ligacoes.length, 0);
-const controles = new Set(planilhas.flatMap((p) => p.ligacoes.map((l) => l.scf))).size;
-console.log(`${planilhas.length} frameworks, ${total} ligações, ${controles} controles SCF, versão ${planilhas.find((p) => p.versao)?.versao ?? "?"} → ${saida}`);
+await gravar();
+
+async function gravar() {
+  await writeFile(saida, paraSql(planilhas), "utf8");
+  const total = planilhas.reduce((n, p) => n + p.ligacoes.length, 0);
+  const controles = new Set(planilhas.flatMap((p) => p.ligacoes.map((l) => l.scf))).size;
+  console.log(`${planilhas.length} frameworks, ${total} ligações, ${controles} controles SCF, versão ${planilhas.find((p) => p.versao)?.versao ?? "?"} → ${saida}`);
+}

@@ -83,11 +83,15 @@ A híbrida fica como padrão, mesmo um pouco abaixo da semântica pura, porque g
 
 ## Correspondência entre frameworks
 
-A ferramenta `correlacionar` (`src/strm.ts`) usa os dados do SCF STRM 2026.1: 183 frameworks, 54.220 vínculos e 1.365 controles SCF, carregados por `scripts/strm-para-sql.mjs` direto no D1.
+As ferramentas `correlacionar`, `cobertura` e `detalhar_controle` (`src/strm.ts`) usam o SCF 2026.3:
+
+- **STRM:** 268 frameworks e 75.039 vínculos (tabelas `strm_frameworks` e `strm`). A versão 2026.3 só saiu em PDF: `scripts/strm-pdf-para-json.py` (pdfplumber) extrai as tabelas, e `scripts/strm-para-sql.mjs` lê o JSON resultante como se fossem as planilhas.
+- **Catálogo:** 1.591 controles, 6.446 objetivos de avaliação e 422 evidências (tabelas `scf_controles`, `scf_objetivos`, `scf_evidencias`, migração `0004_scf_catalogo.sql`), por `scripts/scf-catalogo-para-sql.mjs` a partir do `scf-full-2026.3.json`. O catálogo é a fonte de `scf_controles`; o STRM só acrescenta controles que faltarem.
+- **Versões:** o SCF 2026.3 renumerou a maior parte dos controles. STRM e catálogo precisam ser da mesma versão; `detalhar_controle` aceita id antigo pela coluna `legado`.
 
 - **Caminho:** item de origem → controle(s) SCF → itens dos frameworks de destino. O SCF é o ponto de passagem; não há mapeamento direto entre dois frameworks.
 - **Força:** a de cada correspondência é a do elo mais fraco do caminho (mínimo entre origem → SCF e SCF → destino). Se um dos elos não informa força, o resultado é `null`.
-- **Limite do item numérico:** números são lidos como a célula os exibe. No SCF STRM 2026.1, as 2.698 células de item numérico exibem o mesmo valor que gravam, então não houve colisão; rever se uma versão futura trouxer itens como `1.10` gravados como número. Anotado em `scripts/strm.mjs`.
+- **Limite do item numérico:** números são lidos como a célula os exibe. No SCF STRM 2026.1 (planilhas), as 2.698 células de item numérico exibem o mesmo valor que gravam, então não houve colisão; rever se uma versão futura trouxer itens como `1.10` gravados como número. Anotado em `scripts/strm.mjs`.
 - **Anexo A da ISO 27001:** não existe como framework; use a ISO 27002:2022.
 - **Conversor:** lê só a primeira aba de cada planilha. O ExcelJS não abriu 20 planilhas por causa dos relacionamentos de comentários; o conversor remove esses relacionamentos com JSZip (devDependency) antes da leitura.
 - **Acesso:** pacote `scf-strm`, tudo ou nada por chave; sem restrição por framework.

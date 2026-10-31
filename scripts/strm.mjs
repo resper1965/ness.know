@@ -29,7 +29,7 @@ export function lerPlanilha(linhas, arquivo) {
     }
     return "";
   };
-  const id = arquivo.replace(/^scf-strm-/, "").replace(/\.xlsx$/, "");
+  const id = arquivo.replace(/^scf-strm-/, "").replace(/\.(xlsx|pdf)$/, "");
   const nome = depois("Focal Document") || id;
   const versao = depois("Reference document").match(/version\s+(\S+)/i)?.[1] ?? null;
 
@@ -78,10 +78,11 @@ const INSTRUCOES =
 /** SQL idempotente: apaga e recarrega tudo, e cria ou atualiza o pacote scf-strm. */
 export function paraSql(planilhas) {
   const versao = planilhas.find((p) => p.versao)?.versao ?? null;
-  const sql = ["DELETE FROM strm;", "DELETE FROM strm_frameworks;", "DELETE FROM scf_controles;"];
+  // scf_controles não é apagado: o catálogo (scripts/scf-catalogo.mjs) o enriquece; aqui só entram controles que ainda não existem.
+  const sql = ["DELETE FROM strm;", "DELETE FROM strm_frameworks;"];
   const controles = new Map();
   for (const p of planilhas) {
-    sql.push(`INSERT INTO strm_frameworks (id, nome, versao_scf, itens) VALUES (${q(p.id)}, ${q(p.nome)}, ${q(p.versao)}, ${new Set(p.ligacoes.map((l) => l.item)).size});`);
+    sql.push(`INSERT INTO strm_frameworks (id, nome, versao_scf, itens) VALUES (${q(p.id)}, ${q(p.nome)}, ${q(p.versao ?? versao)}, ${new Set(p.ligacoes.map((l) => l.item)).size});`);
     for (let i = 0; i < p.ligacoes.length; i += LOTE) {
       const valores = p.ligacoes.slice(i, i + LOTE).map((l) => `(${q(p.id)}, ${q(l.item)}, ${q(l.itemNome)}, ${q(l.relacao)}, ${q(l.forca)}, ${q(l.scf)})`);
       sql.push(`INSERT INTO strm (framework, item, item_nome, relacao, forca, scf) VALUES ${valores.join(", ")};`);
@@ -90,7 +91,7 @@ export function paraSql(planilhas) {
   }
   const lista = [...controles.values()];
   for (let i = 0; i < lista.length; i += 50) {
-    sql.push(`INSERT INTO scf_controles (scf, nome, descricao) VALUES ${lista.slice(i, i + 50).map((l) => `(${q(l.scf)}, ${q(l.scfNome)}, ${q(l.scfDescricao)})`).join(", ")};`);
+    sql.push(`INSERT OR IGNORE INTO scf_controles (scf, nome, descricao) VALUES ${lista.slice(i, i + 50).map((l) => `(${q(l.scf)}, ${q(l.scfNome)}, ${q(l.scfDescricao)})`).join(", ")};`);
   }
   sql.push(
     `INSERT INTO pacotes (slug, nome, descricao, instrucoes, versao) VALUES ('scf-strm', 'Correspondência entre frameworks', ${q(`SCF STRM ${versao ?? ""}: ${planilhas.length} frameworks mapeados ao Secure Controls Framework`)}, ${q(INSTRUCOES)}, ${q(versao)}) ON CONFLICT (slug) DO UPDATE SET nome = excluded.nome, descricao = excluded.descricao, instrucoes = excluded.instrucoes, versao = excluded.versao, atualizado_em = datetime('now');`,
