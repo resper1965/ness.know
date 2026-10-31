@@ -184,7 +184,7 @@ LUIZ INÁCIO LULA DA SILVA
 
 Antonio Palocci Filho
 
-Lista de serviços anexa à Lei Complementar nº 116, de 31 de julho de 2003.
+## Lista de serviços anexa à Lei Complementar nº 116, de 31 de julho de 2003
 
 1 - Serviços de informática e congêneres.
 

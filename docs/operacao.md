@@ -84,7 +84,7 @@ node scripts/carregar-pacote.mjs $p $app
 ```
 
 - Cada `<caminho>` é um `.md` ou uma pasta do clone. As normas com `revogada: true` ficam de fora, e o conversor lista os títulos delas.
-- **Recarregar não apaga** o que já está no pacote. Uma norma que saiu do `documentos.json` (revogada, ou trocada por outra) continua na busca até ser apagada: pegue o `id` em `GET /api/pacotes/<slug>/documentos` e chame `DELETE /api/documentos/<id>` com o mesmo token do Access (`cf-access-token`).
+- **Recarregar não apaga** o que já está no pacote. Uma norma que saiu do `documentos.json` (revogada, ou trocada por outra) continua na busca até ser apagada. Para apagar, acrescente `--sincronizar` ao `carregar-pacote.mjs`: depois da carga, ele apaga do pacote os títulos que não estão no `documentos.json`. Se algum documento falhar na carga, ele não apaga nada. **Não use em pastas de acréscimo** (`-nist`, `-cis`), porque apagaria as normas do pacote base.
 - **Título** = título da norma + UF + ementa (até 250 caracteres). Se dois arquivos dão o mesmo título, o segundo leva o caminho entre colchetes, porque título repetido substitui a outra norma na carga.
 - `versao` recebe `versao_texto` (compilada ou original), `vigencia` recebe a data da norma, `fonte` o link oficial.
 - Os vetores são gravados na própria carga; não precisa rodar `vetorizar.mjs`.
