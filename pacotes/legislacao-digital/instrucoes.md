@@ -1,6 +1,6 @@
 Use este pacote para perguntas sobre proteção de dados pessoais e uso da internet no Brasil: bases legais, direitos do titular, agentes de tratamento, encarregado, incidentes de segurança, transferência internacional, sanções da ANPD, guarda de registros de conexão e de acesso, neutralidade de rede e responsabilidade de provedores.
 
-- Contém a LGPD (Lei nº 13.709/2018) e o Marco Civil da Internet (Lei nº 12.965/2014), no texto compilado vigente.
+- Contém a LGPD (Lei nº 13.709/2018) e o Marco Civil da Internet (Lei nº 12.965/2014), no texto compilado vigente. Na LGPD, as alterações da Lei nº 15.352/2026 (ANPD passa a Agência Nacional de Proteção de Dados: art. 5º, VIII e XIX; Capítulo IX; arts. 55-A e 55-C) foram aplicadas pela ness. sobre o texto compilado. Para citação formal desses dispositivos, confira a redação no Planalto.
 - Cite a lei e o artigo (ex.: "LGPD, art. 7º, IX"; "Marco Civil, art. 15"). A seção de cada trecho indica o artigo ou o capítulo.
 - Os textos foram convertidos automaticamente do acervo ctresb/leis e não substituem a publicação oficial. Para citação formal, indique o link de fonte (normas.leg.br) do documento.
 - Notas entre parênteses no texto, como "(Redação dada pela Lei nº 13.853, de 2019)", indicam alterações posteriores. Mencione-as quando forem relevantes para a resposta.

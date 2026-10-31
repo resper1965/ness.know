@@ -93,7 +93,7 @@ VI - controlador: pessoa natural ou jurídica, de direito público ou privado, a
 
 VII - operador: pessoa natural ou jurídica, de direito público ou privado, que realiza o tratamento de dados pessoais em nome do controlador;
 
-VIII - encarregado: pessoa indicada pelo controlador e operador para atuar como canal de comunicação entre o controlador, os titulares dos dados e a Autoridade Nacional de Proteção de Dados (ANPD); *(Inciso com redação dada pela Medida Provisória nº 869, de 27/12/2018, convertida na Lei nº 13.853, de 8/7/2019)*
+VIII - encarregado: pessoa indicada pelo controlador e operador para atuar como canal de comunicação entre o controlador, os titulares dos dados e a Agência Nacional de Proteção de Dados (ANPD); *(Inciso com redação dada pela Medida Provisória nº 869, de 27/12/2018, convertida na Lei nº 13.853, de 8/7/2019, e pela Lei nº 15.352, de 25/2/2026)*
 
 IX - agentes de tratamento: o controlador e o operador;
 
@@ -115,7 +115,7 @@ XVII - relatório de impacto à proteção de dados pessoais: documentação do 
 
 XVIII - órgão de pesquisa: órgão ou entidade da administração pública direta ou indireta ou pessoa jurídica de direito privado sem fins lucrativos legalmente constituída sob as leis brasileiras, com sede e foro no País, que inclua em sua missão institucional ou em seu objetivo social ou estatutário a pesquisa básica ou aplicada de caráter histórico, científico, tecnológico ou estatístico; e *(Inciso com redação dada pela Medida Provisória nº 869, de 27/12/2018, convertida na Lei nº 13.853, de 8/7/2019)*
 
-XIX - autoridade nacional: órgão da administração pública responsável por zelar, implementar e fiscalizar o cumprimento desta Lei em todo o território nacional. *(Inciso com redação dada pela Lei nº 13.853, de 8/7/2019)*
+XIX - autoridade nacional: entidade da administração pública responsável por zelar, implementar e fiscalizar o cumprimento desta Lei em todo o território nacional. *(Inciso com redação dada pela Lei nº 13.853, de 8/7/2019, e pela Lei nº 15.352, de 25/2/2026)*
 
 Art. 6º
 As atividades de tratamento de dados pessoais deverão observar a boa-fé e os seguintes princípios:
@@ -790,19 +790,19 @@ O valor da sanção de multa diária aplicável às infrações a esta Lei deve 
 
 **Parágrafo único.** A intimação da sanção de multa diária deverá conter, no mínimo, a descrição da obrigação imposta, o prazo razoável e estipulado pelo órgão para o seu cumprimento e o valor da multa diária a ser aplicada pelo seu descumprimento.
 
-#### CAPÍTULO IX — DA AUTORIDADE NACIONAL DE PROTEÇÃO DE DADOS
+#### CAPÍTULO IX — DA AGÊNCIA NACIONAL DE PROTEÇÃO DE DADOS E DO CONSELHO NACIONAL DE PROTEÇÃO DE DADOS PESSOAIS E DA PRIVACIDADE
 
-(ANPD) E DO CONSELHO NACIONAL DE PROTEÇÃO DE
+*(Denominação do capítulo com redação dada pela Lei nº 15.352, de 25/2/2026)*
 
-DADOS PESSOAIS E DA PRIVACIDADE
+##### Seção I — Da Agência Nacional de Proteção de Dados
 
-##### Seção I — Da Autoridade Nacional de Proteção de Dados (ANPD)
+*(Denominação da seção com redação dada pela Lei nº 15.352, de 25/2/2026)*
 
 Art. 55
 (VETADO).
 
 Art. 55-A
-Fica criada a Autoridade Nacional de Proteção de Dados (ANPD), autarquia de natureza especial, dotada de autonomia técnica e decisória, com patrimônio próprio e com sede e foro no Distrito Federal. *(“Caput” do artigo acrescido pela Medida Provisória nº 869, de 27/12/2018, convertida na Lei nº 13.853, de 8/7/2019, e com nova redação dada pela Medida Provisória nº 1.124, de 13/6/2022, convertida na Lei nº 14.460, de 25/10/2022)*
+Fica criada a Agência Nacional de Proteção de Dados (ANPD), autarquia de natureza especial vinculada ao Ministério da Justiça e Segurança Pública, dotada de autonomia funcional, técnica, decisória, administrativa e financeira, com patrimônio próprio e com sede e foro no Distrito Federal, nos termos da Lei nº 13.848, de 25 de junho de 2019. *(“Caput” do artigo acrescido pela Medida Provisória nº 869, de 27/12/2018, convertida na Lei nº 13.853, de 8/7/2019, e com nova redação dada pela Medida Provisória nº 1.124, de 13/6/2022, convertida na Lei nº 14.460, de 25/10/2022, e pela Lei nº 15.352, de 25/2/2026)*
 
 **§ 1º** *(Parágrafo acrescido pela Lei nº 13.853, de 8/7/2019, e revogado pela Medida Provisória nº 1.124, de 13/6/2022, convertida na Lei nº 14.460, de 25/10/2022)*
 
@@ -826,9 +826,11 @@ IV - Ouvidoria; *(Inciso acrescido pela Medida Provisória nº 869, de 27/12/201
 
 V - *(Inciso acrescido pela Medida Provisória nº 869, de 27/12/2018, convertida na Lei nº 13.853, de 8/7/2019 e revogado pela Lei nº 14.460, de 25/10/2022)*
 
-V-A - Procuradoria; e *(Inciso acrescido pela Lei nº 14.460, de 25/10/2022)*
+V-A - Procuradoria; *(Inciso acrescido pela Lei nº 14.460, de 25/10/2022, e com redação dada pela Lei nº 15.352, de 25/2/2026)*
 
-VI - unidades administrativas e unidades especializadas necessárias à aplicação do disposto nesta Lei. *(Inciso acrescido pela Medida Provisória nº 869, de 27/12/2018, convertida na Lei nº 13.853, de 8/7/2019)*
+V-B - Auditoria; e *(Inciso acrescido pela Lei nº 15.352, de 25/2/2026)*
+
+VI - unidades administrativas e unidades especializadas. *(Inciso acrescido pela Medida Provisória nº 869, de 27/12/2018, convertida na Lei nº 13.853, de 8/7/2019, e com redação dada pela Lei nº 15.352, de 25/2/2026)*
 
 Art. 55-D
 O Conselho Diretor da ANPD será composto de 5 (cinco) diretores, incluído o Diretor-Presidente.
