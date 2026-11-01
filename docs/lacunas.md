@@ -1,6 +1,6 @@
 # Lacunas conhecidas
 
-Levantamento de 31/10/2026: o que falta, o que limita o uso e o que está pendente de operação.
+Levantamento de 31/10/2026, revisto em 01/11/2026: o que falta, o que limita o uso e o que está pendente de operação.
 
 - **Prioridade:**
   - **P1** bloqueia uso ou deixa produção diferente do código;
@@ -10,13 +10,11 @@ Levantamento de 31/10/2026: o que falta, o que limita o uso e o que está penden
 
 ## 1. Produção atrás do código (P1)
 
-O código do `main` já tem o SCF 2026.3 e a ferramenta `detalhar_controle`, mas a produção ainda não.
+O Worker publicado e o D1 estão em dia com o `main` desde 01/11/2026 (migração 0004 aplicada, deploy feito). Faltam os dados do SCF 2026.3 e a conferência em produção.
 
 | # | Lacuna | Efeito | Próximo passo |
 | --- | --- | --- | --- |
-| 1.1 | Migração `0004_scf_catalogo.sql` não aplicada | `detalhar_controle` falha em produção | `npx wrangler d1 migrations apply ness-know --remote` |
-| 1.2 | Catálogo e STRM do SCF 2026.3 não carregados (produção está com o STRM 2026.1, sem catálogo) | Ids de controle de `correlacionar` e `cobertura` divergem do catálogo novo | `d1 execute` de `scf-catalogo-2026-3.sql`, depois `strm-2026-3.sql` (nessa ordem, mesma versão; ver `operacao.md`) |
-| 1.3 | Worker não publicado com o código atual | Ferramentas e textos novos fora do ar | `npx wrangler deploy` depois de 1.1 e 1.2 |
+| 1.2 | Catálogo e STRM do SCF 2026.3 não carregados (produção está com o STRM 2026.1, sem catálogo) | `detalhar_controle` devolve só nome e descrição, sem objetivos, evidências e maturidade; ids de `correlacionar` e `cobertura` vão divergir do catálogo quando ele entrar | `d1 execute` de `scf-catalogo-2026-3.sql`, depois `strm-2026-3.sql` (nessa ordem, mesma versão; ver `operacao.md`) |
 | 1.4 | Pacote `forense-digital` (ISO/IEC 27037) não carregado | Pacote listado na documentação sem conteúdo | `node scripts/carregar-pacote.mjs <pasta>\forense-digital https://know.ness.com.br` |
 | 1.5 | Ferramentas de correspondência nunca testadas em produção | Erros de dados (extração dos PDFs) só aparecem no uso | Chave de teste com **Correspondência entre frameworks** e **Segurança e conformidade**. Conferir Anexo A → TX-RAMP L2 (21 / 110 / 92), Anexo A → SOC 2 (50 / 293 / 56) e `detalhar_controle MON-02` |
 | 1.6 | Chave "faBRAINzio" não emitida | O faBRAINzio publicado não enxerga pacotes | Gerar com Segurança e conformidade, Setor elétrico e Gestão de serviços de TI; gravar como `NESS_KNOW_TOKEN` no faBRAINzio |
@@ -27,10 +25,12 @@ O código do `main` já tem o SCF 2026.3 e a ferramenta `detalhar_controle`, mas
 | --- | --- | --- | --- | --- |
 | 2.1 | Setor elétrico só tem a REN 964/2021; faltam os documentos do ONS (Procedimentos de Rede, RO-CB.BR.01) | O faBRAINzio (Alupar) não responde sobre o ONS | Carregar no pacote `setor-eletrico` | P2 |
 | 2.2 | Regulação financeira (BCB 538/2025, CMN 5.274/2025) não está na base | Ofertas de conformidade financeira sem fonte | Pacote novo ou acréscimo; não há STRM para elas | P2 |
-| 2.3 | Normas presentes no STRM sem o texto na base (IEC 62443, NIST 800-53, 800-82, NERC CIP, LGPD, PCI DSS, SOC 2, DORA, NIS2…) | `correlacionar` e `cobertura` devolvem o item, mas `buscar_conhecimento` não traz o texto para confirmar | Priorizar por uso: LGPD, IEC 62443 e NIST 800-53 | P2 |
+| 2.3 | Normas presentes no STRM sem o texto na base (IEC 62443, NIST 800-53, 800-82, NERC CIP, PCI DSS, SOC 2, DORA, NIS2…); a LGPD já está no pacote `legislacao-digital` | `correlacionar` e `cobertura` devolvem o item, mas `buscar_conhecimento` não traz o texto para confirmar | Priorizar por uso: IEC 62443 e NIST 800-53 | P2 |
 | 2.4 | REN 964, ISO 20000-1 e ITIL não estão no STRM do SCF | Não há correspondência automática para esses três | Mapeamento próprio (tabela `strm` com framework da ness.), ou só busca textual | P3 |
 | 2.5 | Recarregar uma norma substitui a anterior, sem histórico de versões | Não dá para consultar a versão vigente numa data passada | Guardar versões e marcar a vigente, se algum cliente pedir | P3 |
 | 2.6 | PDF sem camada de texto falha na carga | Normas escaneadas não entram | OCR antes da carga; o serviço não faz OCR | P3 |
+| 2.7 | Normas sem versão vigente completa no acervo ctresb/leis, fora dos pacotes `legislacao-digital` e `crimes-ciberneticos-e-ti`: Decreto 8.771/2016 e Decreto 9.637/2018 (só o original; foram alterados), Lei 14.133/2021 e Lei 9.609/1998 (só atos acessórios), Decreto 11.491/2023 (sem a Convenção de Budapeste) | Perguntas sobre licitação de TI, software, PNSI e regulamento do Marco Civil ficam sem fonte | Baixar o texto compilado do Planalto (HTML ou PDF) e acrescentar à pasta do pacote | P2 |
+| 2.8 | LGPD do pacote `legislacao-digital` consolidada à mão com a Lei 15.352/2026 (o compilado do acervo parava na Lei 14.460/2022) | Redação dos arts. 5º, VIII e XIX, 55-A e 55-C não conferida com a oficial | Comparar com a compilação do Planalto e trocar o arquivo pelo oficial | P2 |
 
 ## 3. Correspondência entre frameworks (SCF)
 
@@ -79,7 +79,7 @@ O código do `main` já tem o SCF 2026.3 e a ferramenta `detalhar_controle`, mas
 
 ## Ordem recomendada
 
-1. Seção 1 inteira, na ordem 1.1 → 1.2 → 1.3 → 1.5 → 1.6 → 1.4.
+1. Seção 1 inteira, na ordem 1.2 → 1.5 → 1.6 → 1.4.
 2. 3.1 (conferência da extração), antes de qualquer cliente usar `cobertura` num relatório.
 3. 2.1 (ONS), para o faBRAINzio.
 4. 4.1 e 4.3 (primeira onda de skills e forma de entrega).
