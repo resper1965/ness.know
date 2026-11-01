@@ -4,10 +4,10 @@ Os comandos são para PowerShell, num clone fora do OneDrive (`C:\dev\ness.know`
 
 ## Recursos na Cloudflare
 
-| Recurso | Nome | Situação em 31/10/2026 |
+| Recurso | Nome | Situação em 01/11/2026 |
 | --- | --- | --- |
-| Worker | `ness-know` | Publicado em `know.ness.com.br` |
-| D1 | `ness-know` | Migrações 0001 a 0003 aplicadas; 0004 pendente (ver [lacunas.md](lacunas.md), seção 1) |
+| Worker | `ness-know` | Publicado em `know.ness.com.br` com o código do `main` (01/11/2026) |
+| D1 | `ness-know` | Migrações 0001 a 0004 aplicadas; catálogo e STRM do SCF 2026.3 pendentes (ver [lacunas.md](lacunas.md), seção 1) |
 | R2 | `ness-know-arquivos` | Criado |
 | Vectorize | `ness-know-trechos` | Criado, com os índices de metadados `alvo` e `documento_id` |
 | Access | app `know.ness.com.br` (Allow, e-mails dos admins) e app `know.ness.com.br/mcp` (Bypass, Everyone) | Configurados |
