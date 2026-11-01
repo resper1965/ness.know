@@ -37,6 +37,8 @@
 
 ## Limites conhecidos
 
+Prioridade e próximo passo de cada um em [lacunas.md](lacunas.md), seção 5.
+
 - Não há limite de requisições por chave. Para isso, use Rate Limiting da Cloudflare em `/mcp` se o uso crescer.
 - Não há registro de consultas por chave; há só o horário do último `initialize` (`usado_em`).
 - ChatGPT e claude.ai na web não conectam, porque os conectores deles exigem OAuth.
