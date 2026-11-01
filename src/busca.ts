@@ -60,7 +60,7 @@ function repetidas(texto: string): Set<string> {
 /** Rótulo curto da seção: artigo só com o número; o resto, a linha até 80 caracteres. */
 const rotuloDe = (linha: string) => {
   const l = linha.trim().replace(/^#+\s+/, "").replace(/\s{2,}/g, " ");
-  return (l.match(/^Art\.\s?\d+[ºo°]?/)?.[0] ?? l).slice(0, 80);
+  return (l.match(/^Art\.\s?\d+[ºo°]?(-[A-Z]{1,2}\b)?/)?.[0] ?? l).slice(0, 80);
 };
 
 /** Trechos de ~`tamanho` caracteres com `sobra` de sobreposição. Corta antes de um título quando dá; senão em fim de parágrafo ou frase. */

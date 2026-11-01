@@ -61,12 +61,36 @@ node scripts/carregar-pacote.mjs "$p\seguranca-conformidade-nist" $app
 node scripts/carregar-pacote.mjs "C:\Users\resper\Downloads\seguranca-conformidade-cis" $app
 node scripts/carregar-pacote.mjs "$p\setor-eletrico" $app
 node scripts/carregar-pacote.mjs "$p\gestao-servicos-ti" $app
+node scripts/carregar-pacote.mjs pacotes\legislacao-digital $app   # neste repositório (ctresb/leis)
+node scripts/carregar-pacote.mjs pacotes\crimes-ciberneticos-e-ti $app
 ```
 
 - Cada documento imprime `ok <título>: N trechos` ou `ERRO <título>: motivo`.
 - **Recarregar** um documento com o mesmo título substitui a versão anterior, então rodar o script de novo não duplica nada.
 - **Pastas de acréscimo** (`-nist`, `-cis`) usam o mesmo `slug` do pacote base e somam documentos a ele.
 - **Títulos** são a identidade das normas nas chaves restritas. Mude um título só de propósito, porque a norma sai das chaves restritas a ele.
+
+## Carregar leis do acervo ctresb/leis
+
+O [ctresb/leis](https://github.com/ctresb/leis) (MIT) traz a legislação brasileira em Markdown com cabeçalho YAML (título, tipo, data, ementa, `revogada`, `fonte`). O acervo inteiro (1,26 milhão de normas, 6,9 GB de texto) não cabe no D1 (10 GB, com o FTS) e levaria semanas a uma norma por chamada. **Carregue recortes**: as normas de um tema, não pastas inteiras de estado.
+
+```powershell
+# Clone parcial: sem o checkout (23 GB), depois só as pastas do recorte.
+git clone --depth 1 --filter=blob:none --sparse https://github.com/ctresb/leis C:\dev\leis
+git -C C:\dev\leis sparse-checkout set federal/leis-ordinarias reguladores/aneel
+$p = "C:\pacotes\legislacao-digital"   # já com pacote.json e instrucoes.md
+node scripts/leis-para-pacote.mjs C:\dev\leis $p federal/leis-ordinarias/2018/lei-13709-2018-08-14.md federal/leis-ordinarias/2014/lei-12965-2014-04-23.md
+node scripts/carregar-pacote.mjs $p $app
+```
+
+- Cada `<caminho>` é um `.md` ou uma pasta do clone. As normas com `revogada: true` ficam de fora, e o conversor lista os títulos delas.
+- **Recarregar não apaga** o que já está no pacote. Uma norma que saiu do `documentos.json` (revogada, ou trocada por outra) continua na busca até ser apagada. Para apagar, acrescente `--sincronizar` ao `carregar-pacote.mjs`: depois da carga, ele apaga do pacote os títulos que não estão no `documentos.json`. Se algum documento falhar na carga, ele não apaga nada. **Não use em pastas de acréscimo** (`-nist`, `-cis`), porque apagaria as normas do pacote base.
+- **Título** = título da norma + UF + ementa (até 250 caracteres). Se dois arquivos dão o mesmo título, o segundo leva o caminho entre colchetes, porque título repetido substitui a outra norma na carga.
+- `versao` recebe `versao_texto` (compilada ou original), `vigencia` recebe a data da norma, `fonte` o link oficial.
+- Os vetores são gravados na própria carga; não precisa rodar `vetorizar.mjs`.
+- O conversor põe cada artigo numa linha própria, então os trechos saem cortados e rotulados por artigo (`Art. 7º`).
+- **Tamanho do pacote:** `listar_pacotes` devolve todos os títulos do pacote ao agente. Mantenha cada pacote em centenas de normas, não em milhares.
+- Os textos são conversões automáticas e OCR, não a publicação oficial. Diga isso no `instrucoes.md` e mande o agente citar o link `fonte`.
 
 ## Carregar ou atualizar o SCF STRM
 

@@ -1,0 +1,74 @@
+[
+  {
+    "arquivo": "textos/federal__decretos-lei__1940__del-2848-1940-12-07.md",
+    "titulo": "Decreto-Lei nº 2.848 de 07/12/1940 — Código Penal.",
+    "tipo": "Decreto-Lei",
+    "versao": "compilada (texto vigente)",
+    "vigencia": "1940-12-07",
+    "fonte": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto.lei:1940-12-07;2848"
+  },
+  {
+    "arquivo": "textos/federal__leis-complementares__2003__lcp-116-2003-07-31.md",
+    "titulo": "Lei Complementar nº 116 de 31/07/2003 — Lei do ISS: Imposto Sobre Serviços de Qualquer Natureza e lista de serviços (inclui informática e congêneres, item 1).",
+    "tipo": "Lei Complementar",
+    "versao": "compilada (texto vigente)",
+    "vigencia": "2003-07-31",
+    "fonte": "https://normas.leg.br/?urn=urn:lex:br:federal:lei.complementar:2003-07-31;116"
+  },
+  {
+    "arquivo": "textos/federal__decretos__2010__dec-7174-2010-05-12.md",
+    "titulo": "Decreto nº 7.174 de 12/05/2010 — Regulamenta a contratação de bens e serviços de informática e automação pela administração pública federal.",
+    "tipo": "Decreto",
+    "versao": "original",
+    "vigencia": "2010-05-12",
+    "fonte": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto:2010-05-12;7174"
+  },
+  {
+    "arquivo": "textos/federal__leis-ordinarias__1974__lei-6019-1974-01-03.md",
+    "titulo": "Lei nº 6.019 de 03/01/1974 — Trabalho temporário e prestação de serviços a terceiros (terceirização).",
+    "tipo": "Lei Ordinária",
+    "versao": "compilada (texto vigente)",
+    "vigencia": "1974-01-03",
+    "fonte": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1974-01-03;6019"
+  },
+  {
+    "arquivo": "textos/federal__leis-ordinarias__1990__lei-8078-1990-09-11.md",
+    "titulo": "Lei nº 8.078 de 11/09/1990 — Código de Defesa do Consumidor.",
+    "tipo": "Lei Ordinária",
+    "versao": "compilada (texto vigente)",
+    "vigencia": "1990-09-11",
+    "fonte": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:1990-09-11;8078"
+  },
+  {
+    "arquivo": "textos/federal__decretos__2023__dec-11856-2023-12-26.md",
+    "titulo": "Decreto nº 11.856 de 26/12/2023 — Institui a Política Nacional de Cibersegurança e o Comitê Nacional de Cibersegurança.",
+    "tipo": "Decreto",
+    "versao": "original",
+    "vigencia": "2023-12-26",
+    "fonte": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto:2023-12-26;11856"
+  },
+  {
+    "arquivo": "textos/federal__decretos__2025__dec-12573-2025-08-04.md",
+    "titulo": "Decreto nº 12.573 de 04/08/2025 — Institui a Estratégia Nacional de Cibersegurança.",
+    "tipo": "Decreto",
+    "versao": "original",
+    "vigencia": "2025-08-04",
+    "fonte": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto:2025-08-04;12573"
+  },
+  {
+    "arquivo": "textos/federal__decretos__2021__dec-10748-2021-07-16.md",
+    "titulo": "Decreto nº 10.748 de 16/07/2021 — Institui a Rede Federal de Gestão de Incidentes Cibernéticos.",
+    "tipo": "Decreto",
+    "versao": "original",
+    "vigencia": "2021-07-16",
+    "fonte": "https://normas.leg.br/?urn=urn:lex:br:federal:decreto:2021-07-16;10748"
+  },
+  {
+    "arquivo": "textos/federal__leis-ordinarias__2022__lei-14478-2022-12-21.md",
+    "titulo": "Lei nº 14.478 de 21/12/2022 — Marco legal dos ativos virtuais: prestadoras de serviços de ativos virtuais e crime de fraude com ativos virtuais.",
+    "tipo": "Lei Ordinária",
+    "versao": "original",
+    "vigencia": "2022-12-21",
+    "fonte": "https://normas.leg.br/?urn=urn:lex:br:federal:lei:2022-12-21;14478"
+  }
+]
