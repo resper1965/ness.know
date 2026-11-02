@@ -143,4 +143,5 @@ npx wrangler deploy
 | Agente recebe `401` | Chave errada, revogada ou sem o prefixo `Bearer` | Conferir com o `curl`; gerar outra |
 | Busca semântica vazia numa chave restrita | Falta o índice de metadados `documento_id`, ou os vetores são anteriores a ele | Criar o índice e rodar `node scripts/vetorizar.mjs $app` |
 | Documento com situação "Falhou" | PDF sem camada de texto ou arquivo corrompido | Usar um PDF com texto (OCR) e recarregar |
+| Recarga ou exclusão dá `500` e a norma aparece duas vezes no pacote | O Vectorize falhou ao apagar os vetores da versão anterior. O documento antigo fica, de propósito, para não deixar vetor órfão | Rode a carga de novo (ou `DELETE /api/documentos/<id>` da versão antiga) quando o Vectorize voltar |
 | `cloudflared access token` falha | Sessão do Access expirada | `cloudflared access login https://know.ness.com.br` |
