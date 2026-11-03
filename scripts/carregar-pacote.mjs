@@ -47,6 +47,7 @@ for (const d of documentos) {
   try {
     const r = await chamar(`/api/pacotes/${pacote.slug}/documentos`, { method: "POST", body: form });
     console.log(`ok  ${d.titulo ?? d.arquivo}: ${r.trechos} trechos`);
+    if (r.aviso) console.log(`AVISO ${d.titulo ?? d.arquivo}: ${r.aviso}`);
     ok++;
   } catch (e) {
     console.log(`ERRO ${d.titulo ?? d.arquivo}: ${e.message}`);

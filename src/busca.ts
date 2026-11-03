@@ -310,7 +310,7 @@ async function paraTexto(env: EnvConhecimento, arquivo: File): Promise<string> {
 }
 
 /** Guarda o original, extrai o texto e indexa os trechos. Arquivo ilegível fica registrado com erro e sem trechos. */
-export async function ingerir(env: EnvConhecimento, alvo: Alvo, meta: MetaDocumento, arquivo: File, autor: string): Promise<{ id: string; trechos: number; erro?: string }> {
+export async function ingerir(env: EnvConhecimento, alvo: Alvo, meta: MetaDocumento, arquivo: File, autor: string): Promise<{ id: string; trechos: number; erro?: string; aviso?: string }> {
   const id = crypto.randomUUID();
   const chave = `${alvo.escopo}/${alvo.dono}/${id}/${arquivo.name.replace(/[^\w.\- ]+/g, "_").slice(0, 120)}`;
   await env.ARQUIVOS.put(chave, arquivo.stream(), { httpMetadata: { contentType: arquivo.type || "application/octet-stream" } });
@@ -330,9 +330,13 @@ export async function ingerir(env: EnvConhecimento, alvo: Alvo, meta: MetaDocume
   const ins = env.DB.prepare("INSERT INTO trechos_fts (documento_id, escopo, dono, texto) VALUES (?, ?, ?, ?)");
   const stmts = [doc.bind(...valores, "ok", null, autor), ...partes.map((p) => ins.bind(id, alvo.escopo, alvo.dono, p))];
   for (let i = 0; i < stmts.length; i += 50) await env.DB.batch(stmts.slice(i, i + 50));
-  // Sem vetores o documento continua achável pela busca textual; o reprocessamento refaz depois.
-  await vetorizar(env, id, alvo, meta.titulo, partes).catch((e) => console.warn("vetores não gravados", id, String(e)));
-  return { id, trechos: partes.length };
+  // Sem vetores o documento continua achável pela busca textual; o aviso volta a quem carregou, para refazer com vetorizar.mjs.
+  const aviso = await vetorizar(env, id, alvo, meta.titulo, partes).then(
+    () => undefined,
+    (e) => `vetores não gravados (${String(e instanceof Error ? e.message : e).slice(0, 200)}); a busca semântica não acha este documento até rodar scripts/vetorizar.mjs`,
+  );
+  if (aviso) console.warn(aviso, id);
+  return { id, trechos: partes.length, ...(aviso ? { aviso } : {}) };
 }
 
 /** Refaz os vetores de documentos já carregados, em páginas (id > `apos`). */

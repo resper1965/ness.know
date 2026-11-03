@@ -10,11 +10,9 @@ Levantamento de 31/10/2026, revisto em 01/11/2026: o que falta, o que limita o u
 
 ## 1. Produção atrás do código (P1)
 
-Em dia desde 03/11/2026: Worker com o código do `main`, migração 0004, catálogo e STRM do SCF 2026.3 carregados (1.591 controles, 268 frameworks) e ferramentas de correspondência conferidas em produção (Anexo A → TX-RAMP L2 21 / 110 / 92, Anexo A → SOC 2 50 / 293 / 56, `detalhar_controle MON-02`). A chave do faBRAINzio foi emitida e gravada em 02/11/2026.
+Em dia desde 03/11/2026: Worker com o código do `main`, migração 0004, catálogo e STRM do SCF 2026.3 carregados (1.591 controles, 268 frameworks) e ferramentas de correspondência conferidas em produção (Anexo A → TX-RAMP L2 21 / 110 / 92, Anexo A → SOC 2 50 / 293 / 56, `detalhar_controle MON-02`). A chave do faBRAINzio foi emitida e gravada em 02/11/2026, e o pacote `forense-digital` (ABNT NBR ISO/IEC 27037:2013) foi carregado em 03/11/2026.
 
-| # | Lacuna | Efeito | Próximo passo |
-| --- | --- | --- | --- |
-| 1.4 | Pacote `forense-digital` (ISO/IEC 27037) não carregado | Pacote listado na documentação sem conteúdo | `node scripts/carregar-pacote.mjs <pasta>\forense-digital https://know.ness.com.br` |
+Nenhuma pendência.
 
 ## 2. Conteúdo da base
 
@@ -77,8 +75,7 @@ Em dia desde 03/11/2026: Worker com o código do `main`, migração 0004, catál
 
 ## Ordem recomendada
 
-1. 1.4 (pacote `forense-digital`).
-2. 3.1 (conferência da extração), antes de qualquer cliente usar `cobertura` num relatório.
-3. 2.1 (ONS), para o faBRAINzio.
-4. 4.1 e 4.3 (primeira onda de skills e forma de entrega).
-5. 5.2 e 5.1 (limite de requisições e OAuth), antes de abrir a base a mais clientes.
+1. 3.1 (conferência da extração), antes de qualquer cliente usar `cobertura` num relatório.
+2. 2.1 (ONS), para o faBRAINzio.
+3. 4.1 e 4.3 (primeira onda de skills e forma de entrega).
+4. 5.2 e 5.1 (limite de requisições e OAuth), antes de abrir a base a mais clientes.
