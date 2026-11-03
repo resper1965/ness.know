@@ -126,6 +126,7 @@ npx wrangler deploy
 | Tarefa | Como |
 | --- | --- |
 | Liberar acesso a um agente | Aba **Chaves**: nome, pacotes inteiros ou normas escolhidas, **Gerar chave**. Entregue a chave por canal seguro |
+| Conferir se as leis envelheceram | Uma vez por mês: `git -C C:\dev\leis pull` e `node scripts/verificar-leis.mjs C:\dev\leis`. Para cada norma dos pacotes `legislacao-digital` e `crimes-ciberneticos-e-ti`, procura no acervo ctresb/leis os atos que a alteram ou revogam e diz o que o texto ainda não cita. `FALTA` (e código de saída 1) é alteração publicada depois da carga, ou qualquer alteração de um texto original: recarregue o pacote com o texto novo. `conferir` é alteração anterior à carga que o texto não cita, quase sempre dispositivo revogado depois ou medida provisória que perdeu a vigência: confira no Planalto. Só vê atos federais de 2000 em diante que citam a norma na ementa |
 | Mandar a chave a um usuário | Logo depois de **Gerar chave**, clique em **Ver como conectar com esta chave**, escolha o agente dele e use **Copiar mensagem pronta**: o texto já traz os pacotes liberados, a receita com a chave, a conferência e os cuidados. A chave some ao recarregar a página. O usuário não precisa de acesso à interface |
 | Mudar o que uma chave enxerga | Gere uma nova chave e revogue a antiga |
 | Revogar | Aba **Chaves**, **Revogar**, **Confirmar** |
