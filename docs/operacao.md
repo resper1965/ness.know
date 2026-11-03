@@ -132,7 +132,7 @@ npx wrangler deploy
 | Ver se um agente está usando | Coluna **Último uso** (atualizada a cada `initialize`) |
 | Conferir uma chave | Aba **Conectar um agente**, comando `curl`; `401` indica chave errada ou revogada |
 | Incluir um administrador | Acrescente o e-mail em `ADMIN_EMAILS` no `wrangler.jsonc` e na política do Access, e rode `npx wrangler deploy` |
-| Medir a busca | `node scripts/avaliar-busca.mjs <perguntas.json> $app [pacote,pacote]` |
+| Medir a busca | `node scripts/avaliar-busca.mjs <perguntas.json> $app [pacote,pacote]`; gabaritos prontos e resultados em [gabaritos/](gabaritos/README.md) |
 | Refazer os vetores | `node scripts/vetorizar.mjs $app` (só sobrescreve) |
 
 ## Solução de problemas

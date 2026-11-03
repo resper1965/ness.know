@@ -26,6 +26,7 @@ Nenhuma pendência.
 | 2.6 | PDF sem camada de texto falha na carga | Normas escaneadas não entram | OCR antes da carga; o serviço não faz OCR | P3 |
 | 2.7 | Normas sem versão vigente completa no acervo ctresb/leis, fora dos pacotes `legislacao-digital` e `crimes-ciberneticos-e-ti`: Decreto 8.771/2016 e Decreto 9.637/2018 (só o original; foram alterados), Lei 14.133/2021 e Lei 9.609/1998 (só atos acessórios), Decreto 11.491/2023 (sem a Convenção de Budapeste) | Perguntas sobre licitação de TI, software, PNSI e regulamento do Marco Civil ficam sem fonte | Baixar o texto compilado do Planalto (HTML ou PDF) e acrescentar à pasta do pacote | P2 |
 | 2.8 | LGPD do pacote `legislacao-digital` consolidada à mão com a Lei 15.352/2026 (o compilado do acervo parava na Lei 14.460/2022) | Redação dos arts. 5º, VIII e XIX, 55-A e 55-C não conferida com a oficial | Comparar com a compilação do Planalto e trocar o arquivo pelo oficial | P2 |
+| 2.9 | `dispositivos-medicos` (ABNT NBR IEC 62304:2023): a conversão do PDF deixou os títulos de seção grudados no texto seguinte e 254 dos 255 trechos saem rotulados `Page N` | O agente cita "Page 30" em vez da seção (as instruções do pacote pedem a seção); acerto em 1º de 50% e no top 5 de 80%, contra 75% a 79% e 100% nos outros pacotes | Extrair o texto do PDF com `pdftotext`, limpar cabeçalhos e rodapés (como na 27037) e recarregar com o mesmo título | P2 |
 
 ## 3. Correspondência entre frameworks (SCF)
 
@@ -58,7 +59,7 @@ Nenhuma pendência.
 
 | # | Lacuna | Efeito | Próximo passo | Prioridade |
 | --- | --- | --- | --- | --- |
-| 6.1 | Avaliação com 36 perguntas, antes dos pacotes novos e do SCF | Não se sabe a qualidade em 62304, 27037, 31000 nem em perguntas de correspondência | Ampliar o gabarito por pacote e rodar `avaliar-busca.mjs` | P2 |
+| 6.1 | O gabarito cobre os pacotes novos (`docs/gabaritos/`, medido em 03/11/2026) e as 36 perguntas de 30/10, mas não o setor elétrico nem as ferramentas de correspondência (`correlacionar`, `cobertura`), que o `avaliar-busca.mjs` não mede | Não se sabe a qualidade da busca no setor elétrico nem se as ferramentas do SCF respondem o que o usuário pergunta | Gabarito do `setor-eletrico`; para as ferramentas, um teste de pares conhecidos (como o da lacuna 1.5) | P3 |
 | 6.2 | `BUSCA_MINIMO` (0,4) escolhido sem calibração | Trechos irrelevantes passam ou relevantes caem | Calibrar com as notas que `avaliar-busca.mjs` mostra | P3 |
 | 6.3 | Rerank desligado (na avaliação de 30/10, o 1º lugar ficou igual, 67%, e o MRR caiu de 0,77 para 0,75) | — | Reavaliar com o gabarito ampliado | P3 |
 
