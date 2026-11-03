@@ -33,11 +33,12 @@ scf_objetivos    ao_id, scf, objetivo
 scf_evidencias   erl_id, area, artefato, descricao
 strm             framework, item, item_nome, relacao (igual|subconjunto|superconjunto|intersecao), forca (0 a 10, pode faltar), scf; índices (framework, item) e (scf, framework)
 chaves      id PK, nome, token_hash UNIQUE, pacotes JSON [slug], documentos JSON {slug: [título]}, ativo, criado_por, criado_em, usado_em
+uso_chaves  chave_id + dia + ferramenta PK, chamadas (contagem por dia; não guarda o texto da consulta)
 ```
 
 As colunas `escopo` e `dono` existem porque o código de busca veio do faBRAINzio, que tem camadas pessoal, da organização e de pacote. Aqui `escopo` é sempre `pacote`.
 
-Migrações em `migrations/`: `0001_inicial.sql`, `0002_chave_documentos.sql`, `0003_strm.sql` (as tabelas do SCF STRM) e `0004_scf_catalogo.sql` (catálogo de controles, objetivos e evidências).
+Migrações em `migrations/`: `0001_inicial.sql`, `0002_chave_documentos.sql`, `0003_strm.sql` (as tabelas do SCF STRM) `0004_scf_catalogo.sql` (catálogo de controles, objetivos e evidências) e `0005_uso_chaves.sql` (uso por chave).
 
 ## Ingestão
 

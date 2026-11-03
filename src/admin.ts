@@ -55,7 +55,7 @@ export async function admin(req: Request, env: EnvConhecimento, email: string, c
   if (rota === "GET /api/eu") return Response.json({ email });
 
   // Chaves de API: o token aparece uma vez, na criação; no banco fica só o hash.
-  if (rota === "GET /api/chaves") return Response.json((await db.prepare("SELECT id, nome, pacotes, documentos, ativo, criado_por, criado_em, usado_em FROM chaves ORDER BY ativo DESC, nome").all()).results);
+  if (rota === "GET /api/chaves") return Response.json((await db.prepare("SELECT id, nome, pacotes, documentos, ativo, criado_por, criado_em, usado_em, (SELECT coalesce(sum(chamadas), 0) FROM uso_chaves u WHERE u.chave_id = chaves.id AND u.dia >= date('now', '-30 days')) AS chamadas_30d FROM chaves ORDER BY ativo DESC, nome").all()).results);
   if (rota === "POST /api/chaves") {
     const b = await corpo(req);
     const nome = txt(b.nome, 100);

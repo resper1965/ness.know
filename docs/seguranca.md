@@ -39,7 +39,7 @@
 
 Prioridade e próximo passo de cada um em [lacunas.md](lacunas.md), seção 5.
 
-- Não há limite de requisições por chave. Para isso, use Rate Limiting da Cloudflare em `/mcp` se o uso crescer.
-- Não há registro de consultas por chave; há só o horário do último `initialize` (`usado_em`).
+- Cada chave tem um limite de 240 chamadas por minuto no `/mcp` (Rate Limiting da Cloudflare, binding `LIMITE_MCP`); o excedente recebe `429`. O limite é por chave e por localidade da Cloudflare, então é uma barreira contra laço e vazamento, não uma cota exata.
+- O uso por chave é contado por dia e ferramenta (`uso_chaves`), sem o texto da consulta; não há registro do que cada agente perguntou.
 - ChatGPT e claude.ai na web não conectam, porque os conectores deles exigem OAuth.
 - As chaves não expiram sozinhas; a revogação é manual.

@@ -14,7 +14,7 @@ Erros vêm como `{ "erro": "mensagem" }`: `400` para entrada inválida, `401` se
 
 | Rota | Descrição |
 | --- | --- |
-| `GET /api/chaves` | Lista as chaves: `id`, `nome`, `pacotes` (JSON), `documentos` (JSON), `ativo`, `criado_por`, `criado_em`, `usado_em` |
+| `GET /api/chaves` | Lista as chaves: `id`, `nome`, `pacotes` (JSON), `documentos` (JSON), `ativo`, `criado_por`, `criado_em`, `usado_em` (atualizado no máximo uma vez por hora), `chamadas_30d` (chamadas autenticadas ao `/mcp` nos últimos 30 dias) |
 | `POST /api/chaves` | Cria uma chave. Devolve o `token` **uma única vez** |
 | `DELETE /api/chaves/:id` | Revoga a chave. O efeito é imediato e a chave não volta a valer |
 

@@ -1,0 +1,94 @@
+[
+  {
+    "pergunta": "O que é a cadeia de custódia da evidência digital?",
+    "documento": "27037",
+    "contem": [
+      "6.1",
+      "Cadeia de custódia"
+    ]
+  },
+  {
+    "pergunta": "Quais são os princípios da evidência digital?",
+    "documento": "27037",
+    "contem": [
+      "5.2",
+      "Princípios"
+    ]
+  },
+  {
+    "pergunta": "Quem é o primeiro interventor da evidência digital e o que ele faz?",
+    "documento": "27037",
+    "contem": [
+      "Primeiro Interventor"
+    ]
+  },
+  {
+    "pergunta": "Como coletar um dispositivo digital que está ligado?",
+    "documento": "27037",
+    "contem": [
+      "7.1.2.1"
+    ]
+  },
+  {
+    "pergunta": "Como coletar um dispositivo digital que está desligado?",
+    "documento": "27037",
+    "contem": [
+      "7.1.2.2"
+    ]
+  },
+  {
+    "pergunta": "Quando a aquisição parcial de evidência é aceitável?",
+    "documento": "27037",
+    "contem": [
+      "7.1.3.4",
+      "Aquisição parcial"
+    ]
+  },
+  {
+    "pergunta": "Quais os requisitos para o manuseio da evidência: repetibilidade e reprodutibilidade",
+    "documento": "27037",
+    "contem": [
+      "5.3.3",
+      "5.3.4"
+    ]
+  },
+  {
+    "pergunta": "Quais precauções tomar no local do incidente?",
+    "documento": "27037",
+    "contem": [
+      "6.2"
+    ]
+  },
+  {
+    "pergunta": "Como acondicionar e transportar a potencial evidência digital?",
+    "documento": "27037",
+    "contem": [
+      "6.9"
+    ]
+  },
+  {
+    "pergunta": "Que documentação mínima acompanha a transferência de evidência entre jurisdições?",
+    "documento": "27037",
+    "contem": [
+      "Anexo B",
+      "transferência"
+    ]
+  },
+  {
+    "pergunta": "Como tratar dispositivos de rede na coleta e aquisição de evidência?",
+    "documento": "27037",
+    "contem": [
+      "7.2.1",
+      "7.2.2",
+      "Dispositivos de rede"
+    ]
+  },
+  {
+    "pergunta": "Quais competências o especialista em evidência digital precisa ter?",
+    "documento": "27037",
+    "contem": [
+      "6.4 Competência",
+      "Competências essenciais"
+    ]
+  }
+]

@@ -1,0 +1,72 @@
+[
+  {
+    "pergunta": "Como classificar a segurança do software em classe A, B ou C?",
+    "documento": "62304",
+    "contem": [
+      "Classificação de segurança do software"
+    ]
+  },
+  {
+    "pergunta": "O que o fabricante deve planejar no desenvolvimento do software?",
+    "documento": "62304",
+    "contem": [
+      "Planejamento do desenvolvimento de software"
+    ]
+  },
+  {
+    "pergunta": "Como deve ser feita a análise de requisitos de software?",
+    "documento": "62304",
+    "contem": [
+      "requisitos de software"
+    ]
+  },
+  {
+    "pergunta": "O que a norma exige da arquitetura de software?",
+    "documento": "62304",
+    "contem": [
+      "arquitetura de software"
+    ]
+  },
+  {
+    "pergunta": "Como funciona o processo de manutenção de software?",
+    "documento": "62304",
+    "contem": [
+      "manutenção de software"
+    ]
+  },
+  {
+    "pergunta": "O que a norma exige no gerenciamento de risco de software?",
+    "documento": "62304",
+    "contem": [
+      "gerenciamento de risco de software"
+    ]
+  },
+  {
+    "pergunta": "Como fazer o gerenciamento de configuração do software?",
+    "documento": "62304",
+    "contem": [
+      "gerenciamento de configuração"
+    ]
+  },
+  {
+    "pergunta": "Como tratar a resolução de problemas de software?",
+    "documento": "62304",
+    "contem": [
+      "resolução de problemas"
+    ]
+  },
+  {
+    "pergunta": "Como tratar itens de software de procedência desconhecida?",
+    "documento": "62304",
+    "contem": [
+      "procedência desconhecida"
+    ]
+  },
+  {
+    "pergunta": "Como deve ser o teste do sistema de software?",
+    "documento": "62304",
+    "contem": [
+      "Teste de sistema de software"
+    ]
+  }
+]

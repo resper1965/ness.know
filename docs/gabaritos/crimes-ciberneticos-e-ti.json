@@ -1,0 +1,110 @@
+[
+  {
+    "pergunta": "Qual a pena para quem invade dispositivo informático alheio para obter dados?",
+    "documento": "2.848",
+    "contem": [
+      "Art. 154-A"
+    ]
+  },
+  {
+    "pergunta": "Furto mediante fraude cometido por dispositivo eletrônico tem pena maior?",
+    "documento": "2.848",
+    "contem": [
+      "Art. 155"
+    ]
+  },
+  {
+    "pergunta": "Estelionato em que a vítima fornece informações induzida por redes sociais ou golpe por telefone",
+    "documento": "2.848",
+    "contem": [
+      "Art. 171"
+    ]
+  },
+  {
+    "pergunta": "O que configura o crime de perseguição (stalking)?",
+    "documento": "2.848",
+    "contem": [
+      "Art. 147-A"
+    ]
+  },
+  {
+    "pergunta": "Divulgar cena de nudez ou sexo sem consentimento é crime?",
+    "documento": "2.848",
+    "contem": [
+      "Art. 218-C"
+    ]
+  },
+  {
+    "pergunta": "Como o Código Penal trata a fraude com ativos virtuais?",
+    "documento": "2.848",
+    "contem": [
+      "Art. 171-A"
+    ],
+    "aceita": [
+      {
+        "documento": "14.478",
+        "contem": [
+          "fraude"
+        ]
+      }
+    ]
+  },
+  {
+    "pergunta": "Quais serviços de informática estão na lista de serviços do ISS?",
+    "documento": "116",
+    "contem": [
+      "1.01",
+      "informática"
+    ]
+  },
+  {
+    "pergunta": "Quando uma empresa pode contratar serviços de terceiros e qual a responsabilidade do contratante?",
+    "documento": "6.019",
+    "contem": [
+      "Art. 4º-A",
+      "Art. 5º-A"
+    ]
+  },
+  {
+    "pergunta": "Como a administração pública federal contrata bens e serviços de informática?",
+    "documento": "7.174",
+    "contem": [
+      "informática"
+    ]
+  },
+  {
+    "pergunta": "O que é a Política Nacional de Cibersegurança e quem a coordena?",
+    "documento": "11.856",
+    "contem": [
+      "Cibersegurança"
+    ]
+  },
+  {
+    "pergunta": "O que é a Rede Federal de Gestão de Incidentes Cibernéticos?",
+    "documento": "10.748",
+    "contem": [
+      "Incidentes Cibernéticos"
+    ]
+  },
+  {
+    "pergunta": "Quais os objetivos da Estratégia Nacional de Cibersegurança?",
+    "documento": "12.573",
+    "contem": [
+      "Estratégia Nacional de Cibersegurança"
+    ]
+  },
+  {
+    "pergunta": "O fornecedor responde por defeito na prestação do serviço?",
+    "documento": "8.078",
+    "contem": [
+      "Art. 14"
+    ]
+  },
+  {
+    "pergunta": "Direito de arrependimento em contratação feita fora do estabelecimento ou pela internet",
+    "documento": "8.078",
+    "contem": [
+      "Art. 49"
+    ]
+  }
+]

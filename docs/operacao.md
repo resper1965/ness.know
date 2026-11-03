@@ -126,12 +126,14 @@ npx wrangler deploy
 | Tarefa | Como |
 | --- | --- |
 | Liberar acesso a um agente | Aba **Chaves**: nome, pacotes inteiros ou normas escolhidas, **Gerar chave**. Entregue a chave por canal seguro |
+| Conferir se as leis envelheceram | Uma vez por mês: `git -C C:\dev\leis pull` e `node scripts/verificar-leis.mjs C:\dev\leis`. Para cada norma dos pacotes `legislacao-digital` e `crimes-ciberneticos-e-ti`, procura no acervo ctresb/leis os atos que a alteram ou revogam e diz o que o texto ainda não cita. `FALTA` (e código de saída 1) é alteração publicada depois da carga, ou qualquer alteração de um texto original: recarregue o pacote com o texto novo. `conferir` é alteração anterior à carga que o texto não cita, quase sempre dispositivo revogado depois ou medida provisória que perdeu a vigência: confira no Planalto. Só vê atos federais de 2000 em diante que citam a norma na ementa |
+| Mandar a chave a um usuário | Logo depois de **Gerar chave**, clique em **Ver como conectar com esta chave**, escolha o agente dele e use **Copiar mensagem pronta**: o texto já traz os pacotes liberados, a receita com a chave, a conferência e os cuidados. A chave some ao recarregar a página. O usuário não precisa de acesso à interface |
 | Mudar o que uma chave enxerga | Gere uma nova chave e revogue a antiga |
 | Revogar | Aba **Chaves**, **Revogar**, **Confirmar** |
 | Ver se um agente está usando | Coluna **Último uso** (atualizada a cada `initialize`) |
 | Conferir uma chave | Aba **Conectar um agente**, comando `curl`; `401` indica chave errada ou revogada |
 | Incluir um administrador | Acrescente o e-mail em `ADMIN_EMAILS` no `wrangler.jsonc` e na política do Access, e rode `npx wrangler deploy` |
-| Medir a busca | `node scripts/avaliar-busca.mjs <perguntas.json> $app [pacote,pacote]` |
+| Medir a busca | `node scripts/avaliar-busca.mjs <perguntas.json> $app [pacote,pacote]`; gabaritos prontos e resultados em [gabaritos/](gabaritos/README.md) |
 | Refazer os vetores | `node scripts/vetorizar.mjs $app` (só sobrescreve) |
 
 ## Solução de problemas
@@ -140,6 +142,7 @@ npx wrangler deploy
 | --- | --- | --- |
 | Interface mostra "Sua sessão expirou" logo ao abrir | Falta a aplicação do Access sem caminho, `ACCESS_AUD` errado ou e-mail fora de `ADMIN_EMAILS` | Confira os três e rode `npx wrangler deploy` |
 | `/mcp` pede login no navegador | A aplicação Bypass do caminho `mcp` não existe ou está com Allow | Ajuste no Zero Trust |
+| Agente recebe `429` | A chave passou de 240 chamadas por minuto (o faBRAINzio usa uma chave só para todos os usuários) | Espere 30 segundos. Se for uso normal, suba `limit` em `ratelimits` no `wrangler.jsonc` e rode `npx wrangler deploy` |
 | Agente recebe `401` | Chave errada, revogada ou sem o prefixo `Bearer` | Conferir com o `curl`; gerar outra |
 | Busca semântica vazia numa chave restrita | Falta o índice de metadados `documento_id`, ou os vetores são anteriores a ele | Criar o índice e rodar `node scripts/vetorizar.mjs $app` |
 | Documento com situação "Falhou" | PDF sem camada de texto ou arquivo corrompido | Usar um PDF com texto (OCR) e recarregar |

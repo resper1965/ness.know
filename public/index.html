@@ -58,6 +58,7 @@
     h1 { flex: 1; min-width: 0; margin: 0; font: 600 20px/1.1 var(--font-head); letter-spacing: -.02em; }
     .conteudo { padding: 24px 28px 64px; max-width: 1180px; }
     .painel[hidden] { display: none; }
+    #copiar-mensagem[hidden] { display: none; }
     .lead { color: var(--ink-3); margin: 0 0 24px; max-width: 72ch; }
     h2 { margin: 0; font: 600 15px/1.2 var(--font-head); letter-spacing: -.01em; }
     p { margin: 0 0 12px; }
@@ -326,6 +327,7 @@
                 </dl>
                 <div class="codigo" id="receita-bloco"><pre id="receita-texto"></pre><button type="button" class="secundario copiar" data-copiar="receita-texto">Copiar</button></div>
                 <p class="apoio" id="receita-nota" style="margin:12px 0 0"></p>
+                <button type="button" class="secundario" id="copiar-mensagem" hidden style="margin-top:12px">Copiar mensagem pronta</button>
               </div>
             </div>
             <div class="folha">

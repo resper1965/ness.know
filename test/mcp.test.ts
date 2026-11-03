@@ -29,6 +29,7 @@ async function ambiente(pacotes = ["iso"], documentos: Record<string, string[]> 
         };
       },
     }),
+    batch: async (stmts: { run(): Promise<unknown> }[]) => Promise.all(stmts.map((s) => s.run())),
   } as unknown as D1Database;
   return { env: { DB, AI: {} as Ai }, consultas };
 }
@@ -149,5 +150,34 @@ describe("mcp", () => {
     expect(com.find((x) => x.slug === "scf-strm")?.frameworks).toEqual([{ id: "iso", nome: "ISO 27002:2022", itens: 93 }]);
     expect(com.find((x) => x.slug === "iso")).not.toHaveProperty("frameworks");
     expect((await ler(["iso"]))[0]).not.toHaveProperty("frameworks");
+  });
+  it("registra o uso por ferramenta (nome inventado vira desconhecida) e não guarda a consulta", async () => {
+    const { env, consultas } = await ambiente();
+    await chamar(env, { jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-03-26" } });
+    await chamar(env, { jsonrpc: "2.0", id: 2, method: "tools/call", params: { name: "listar_pacotes" } });
+    await chamar(env, { jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "x".repeat(5000) } });
+    await chamar(env, { jsonrpc: "2.0", id: 4, method: "tools/call", params: { name: "buscar_conhecimento", arguments: { consulta: "segredo do cliente" } } });
+    await chamar(env, { jsonrpc: "2.0", id: 5, method: "ping" });
+    const usos = consultas.filter((c) => c.sql.includes("INSERT INTO uso_chaves"));
+    expect(usos.map((c) => c.binds)).toEqual([["c1", "initialize"], ["c1", "listar_pacotes"], ["c1", "desconhecida"], ["c1", "buscar_conhecimento"]]);
+    expect(JSON.stringify(consultas.filter((c) => c.sql.includes("uso_chaves")))).not.toContain("segredo do cliente");
+    // O último uso só é regravado quando passou mais de uma hora.
+    expect(consultas.filter((c) => c.sql.includes("UPDATE chaves SET usado_em"))[0].sql).toContain("-1 hour");
+  });
+  it("com o limite da chave estourado responde 429 sem consultar nada; dentro do limite segue normal", async () => {
+    const { env, consultas } = await ambiente();
+    const chaves: string[] = [];
+    const comLimite = (success: boolean) =>
+      ({ ...env, LIMITE_MCP: { limit: async ({ key }: { key: string }) => (chaves.push(key), { success }) } }) as unknown as typeof env;
+
+    const r = await chamar(comLimite(false), { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "listar_pacotes" } });
+    expect(r.status).toBe(429);
+    expect(r.headers.get("retry-after")).toBe("30");
+    expect(((await r.json()) as { error: { code: number } }).error.code).toBe(-32002);
+    expect(consultas.some((c) => c.sql.includes("uso_chaves"))).toBe(false);
+
+    expect((await chamar(comLimite(true), { jsonrpc: "2.0", id: 2, method: "ping" })).status).toBe(200);
+    expect(chaves).toEqual(["c1", "c1"]); // o limite é por chave
+    expect((await chamar(comLimite(false), { jsonrpc: "2.0", id: 3, method: "ping" }, "errado")).status).toBe(401); // chave inválida não chega ao limitador
   });
 });

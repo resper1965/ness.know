@@ -157,6 +157,7 @@ Erros: chave sem o pacote, `informe scf (ex.: MON-02)` e `controle SCF desconhec
 | Situação | HTTP | JSON-RPC |
 | --- | --- | --- |
 | Sem chave, chave inválida ou revogada | 401 | `-32001 token inválido` |
+| Chave acima do limite de 240 chamadas por minuto | 429, com `Retry-After: 30` | `-32002 limite de requisições da chave excedido` |
 | Corpo que não é JSON-RPC | 400 | `-32600 requisição inválida` |
 | Método desconhecido | 200 | `-32601 método não suportado` |
 | `GET` em `/mcp` | 405 | (sem corpo JSON) |

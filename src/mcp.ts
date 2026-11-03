@@ -7,6 +7,8 @@ export interface EnvMcp extends EnvBusca {
   /** Ajustes medidos com scripts/avaliar-busca.mjs: "1" liga o rerank; número troca a nota mínima da semântica. */
   BUSCA_RERANK?: string;
   BUSCA_MINIMO?: string;
+  /** Limite de chamadas por chave (Rate Limiting da Cloudflare). Sem o binding, não há limite (testes e wrangler dev sem ele). */
+  LIMITE_MCP?: RateLimit;
 }
 
 /** Versões que este servidor implementa (HTTP sem sessão, só ferramentas). Pedido fora da lista recebe a mais nova. */
@@ -194,6 +196,23 @@ async function chamar(env: EnvMcp, cliente: Cliente, nome: string, args: Record<
   return texto(`ferramenta desconhecida: ${nome}`, true);
 }
 
+/**
+ * Uso da chave: contagem por dia e ferramenta (sem o texto da consulta) e último uso, no máximo uma vez por hora.
+ * Falha ao registrar não derruba a consulta.
+ */
+async function registrarUso(db: D1Database, chaveId: string, ferramenta: string): Promise<void> {
+  try {
+    await db.batch([
+      db
+        .prepare("INSERT INTO uso_chaves (chave_id, dia, ferramenta, chamadas) VALUES (?, date('now'), ?, 1) ON CONFLICT (chave_id, dia, ferramenta) DO UPDATE SET chamadas = chamadas + 1")
+        .bind(chaveId, ferramenta),
+      db.prepare("UPDATE chaves SET usado_em = datetime('now') WHERE id = ? AND (usado_em IS NULL OR usado_em < datetime('now', '-1 hour'))").bind(chaveId),
+    ]);
+  } catch (e) {
+    console.warn("uso não registrado", chaveId, String(e));
+  }
+}
+
 const rpc = (id: unknown, result: unknown) => Response.json({ jsonrpc: "2.0", id, result });
 const rpcErro = (id: unknown, code: number, message: string, status = 200) => Response.json({ jsonrpc: "2.0", id: id ?? null, error: { code, message } }, { status });
 
@@ -201,13 +220,21 @@ export async function mcp(req: Request, env: EnvMcp): Promise<Response> {
   if (req.method !== "POST") return new Response("use POST", { status: 405, headers: { allow: "POST" } });
   const cliente = await clienteDe(req, env.DB);
   if (!cliente) return rpcErro(null, -32001, "token inválido", 401);
+  // Uma chave vazada ou um agente em laço não consome sem fim a cota do Workers AI e do Vectorize.
+  if (env.LIMITE_MCP && !(await env.LIMITE_MCP.limit({ key: cliente.id })).success)
+    return Response.json({ jsonrpc: "2.0", id: null, error: { code: -32002, message: "limite de requisições da chave excedido; tente de novo em instantes" } }, { status: 429, headers: { "retry-after": "30" } });
   const m = (await req.json().catch(() => null)) as { id?: unknown; method?: unknown; params?: Record<string, unknown> } | null;
   if (!m || typeof m !== "object" || Array.isArray(m) || typeof m.method !== "string") return rpcErro(null, -32600, "requisição inválida", 400);
   if (m.id === undefined) return new Response(null, { status: 202 }); // notificação (ex.: notifications/initialized)
 
+  // Nome de ferramenta que não existe vira "desconhecida": a chave não cria linhas novas à vontade.
+  if (m.method === "initialize" || m.method === "tools/list" || m.method === "tools/call") {
+    const chamada = typeof m.params?.name === "string" ? m.params.name : "";
+    await registrarUso(env.DB, cliente.id, m.method !== "tools/call" ? m.method : FERRAMENTAS.some((f) => f.name === chamada) ? chamada : "desconhecida");
+  }
+
   switch (m.method) {
     case "initialize":
-      await env.DB.prepare("UPDATE chaves SET usado_em = datetime('now') WHERE id = ?").bind(cliente.id).run();
       return rpc(m.id, {
         protocolVersion: VERSOES.includes(String(m.params?.protocolVersion)) ? m.params?.protocolVersion : VERSOES[0],
         capabilities: { tools: {} },
