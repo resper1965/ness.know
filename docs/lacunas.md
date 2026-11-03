@@ -10,14 +10,11 @@ Levantamento de 31/10/2026, revisto em 01/11/2026: o que falta, o que limita o u
 
 ## 1. Produção atrás do código (P1)
 
-O Worker publicado e o D1 estão em dia com o `main` desde 01/11/2026 (migração 0004 aplicada, deploy feito). Faltam os dados do SCF 2026.3 e a conferência em produção.
+Em dia desde 03/11/2026: Worker com o código do `main`, migração 0004, catálogo e STRM do SCF 2026.3 carregados (1.591 controles, 268 frameworks) e ferramentas de correspondência conferidas em produção (Anexo A → TX-RAMP L2 21 / 110 / 92, Anexo A → SOC 2 50 / 293 / 56, `detalhar_controle MON-02`). A chave do faBRAINzio foi emitida e gravada em 02/11/2026.
 
 | # | Lacuna | Efeito | Próximo passo |
 | --- | --- | --- | --- |
-| 1.2 | Catálogo e STRM do SCF 2026.3 não carregados (produção está com o STRM 2026.1, sem catálogo) | `detalhar_controle` devolve só nome e descrição, sem objetivos, evidências e maturidade; ids de `correlacionar` e `cobertura` vão divergir do catálogo quando ele entrar | `d1 execute` de `scf-catalogo-2026-3.sql`, depois `strm-2026-3.sql` (nessa ordem, mesma versão; ver `operacao.md`) |
 | 1.4 | Pacote `forense-digital` (ISO/IEC 27037) não carregado | Pacote listado na documentação sem conteúdo | `node scripts/carregar-pacote.mjs <pasta>\forense-digital https://know.ness.com.br` |
-| 1.5 | Ferramentas de correspondência nunca testadas em produção | Erros de dados (extração dos PDFs) só aparecem no uso | Chave de teste com **Correspondência entre frameworks** e **Segurança e conformidade**. Conferir Anexo A → TX-RAMP L2 (21 / 110 / 92), Anexo A → SOC 2 (50 / 293 / 56) e `detalhar_controle MON-02` |
-| 1.6 | Chave "faBRAINzio" não emitida | O faBRAINzio publicado não enxerga pacotes | Gerar com Segurança e conformidade, Setor elétrico e Gestão de serviços de TI; gravar como `NESS_KNOW_TOKEN` no faBRAINzio |
 
 ## 2. Conteúdo da base
 
@@ -60,6 +57,7 @@ O Worker publicado e o D1 estão em dia com o `main` desde 01/11/2026 (migraçã
 | 5.3 | Sem registro de consultas por chave (só `usado_em`) | Não dá para saber o que cada agente consulta nem auditar uso indevido | Tabela de uso com chave, ferramenta, horário e contagem, sem o texto da consulta | P3 |
 | 5.4 | Chaves não expiram | Chave esquecida continua válida | Validade opcional na criação, com aviso na interface | P3 |
 | 5.5 | Mudar o que uma chave enxerga exige revogar e gerar outra | Troca de chave em todos os agentes que a usam | Aceitável; rever se houver muitos clientes | P3 |
+| 5.6 | "Último uso" da chave só muda no `initialize` do MCP; o faBRAINzio e os scripts chamam `tools/call` direto | A aba Chaves mostra "nunca" para chaves em uso, inclusive a do faBRAINzio | Gravar `usado_em` em qualquer chamada autenticada, no máximo uma vez por hora por chave | P3 |
 
 ## 6. Busca
 
@@ -79,7 +77,7 @@ O Worker publicado e o D1 estão em dia com o `main` desde 01/11/2026 (migraçã
 
 ## Ordem recomendada
 
-1. Seção 1 inteira, na ordem 1.2 → 1.5 → 1.6 → 1.4.
+1. 1.4 (pacote `forense-digital`).
 2. 3.1 (conferência da extração), antes de qualquer cliente usar `cobertura` num relatório.
 3. 2.1 (ONS), para o faBRAINzio.
 4. 4.1 e 4.3 (primeira onda de skills e forma de entrega).
