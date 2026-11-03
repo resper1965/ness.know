@@ -25,7 +25,7 @@ A base é organizada em **pacotes**. Cada pacote reúne documentos de um domíni
 | `setor-eletrico` | ANEEL REN 964/2021 |
 | `gestao-servicos-ti` | ITIL 4 Foundation |
 | `dispositivos-medicos` | IEC 62304 (software de dispositivo médico) |
-| `forense-digital` | ISO/IEC 27037 (evidência digital); carga pendente |
+| `forense-digital` | ABNT NBR ISO/IEC 27037:2013 (identificação, coleta, aquisição e preservação de evidência digital) |
 | `legislacao-digital` | LGPD (Lei 13.709/2018) e Marco Civil da Internet (Lei 12.965/2014), texto compilado; pasta [`pacotes/legislacao-digital`](pacotes/legislacao-digital) |
 | `crimes-ciberneticos-e-ti` | Código Penal compilado (crimes cibernéticos), Lei 14.478/2022 (ativos virtuais), Decretos 11.856/2023, 12.573/2025 e 10.748/2021 (cibersegurança), LC 116/2003, Decreto 7.174/2010, Lei 6.019/1974 e CDC; pasta [`pacotes/crimes-ciberneticos-e-ti`](pacotes/crimes-ciberneticos-e-ti) |
 
