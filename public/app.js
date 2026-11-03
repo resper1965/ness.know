@@ -312,7 +312,7 @@ function desenharChaves() {
           const uso = c.usado_em ? el("span", quando(c.usado_em)) : el("span", "nunca", "apoio");
           if (c.usado_em) uso.title = fmtHora.format(dataDe(c.usado_em));
           const acao = celula(c.ativo ? botao("Revogar", "secundario pequeno", (e) => confirmarRevogacao(c, e.currentTarget.parentElement)) : null, "acao");
-          tr.append(celula(nome), celula(lista), celula(uso, "esconde-estreito"), acao);
+          tr.append(celula(nome), celula(lista), celula([uso, el("span", `${c.chamadas_30d ?? 0} chamadas em 30 dias`, "sub")], "esconde-estreito"), acao);
           return tr;
         })
       : [vazio(4, "Nenhuma chave ativa", "Gere a primeira ao lado para conectar um agente.")]),

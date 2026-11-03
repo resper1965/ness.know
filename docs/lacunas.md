@@ -52,10 +52,8 @@ Nenhuma pendência.
 | --- | --- | --- | --- | --- |
 | 5.1 | Sem OAuth no `/mcp` | claude.ai na web e ChatGPT não conectam (só aceitam OAuth ou sem autenticação) | OAuth 2.1 com Cloudflare Access como provedor, mapeando o usuário para uma chave | P2 |
 | 5.2 | Sem limite de requisições por chave | Uma chave vazada ou um agente em laço consome a cota de Workers AI e Vectorize | Rate Limiting da Cloudflare em `/mcp` | P2 |
-| 5.3 | Sem registro de consultas por chave (só `usado_em`) | Não dá para saber o que cada agente consulta nem auditar uso indevido | Tabela de uso com chave, ferramenta, horário e contagem, sem o texto da consulta | P3 |
 | 5.4 | Chaves não expiram | Chave esquecida continua válida | Validade opcional na criação, com aviso na interface | P3 |
 | 5.5 | Mudar o que uma chave enxerga exige revogar e gerar outra | Troca de chave em todos os agentes que a usam | Aceitável; rever se houver muitos clientes | P3 |
-| 5.6 | "Último uso" da chave só muda no `initialize` do MCP; o faBRAINzio e os scripts chamam `tools/call` direto | A aba Chaves mostra "nunca" para chaves em uso, inclusive a do faBRAINzio | Gravar `usado_em` em qualquer chamada autenticada, no máximo uma vez por hora por chave | P3 |
 
 ## 6. Busca
 
