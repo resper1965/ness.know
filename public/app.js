@@ -1,4 +1,5 @@
 // ness.KNOW — admin. Todo texto vindo do servidor entra por textContent.
+import { mensagemPronta } from "./mensagem.js";
 const $ = (s) => document.querySelector(s);
 const el = (tag, txt, cls) => {
   const e = document.createElement(tag);
@@ -161,6 +162,7 @@ function mostrarReceita() {
   $("#receita-texto").textContent = r.texto;
   $("#receita-bloco").querySelector(".copiar").hidden = !!r.sem;
   $("#receita-nota").textContent = r.sem || r.id === "codex" ? "" : "A chave fica em texto nesse arquivo. Não o envie ao Git.";
+  $("#copiar-mensagem").hidden = !chaveAtual || !!r.sem;
   $("#cmd-conferir").textContent = `curl -s ${URL_MCP} \\\n  -H "Authorization: Bearer ${chave}" \\\n  -H "content-type: application/json" \\\n  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"listar_pacotes","arguments":{}}}'`;
 
   const estado = $("#estado-chave");
@@ -181,6 +183,19 @@ $("#clientes").append(
     return b;
   }),
 );
+$("#copiar-mensagem").addEventListener("click", async (e) => {
+  const b = e.currentTarget;
+  const lista = receitas(chaveAtual.token);
+  const r = lista.find((x) => x.id === clienteAtual) ?? lista[0];
+  const texto = mensagemPronta({ nome: chaveAtual.nome, pacotes: chaveAtual.pacotes, agente: r.nome, onde: r.onde, receita: r.texto, conferir: $("#cmd-conferir").textContent });
+  try {
+    await navigator.clipboard.writeText(texto);
+    b.textContent = "Copiado";
+  } catch {
+    b.textContent = "Não consegui copiar";
+  }
+  setTimeout(() => (b.textContent = "Copiar mensagem pronta"), 1800);
+});
 $("#url-mcp").textContent = URL_MCP;
 mostrarReceita();
 
@@ -442,7 +457,8 @@ $("#nova").addEventListener("submit", async (e) => {
   b.textContent = "Gerando…";
   try {
     const r = await api("/api/chaves", { method: "POST", body: JSON.stringify({ nome, pacotes: pacotesEscolhidos, documentos }) });
-    chaveAtual = { nome, token: r.token };
+    // Nomes dos pacotes na mensagem pronta; pacote restrito a algumas normas leva o aviso.
+    chaveAtual = { nome, token: r.token, pacotes: pacotesEscolhidos.map((s) => (nomes[s] ?? s) + (documentos[s] ? " (normas escolhidas)" : "")) };
     mostrarReceita();
     const caixa = el("div", null, "callout");
     caixa.append(el("strong", `Chave de ${nome} criada. Copie agora: ela não aparece de novo.`), codigo("token-novo", r.token), botao("Ver como conectar com esta chave", "texto", () => abrir("conectar", true)));

@@ -126,6 +126,7 @@ npx wrangler deploy
 | Tarefa | Como |
 | --- | --- |
 | Liberar acesso a um agente | Aba **Chaves**: nome, pacotes inteiros ou normas escolhidas, **Gerar chave**. Entregue a chave por canal seguro |
+| Mandar a chave a um usuário | Logo depois de **Gerar chave**, clique em **Ver como conectar com esta chave**, escolha o agente dele e use **Copiar mensagem pronta**: o texto já traz os pacotes liberados, a receita com a chave, a conferência e os cuidados. A chave some ao recarregar a página. O usuário não precisa de acesso à interface |
 | Mudar o que uma chave enxerga | Gere uma nova chave e revogue a antiga |
 | Revogar | Aba **Chaves**, **Revogar**, **Confirmar** |
 | Ver se um agente está usando | Coluna **Último uso** (atualizada a cada `initialize`) |
