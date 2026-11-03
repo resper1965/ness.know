@@ -33,7 +33,7 @@ A chave vai na variável de ambiente (Windows: `setx NESS_KNOW_TOKEN "<chave>"`;
 ```
 
 ## Claude Desktop
-`claude_desktop_config.json`, pela ponte `mcp-remote` (exige Node):
+Não use Configurações › Conectores › "Adicionar conector personalizado": ele só aceita OAuth e não manda a chave. Edite `claude_desktop_config.json` (Configurações › Desenvolvedor › Editar config; no Mac, `~/Library/Application Support/Claude/`), pela ponte `mcp-remote` (exige Node), e reinicie o Claude (Cmd+Q):
 ```json
 { "mcpServers": { "ness-know": { "command": "npx", "args": ["-y", "mcp-remote", "https://know.ness.com.br/mcp", "--header", "Authorization: Bearer <chave>"] } } }
 ```

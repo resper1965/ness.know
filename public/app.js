@@ -147,7 +147,7 @@ const receitas = (chave) => [
   {
     id: "claude-desktop",
     nome: "Claude Desktop",
-    onde: "Em claude_desktop_config.json (Configurações › Desenvolvedor › Editar config). Usa a ponte mcp-remote e exige Node instalado.",
+    onde: "NÃO use \"Adicionar conector personalizado\" (ele só aceita OAuth e vai falhar). Abra Configurações › Desenvolvedor › Editar config (no Mac: ~/Library/Application Support/Claude/claude_desktop_config.json), cole o bloco abaixo dentro de mcpServers e reinicie o Claude com Cmd+Q (Windows: feche pela bandeja). Exige Node instalado (nodejs.org, versão LTS).",
     texto: JSON.stringify({ mcpServers: { "ness-know": { command: "npx", args: ["-y", "mcp-remote", URL_MCP, "--header", `Authorization: Bearer ${chave}`] } } }, null, 2),
   },
   { id: "chatgpt", nome: "ChatGPT e Claude web", onde: "Ainda não é possível.", texto: "Os conectores do ChatGPT e do claude.ai só aceitam OAuth ou acesso sem autenticação.\nO ness.KNOW usa chave no cabeçalho; por enquanto, use um dos outros agentes.", sem: true },
