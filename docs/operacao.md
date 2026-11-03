@@ -4,10 +4,10 @@ Os comandos são para PowerShell, num clone fora do OneDrive (`C:\dev\ness.know`
 
 ## Recursos na Cloudflare
 
-| Recurso | Nome | Situação em 01/11/2026 |
+| Recurso | Nome | Situação em 03/11/2026 |
 | --- | --- | --- |
 | Worker | `ness-know` | Publicado em `know.ness.com.br` com o código do `main` (01/11/2026) |
-| D1 | `ness-know` | Migrações 0001 a 0004 aplicadas; catálogo e STRM do SCF 2026.3 pendentes (ver [lacunas.md](lacunas.md), seção 1) |
+| D1 | `ness-know` | Migrações 0001 a 0004 aplicadas; SCF 2026.3 carregado (catálogo e STRM, 03/11/2026) |
 | R2 | `ness-know-arquivos` | Criado |
 | Vectorize | `ness-know-trechos` | Criado, com os índices de metadados `alvo` e `documento_id` |
 | Access | app `know.ness.com.br` (Allow, e-mails dos admins) e app `know.ness.com.br/mcp` (Bypass, Everyone) | Configurados |
@@ -143,4 +143,5 @@ npx wrangler deploy
 | Agente recebe `401` | Chave errada, revogada ou sem o prefixo `Bearer` | Conferir com o `curl`; gerar outra |
 | Busca semântica vazia numa chave restrita | Falta o índice de metadados `documento_id`, ou os vetores são anteriores a ele | Criar o índice e rodar `node scripts/vetorizar.mjs $app` |
 | Documento com situação "Falhou" | PDF sem camada de texto ou arquivo corrompido | Usar um PDF com texto (OCR) e recarregar |
+| Recarga ou exclusão dá `500` e a norma aparece duas vezes no pacote | O Vectorize falhou ao apagar os vetores da versão anterior. O documento antigo fica, de propósito, para não deixar vetor órfão | Rode a carga de novo (ou `DELETE /api/documentos/<id>` da versão antiga) quando o Vectorize voltar |
 | `cloudflared access token` falha | Sessão do Access expirada | `cloudflared access login https://know.ness.com.br` |

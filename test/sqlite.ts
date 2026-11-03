@@ -14,5 +14,5 @@ export function bancoTeste(...sqls: string[]): D1Database {
     first: async () => db.prepare(sql).get(...p) ?? null,
     run: async () => ({ meta: { changes: db.prepare(sql).run(...p).changes } }),
   });
-  return { prepare: (sql: string) => preparar(sql) } as unknown as D1Database;
+  return { prepare: (sql: string) => preparar(sql), batch: async (stmts: { run(): Promise<unknown> }[]) => { for (const s of stmts) await s.run(); } } as unknown as D1Database;
 }

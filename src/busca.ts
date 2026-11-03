@@ -353,11 +353,13 @@ export async function apagarDocumento(env: EnvConhecimento, id: string): Promise
   const d = await env.DB.prepare("SELECT r2_key FROM documentos WHERE id = ?").bind(id).first<{ r2_key: string | null }>();
   if (!d) return false;
   const n = (await env.DB.prepare("SELECT count(*) AS n FROM trechos_fts WHERE documento_id = ?").bind(id).first<{ n: number }>())?.n ?? 0;
-  await env.DB.batch([env.DB.prepare("DELETE FROM trechos_fts WHERE documento_id = ?").bind(id), env.DB.prepare("DELETE FROM documentos WHERE id = ?").bind(id)]);
-  if (d.r2_key) await env.ARQUIVOS.delete(d.r2_key);
+  // Vetores antes do banco: se o Vectorize falhar, o erro sobe e o documento fica, para apagar de novo depois.
+  // Na ordem inversa, os vetores ficavam órfãos e sem registro (busca disputando vagas com trechos de documento que não existe).
   if (env.VETORES && n) {
     const ids = Array.from({ length: n }, (_, i) => `${id}:${i}`);
-    for (let i = 0; i < ids.length; i += 1000) await env.VETORES.deleteByIds(ids.slice(i, i + 1000)).catch((e) => console.warn("vetores não apagados", id, String(e)));
+    for (let i = 0; i < ids.length; i += 1000) await env.VETORES.deleteByIds(ids.slice(i, i + 1000));
   }
+  await env.DB.batch([env.DB.prepare("DELETE FROM trechos_fts WHERE documento_id = ?").bind(id), env.DB.prepare("DELETE FROM documentos WHERE id = ?").bind(id)]);
+  if (d.r2_key) await env.ARQUIVOS.delete(d.r2_key);
   return true;
 }
