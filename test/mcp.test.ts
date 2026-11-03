@@ -164,4 +164,20 @@ describe("mcp", () => {
     // O último uso só é regravado quando passou mais de uma hora.
     expect(consultas.filter((c) => c.sql.includes("UPDATE chaves SET usado_em"))[0].sql).toContain("-1 hour");
   });
+  it("com o limite da chave estourado responde 429 sem consultar nada; dentro do limite segue normal", async () => {
+    const { env, consultas } = await ambiente();
+    const chaves: string[] = [];
+    const comLimite = (success: boolean) =>
+      ({ ...env, LIMITE_MCP: { limit: async ({ key }: { key: string }) => (chaves.push(key), { success }) } }) as unknown as typeof env;
+
+    const r = await chamar(comLimite(false), { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "listar_pacotes" } });
+    expect(r.status).toBe(429);
+    expect(r.headers.get("retry-after")).toBe("30");
+    expect(((await r.json()) as { error: { code: number } }).error.code).toBe(-32002);
+    expect(consultas.some((c) => c.sql.includes("uso_chaves"))).toBe(false);
+
+    expect((await chamar(comLimite(true), { jsonrpc: "2.0", id: 2, method: "ping" })).status).toBe(200);
+    expect(chaves).toEqual(["c1", "c1"]); // o limite é por chave
+    expect((await chamar(comLimite(false), { jsonrpc: "2.0", id: 3, method: "ping" }, "errado")).status).toBe(401); // chave inválida não chega ao limitador
+  });
 });

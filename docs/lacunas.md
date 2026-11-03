@@ -51,7 +51,6 @@ Nenhuma pendência.
 | # | Lacuna | Efeito | Próximo passo | Prioridade |
 | --- | --- | --- | --- | --- |
 | 5.1 | Sem OAuth no `/mcp` | claude.ai na web e ChatGPT não conectam (só aceitam OAuth ou sem autenticação) | OAuth 2.1 com Cloudflare Access como provedor, mapeando o usuário para uma chave | P2 |
-| 5.2 | Sem limite de requisições por chave | Uma chave vazada ou um agente em laço consome a cota de Workers AI e Vectorize | Rate Limiting da Cloudflare em `/mcp` | P2 |
 | 5.4 | Chaves não expiram | Chave esquecida continua válida | Validade opcional na criação, com aviso na interface | P3 |
 | 5.5 | Mudar o que uma chave enxerga exige revogar e gerar outra | Troca de chave em todos os agentes que a usam | Aceitável; rever se houver muitos clientes | P3 |
 
@@ -76,4 +75,4 @@ Nenhuma pendência.
 1. 3.1 (conferência da extração), antes de qualquer cliente usar `cobertura` num relatório.
 2. 2.1 (ONS), para o faBRAINzio.
 3. 4.1 e 4.3 (primeira onda de skills e forma de entrega).
-4. 5.2 e 5.1 (limite de requisições e OAuth), antes de abrir a base a mais clientes.
+4. 5.1 (OAuth), antes de abrir a base a mais clientes.

@@ -141,6 +141,7 @@ npx wrangler deploy
 | --- | --- | --- |
 | Interface mostra "Sua sessão expirou" logo ao abrir | Falta a aplicação do Access sem caminho, `ACCESS_AUD` errado ou e-mail fora de `ADMIN_EMAILS` | Confira os três e rode `npx wrangler deploy` |
 | `/mcp` pede login no navegador | A aplicação Bypass do caminho `mcp` não existe ou está com Allow | Ajuste no Zero Trust |
+| Agente recebe `429` | A chave passou de 240 chamadas por minuto (o faBRAINzio usa uma chave só para todos os usuários) | Espere 30 segundos. Se for uso normal, suba `limit` em `ratelimits` no `wrangler.jsonc` e rode `npx wrangler deploy` |
 | Agente recebe `401` | Chave errada, revogada ou sem o prefixo `Bearer` | Conferir com o `curl`; gerar outra |
 | Busca semântica vazia numa chave restrita | Falta o índice de metadados `documento_id`, ou os vetores são anteriores a ele | Criar o índice e rodar `node scripts/vetorizar.mjs $app` |
 | Documento com situação "Falhou" | PDF sem camada de texto ou arquivo corrompido | Usar um PDF com texto (OCR) e recarregar |

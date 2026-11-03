@@ -21,5 +21,8 @@
     // Busca calibrada com scripts/avaliar-busca.mjs (avaliação de 30/10/2026 no faBRAINzio).
     "BUSCA_RERANK": "0",
     "BUSCA_MINIMO": "0.4"
-  }
+  },
+  // Limite por chave no /mcp: 240 chamadas por minuto (4 por segundo sustentado; o excedente recebe 429). O faBRAINzio usa uma
+  // chave só para todos os usuários dele; se encostar no limite, suba o número e rode `npx wrangler deploy`.
+  "ratelimits": [{ "name": "LIMITE_MCP", "namespace_id": "1001", "simple": { "limit": 240, "period": 60 } }]
 }

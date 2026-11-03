@@ -7,6 +7,8 @@ export interface EnvMcp extends EnvBusca {
   /** Ajustes medidos com scripts/avaliar-busca.mjs: "1" liga o rerank; número troca a nota mínima da semântica. */
   BUSCA_RERANK?: string;
   BUSCA_MINIMO?: string;
+  /** Limite de chamadas por chave (Rate Limiting da Cloudflare). Sem o binding, não há limite (testes e wrangler dev sem ele). */
+  LIMITE_MCP?: RateLimit;
 }
 
 /** Versões que este servidor implementa (HTTP sem sessão, só ferramentas). Pedido fora da lista recebe a mais nova. */
@@ -218,6 +220,9 @@ export async function mcp(req: Request, env: EnvMcp): Promise<Response> {
   if (req.method !== "POST") return new Response("use POST", { status: 405, headers: { allow: "POST" } });
   const cliente = await clienteDe(req, env.DB);
   if (!cliente) return rpcErro(null, -32001, "token inválido", 401);
+  // Uma chave vazada ou um agente em laço não consome sem fim a cota do Workers AI e do Vectorize.
+  if (env.LIMITE_MCP && !(await env.LIMITE_MCP.limit({ key: cliente.id })).success)
+    return Response.json({ jsonrpc: "2.0", id: null, error: { code: -32002, message: "limite de requisições da chave excedido; tente de novo em instantes" } }, { status: 429, headers: { "retry-after": "30" } });
   const m = (await req.json().catch(() => null)) as { id?: unknown; method?: unknown; params?: Record<string, unknown> } | null;
   if (!m || typeof m !== "object" || Array.isArray(m) || typeof m.method !== "string") return rpcErro(null, -32600, "requisição inválida", 400);
   if (m.id === undefined) return new Response(null, { status: 202 }); // notificação (ex.: notifications/initialized)
