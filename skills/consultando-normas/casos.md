@@ -28,8 +28,13 @@ O caso 2 original perguntava sobre o Marco Civil. Ele está no pacote `legislaca
 
 Falha principal: o agente responde de memória, sem buscar e sem citar fonte da base. A skill ataca isso no passo 1.
 
-### Com a skill
+### Com a skill, 06/11/2026 (skill carregada às 14:53 UTC), faBRAINzio (Alupar)
 
-| Data | Caso 1 | Caso 2 | Caso 3 | Observações |
-| --- | --- | --- | --- | --- |
-| (pendente: carregar a skill e repetir) | | | | |
+| Caso | Resultado | Pontos |
+| --- | --- | --- |
+| 1. Logs na 27001 | Respondeu em **Requisito** (controles 8.15, 8.16 e 8.17, cada um com a norma e a versão) e **Leitura**, com 6 fontes (27001 8.15 versão 2022 + Em1:2024, 27018 12.4.2, 27017 12.4, 27701 B.3.25 e outras). `uso_chaves`: +1 `buscar_conhecimento`; auditoria com fontes. As referências 8.16 e 8.17 existem no texto da 27001 carregado (4 e 3 trechos) | 4 de 4 (antes: 0 de 4) |
+| 2. REN 964 | Não rodado | |
+| 2b. Marco Civil, pergunta feita pelo dono ("quais as penas previstas pelo marco da internet") | "Não encontrei isso. Busquei por "Marco Civil da Internet", "penas", "sanções" e "Lei 12.965" e não localizei informações no conteúdo liberado para esta organização." Resposta certa (o pacote não está liberado à Alupar) e diz o que buscou | Lacuna declarada: sim. **Alerta:** o `uso_chaves` não registrou nenhum `buscar_conhecimento` para essa conversa, então a afirmação "Busquei por..." não bate com o servidor. Possível busca alegada e não feita |
+| 3. Drones na 27001 | Não rodado | |
+
+Conclusão provisória: a skill resolveu a falha principal no caso 1 (agora busca, cita e separa Requisito de Leitura). Falta rodar os casos 2 e 3 e investigar o alerta do caso 2b: o modelo pequeno pode dizer que buscou sem ter chamado a ferramenta. Se se repetir, reforçar no passo 1 ("a ferramenta tem de ser chamada; não diga que buscou se não chamou") e conferir sempre contra o `uso_chaves`.
