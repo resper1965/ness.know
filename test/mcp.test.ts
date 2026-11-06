@@ -54,7 +54,7 @@ describe("mcp", () => {
     const futura = (await (await chamar(env, { jsonrpc: "2.0", id: 9, method: "initialize", params: { protocolVersion: "2099-01-01" } })).json()) as { result: { protocolVersion: string } };
     expect(futura.result.protocolVersion).toBe("2025-06-18");
     const l = (await (await chamar(env, { jsonrpc: "2.0", id: 2, method: "tools/list" })).json()) as { result: { tools: { name: string }[] } };
-    expect(l.result.tools.map((t) => t.name)).toEqual(["listar_pacotes", "buscar_conhecimento", "correlacionar", "cobertura", "detalhar_controle"]);
+    expect(l.result.tools.map((t) => t.name)).toEqual(["listar_pacotes", "buscar_conhecimento", "correlacionar", "cobertura", "detalhar_controle", "obter_skill"]);
   });
 
   it("busca só nos pacotes liberados, mesmo se pedir outro", async () => {
@@ -82,6 +82,7 @@ describe("mcp", () => {
     const p = (await (await chamar(env, { jsonrpc: "2.0", id: 5, method: "tools/call", params: { name: "listar_pacotes" } })).json()) as { result: { content: { text: string }[] } };
     expect(JSON.parse(p.result.content[0].text)).toEqual({
       pacotes: [{ slug: "iso", nome: "Segurança e conformidade", descricao: null, versao: "2026-10", instrucoes: "Cite a cláusula.", documentos: [{ titulo: "ISO 27001", versao: "2022" }, { titulo: "NIST CSF", versao: "2.0" }] }],
+      skills: [],
     });
   });
 

@@ -1,6 +1,7 @@
 // API de administração (atrás do Access, só ADMIN_EMAILS): chaves de API, pacotes, documentos, busca de teste e revetorização.
 import { apagarDocumento, buscarEm, type EnvConhecimento, ingerir, LIMITE_ARQUIVO, revetorizar } from "./busca";
 import { hashToken, novoToken, restricoesDe } from "./mcp";
+import { normasExistem, validarSkill } from "./skills";
 
 const SLUG = /^[a-z0-9][a-z0-9-]{1,62}$/;
 type Valido<T> = { ok: true; v: T } | { ok: false; erro: string };
@@ -147,6 +148,28 @@ export async function admin(req: Request, env: EnvConhecimento, email: string, c
   if (rota === "POST /api/vetores") {
     if (!env.VETORES) return erro("índice de vetores não configurado");
     return Response.json(await revetorizar(env, txt((await corpo(req)).apos, 36)));
+  }
+
+  // Skills: procedimentos que o agente segue ao usar as normas (ver docs/skills-plano.md).
+  if (rota === "GET /api/skills")
+    return Response.json((await db.prepare("SELECT nome, descricao, normas, versao, atualizado_em, length(corpo) AS tamanho FROM skills ORDER BY nome").all()).results);
+  if (rota === "POST /api/skills") {
+    const r = validarSkill(await corpo(req));
+    if (!r.ok) return erro(r.erro);
+    const falta = await normasExistem(db, r.v.normas);
+    if (falta) return erro(falta);
+    await db
+      .prepare(
+        "INSERT INTO skills (nome, descricao, normas, corpo, versao) VALUES (?, ?, ?, ?, ?) ON CONFLICT (nome) DO UPDATE SET descricao = excluded.descricao, normas = excluded.normas, corpo = excluded.corpo, versao = excluded.versao, atualizado_em = datetime('now')",
+      )
+      .bind(r.v.nome, r.v.descricao, JSON.stringify(r.v.normas), r.v.corpo, r.v.versao)
+      .run();
+    return Response.json({ nome: r.v.nome });
+  }
+  const sk = caminho.match(/^\/api\/skills\/([a-z0-9-]+)$/);
+  if (sk && req.method === "DELETE") {
+    const r = await db.prepare("DELETE FROM skills WHERE nome = ?").bind(sk[1]).run();
+    return r.meta.changes ? Response.json({ ok: true }) : erro("skill não encontrada", 404);
   }
 
   return erro("não encontrado", 404);
