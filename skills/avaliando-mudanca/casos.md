@@ -36,6 +36,19 @@ Conferência no servidor: `uso_chaves` ganhou 3 `buscar_conhecimento` (uma por p
 
 **Falhas que a skill ataca:** (1) classificar o tipo e o risco primeiro; (2) buscas de continuação com os termos das normas; (3) não citar seção que não apareceu nos trechos, avisando que o exemplo das instruções é formato e não fonte; (4) entregar o Registro de mudança com campos fixos.
 
-### Com a skill
+### Com a skill: 06/11/2026 (skill carregada às 19:26 UTC; faBRAINzio com o carregamento por assunto, PR #31)
 
-(pendente: carregar a skill, subir o carregamento por assunto no faBRAINzio e repetir as 3 perguntas)
+Conferência no servidor: 3 conversas (19:27 a 19:28 UTC), todas "ok; busca prévia" com as mesmas fontes da linha de base; `buscar_conhecimento` +3 (só as buscas prévias: o modelo **não fez** as buscas de continuação que a skill pede).
+
+| Caso | Resultado | Pontos (antes) | Observações |
+| --- | --- | --- | --- |
+| 1. Firmware dos switches | Diz o tipo (**mudança normal**, "ativo crítico do core, não é rotina pré-aprovada"); lista plano de rollback, de testes, aprovação (CAB) e comunicação; cita ISO 20000-1 8.5.1.3 | 3,5 de 5 (2) | Não monta o registro com os 9 campos (falta risco explícito, janela, revisão pós-implantação) e não escreve "definir pela organização". O formato Requisito e Leitura da `consultando-normas` competiu com o Registro |
+| 2. Patches como mudança padrão | Resposta certa (sim, com procedimento documentado), igual à linha de base | 2 de 5 (2) | **Sem mudança:** ainda cita "ITIL 4 Foundation, 5.2.4 Change control" sem o ITIL estar entre as fontes recuperadas; a regra "não cite o exemplo" da skill foi ignorada |
+| 3. Mudança emergencial | **Registro de mudança completo** com os 9 campos da skill, tipo Emergencial e risco Alto justificado, "definir pela organização" nos planos de testes e de retorno | 4,5 de 5 (2) | Não cita a norma no texto (sem citação inventada: o "5.2.4" sumiu). A lista de fontes continua mostrando CIS e ITIL "A.1", fontes que a busca trouxe e a resposta não usou |
+
+Total: de 6 para cerca de 10 de 15 pontos. A skill funciona quando a pergunta pede o registro (caso 3) e melhora a classificação (caso 1). Não resolveu o caso 2 e não fez o modelo buscar de novo.
+
+**O que a skill não resolve, e o que fazer:**
+1. **Citação "5.2.4 Change control" sem fonte (caso 2):** a causa é o exemplo nas instruções do pacote `gestao-servicos-ti`, que o modelo repete. Corrigir o texto do pacote (dado, não código): trocar o exemplo por uma regra "cite a seção só se ela aparecer nos trechos recebidos".
+2. **Buscas de continuação ignoradas pelo modelo:** o modelo pequeno não as faz sozinho (nenhuma `buscar_conhecimento` além da prévia). A saída é o código fazê-las: a skill declara os termos (`buscas:`) e a busca prévia do faBRAINzio as executa e junta os trechos. Assim ITIL 4 e ISO 27001 8.32 entram no prompt.
+3. **Lista de fontes mostra o recuperado, não o usado:** melhoria separada na interface do faBRAINzio.
