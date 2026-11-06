@@ -121,6 +121,20 @@ npx wrangler deploy
 - Rode os `d1 execute` fora do horário comercial: importar os SQL (cerca de 8 e 11 MB) pode deixar as consultas do /mcp lentas por instantes.
 - Uma versão nova do SCF repete os mesmos passos com o novo zip.
 
+### Conferir o STRM carregado
+
+Depois de carregar uma versão nova do STRM, confira o que está em produção contra as planilhas da versão anterior (lacuna 3.1). O script só lê:
+
+```powershell
+cloudflared access login https://know.ness.com.br
+node scripts/conferir-strm.mjs "<pasta-das-planilhas-2026.1>" https://know.ness.com.br
+```
+
+- Compara por framework e por item (a numeração do próprio framework é estável; os controles SCF foram renumerados no 2026.3, então o par item × controle não serve).
+- `FALHA`: um framework perdeu mais de 2% dos itens (`--limite` muda), ou um framework da versão anterior sumiu. O script sai com código 1.
+- `aviso`: o número de ligações mudou mais de 15%, o que a renumeração pode explicar. Só informa.
+- Sorteia 30 itens (`--amostra`) de 3 frameworks (`--frameworks 27002-2022,csf-2,txramp`, trecho do id) e mostra as ligações de antes e de depois, para você conferir à mão contra o PDF ou a planilha.
+
 ## Rotina
 
 | Tarefa | Como |

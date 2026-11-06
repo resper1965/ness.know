@@ -5,23 +5,9 @@
 //   (o .json vem de scripts/strm-pdf-para-json.py, quando a versão do STRM só sai em PDF)
 // Depois: npx wrangler d1 execute ness-know --remote --file=<saida.sql>
 // O SQL apaga e recarrega tudo: rodar de novo com uma versão nova do SCF substitui a anterior.
-import { readFile, readdir, writeFile } from "node:fs/promises";
-import { join } from "node:path";
-import ExcelJS from "exceljs";
-import JSZip from "jszip";
-import { lerPlanilha, paraSql, valor } from "./strm.mjs";
-
-// shortcut: ExcelJS 4.4 falha ao ler 20 planilhas cujos comentários têm alvo absoluto ("/xl/comments/…"); os comentários não trazem dado STRM, então saem do arquivo antes da leitura. Revisar ao atualizar o exceljs.
-async function abrirPlanilha(caminho) {
-  const zip = await JSZip.loadAsync(await readFile(caminho));
-  for (const nome of Object.keys(zip.files).filter((n) => /^xl\/worksheets\/_rels\/[^/]+\.rels$/.test(n))) {
-    const xml = await zip.file(nome).async("string");
-    zip.file(nome, xml.replace(/<Relationship [^>]*Type="[^"]*\/comments"[^>]*\/>/g, ""));
-  }
-  const wb = new ExcelJS.Workbook();
-  await wb.xlsx.load(await zip.generateAsync({ type: "nodebuffer" }));
-  return wb;
-}
+import { readFile, writeFile } from "node:fs/promises";
+import { lerPlanilha, paraSql } from "./strm.mjs";
+import { lerPasta } from "./strm-xlsx.mjs";
 
 const [pasta, saida] = process.argv.slice(2);
 if (!pasta || !saida) {
@@ -34,21 +20,7 @@ if (pasta.endsWith(".json")) {
   await gravar();
   process.exit(0);
 }
-const arquivos = (await readdir(pasta)).filter((f) => /^scf-strm-.+\.xlsx$/i.test(f)).sort();
-if (!arquivos.length) {
-  console.error(`nenhum scf-strm-*.xlsx em ${pasta}`);
-  process.exit(1);
-}
-for (const f of arquivos) {
-  const wb = await abrirPlanilha(join(pasta, f));
-  const ws = wb.worksheets[0]; // a primeira aba é a completa; as extras ("condensed", crosswalk) repetem ou resumem
-  if (!ws) throw new Error(`${f}: planilha sem abas`);
-  const linhas = [];
-  ws.eachRow({ includeEmpty: true }, (row) => linhas.push(Array.from({ length: row.cellCount }, (_, i) => valor(row.getCell(i + 1).value))));
-  const p = lerPlanilha(linhas, f);
-  if (!p.ligacoes.length) console.warn(`aviso: ${f} sem ligações (cabeçalho não reconhecido?)`);
-  planilhas.push(p);
-}
+planilhas.push(...(await lerPasta(pasta).catch((e) => (console.error(e.message), process.exit(1)))));
 await gravar();
 
 async function gravar() {
