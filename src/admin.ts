@@ -168,6 +168,15 @@ export async function admin(req: Request, env: EnvConhecimento, email: string, c
     return Response.json(await revetorizar(env, txt((await corpo(req)).apos, 36)));
   }
 
+  // STRM em produção, só leitura: base de scripts/conferir-strm.mjs (conferência contra as planilhas da versão anterior).
+  if (rota === "GET /api/strm/frameworks")
+    return Response.json((await db.prepare("SELECT f.id, f.nome, f.versao_scf, f.itens, (SELECT count(*) FROM strm s WHERE s.framework = f.id) AS ligacoes FROM strm_frameworks f ORDER BY f.id").all()).results);
+  const st = caminho.match(/^\/api\/strm\/([^/]+)$/);
+  if (st && req.method === "GET") {
+    const linhas = (await db.prepare("SELECT item, item_nome, relacao, forca, scf FROM strm WHERE framework = ? ORDER BY rowid").bind(decodeURIComponent(st[1])).all()).results;
+    return linhas.length ? Response.json(linhas) : erro("framework não encontrado", 404);
+  }
+
   // Skills: procedimentos que o agente segue ao usar as normas (ver docs/skills-plano.md).
   if (rota === "GET /api/skills")
     return Response.json((await db.prepare("SELECT nome, descricao, normas, versao, atualizado_em, length(corpo) AS tamanho FROM skills ORDER BY nome").all()).results);

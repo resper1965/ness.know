@@ -61,6 +61,15 @@ Procedimentos que o agente segue ao usar as normas (ver [skills-plano.md](skills
 
 O título identifica a norma de forma estável. Recarregar um documento troca o `id`, mas as chaves restritas por título continuam valendo. Renomear um título tira essa norma das chaves restritas a ele.
 
+## STRM (só leitura)
+
+Base de `scripts/conferir-strm.mjs`.
+
+| Rota | Descrição |
+| --- | --- |
+| `GET /api/strm/frameworks` | Frameworks carregados: `id`, `nome`, `versao_scf`, `itens` e `ligacoes` (contagem real em `strm`) |
+| `GET /api/strm/:id` | Ligações do framework: `item`, `item_nome`, `relacao`, `forca`, `scf`. `404` se o id não existe |
+
 ## Busca de teste
 
 `POST /api/busca` busca em todos os pacotes, sem restrição de chave. Serve para a tela de teste e para a avaliação.

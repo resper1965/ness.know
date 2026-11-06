@@ -32,7 +32,7 @@ Nenhuma pendência.
 
 | # | Lacuna | Efeito | Próximo passo | Prioridade |
 | --- | --- | --- | --- | --- |
-| 3.1 | STRM 2026.3 extraído de PDF (pdfplumber), sem conferência automática contra outra fonte | Linha perdida ou trocada na extração passa despercebida | Comparar contagens por framework com o 2026.1 (planilhas) e amostrar 3 frameworks à mão | P1 |
+| 3.1 | STRM 2026.3 extraído de PDF (pdfplumber); o script `scripts/conferir-strm.mjs` está pronto (ver `operacao.md`), falta rodá-lo contra as planilhas 2026.1 e conferir a amostra à mão | Linha perdida ou trocada na extração passa despercebida até a conferência rodar | Rodar o script e registrar o resultado aqui | P1 |
 | 3.2 | `cobertura` aceita uma única origem | Quem implementou ISO 27001 **e** NIST CSF precisa somar à mão | Aceitar várias origens (`de` como lista de pares framework × itens) | P2 |
 | 3.3 | O pacote `scf-strm` é tudo ou nada por chave | Não dá para liberar só alguns frameworks a um cliente | Restrição por framework na chave, como já existe por norma | P3 |
 | 3.4 | Anexo A da ISO 27001 não existe como framework no SCF | Usuário precisa saber que é a ISO 27002 | Já tratado na mensagem de erro; documentar nas skills | P3 |
