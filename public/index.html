@@ -193,7 +193,8 @@
 
     @media (max-width: 960px) { .duas { grid-template-columns: 1fr; } }
     @media (max-width: 760px) {
-      .shell { grid-template-columns: 1fr; }
+      /* minmax(0, …): sem isso a faixa de abas (nowrap) alarga a coluna e a página rola de lado */
+      .shell { grid-template-columns: minmax(0, 1fr); --control-h: 40px; --control-h-sm: 36px; }
       .lateral { border-right: 0; border-bottom: 1px solid var(--line); }
       .lateral-fixa { position: static; height: auto; }
       .banda-marca { height: 56px; padding: 0 16px; }
