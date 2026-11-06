@@ -42,4 +42,6 @@ Prioridade e próximo passo de cada um em [lacunas.md](lacunas.md), seção 5.
 - Cada chave tem um limite de 240 chamadas por minuto no `/mcp` (Rate Limiting da Cloudflare, binding `LIMITE_MCP`); o excedente recebe `429`. O limite é por chave e por localidade da Cloudflare, então é uma barreira contra laço e vazamento, não uma cota exata.
 - O uso por chave é contado por dia e ferramenta (`uso_chaves`), sem o texto da consulta; não há registro do que cada agente perguntou.
 - ChatGPT e claude.ai na web não conectam, porque os conectores deles exigem OAuth.
-- As chaves não expiram sozinhas; a revogação é manual.
+- A validade da chave é opcional (`dias` ou `expira_em` na criação): sem ela, a chave não expira e a revogação é manual.
+- Tentativas com chave ausente ou inválida contam por IP (`LIMITE_AUTH`, 30 por minuto) e passam a receber `429`. A chave errada ainda custa uma leitura no banco antes de ser contada; só a ausência de chave a evita. É um freio contra laço e tentativa em série, não uma defesa contra volume alto.
+- Requisição com `Origin` que não está em `ORIGENS_MCP` leva `403`. Agentes e CLIs não mandam `Origin` e não são afetados; um cliente que rode no navegador precisa ter a origem dele na lista (var, separada por vírgula).

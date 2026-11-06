@@ -14,7 +14,7 @@ Erros vêm como `{ "erro": "mensagem" }`: `400` para entrada inválida, `401` se
 
 | Rota | Descrição |
 | --- | --- |
-| `GET /api/chaves` | Lista as chaves: `id`, `nome`, `pacotes` (JSON), `documentos` (JSON), `ativo`, `criado_por`, `criado_em`, `usado_em` (atualizado no máximo uma vez por hora), `chamadas_30d` (chamadas autenticadas ao `/mcp` nos últimos 30 dias) |
+| `GET /api/chaves` | Lista as chaves: `id`, `nome`, `pacotes` (JSON), `documentos` (JSON), `ativo`, `criado_por`, `criado_em`, `usado_em` (atualizado no máximo uma vez por hora), `expira_em` (UTC, nulo se não expira), `chamadas_30d` (chamadas autenticadas ao `/mcp` nos últimos 30 dias) |
 | `POST /api/chaves` | Cria uma chave. Devolve o `token` **uma única vez** |
 | `DELETE /api/chaves/:id` | Revoga a chave. O efeito é imediato e a chave não volta a valer |
 
@@ -29,6 +29,7 @@ Corpo do `POST /api/chaves`:
 ```
 
 - `pacotes`: slugs liberados; obrigatório e não vazio. Slug inexistente dá `404`.
+- `dias` ou `expira_em`: validade opcional, nunca os dois. `dias` é um inteiro de 1 a 3650 a partir de agora; `expira_em` é `AAAA-MM-DD` futura e vale até o fim desse dia (UTC). Sem nenhum dos dois, a chave não expira. Chave vencida recebe `401`, como a revogada. A resposta traz `expira_em`.
 - `documentos`: opcional. Para cada pacote listado aqui, a chave fica restrita a esses títulos. Pacote fora do mapa vale inteiro, inclusive para normas carregadas depois.
 - Regras de `documentos`:
   - título que não existe no pacote dá `400`;

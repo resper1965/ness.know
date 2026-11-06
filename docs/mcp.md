@@ -169,7 +169,9 @@ Uma chave enxerga a skill só se tiver todos os pacotes que ela declara em `norm
 
 | Situação | HTTP | JSON-RPC |
 | --- | --- | --- |
-| Sem chave, chave inválida ou revogada | 401 | `-32001 token inválido` |
+| Sem chave, chave inválida, revogada ou vencida (veja `expira_em` em [api-admin.md](api-admin.md)) | 401 | `-32001 token inválido` |
+| Muitas tentativas com chave ausente ou inválida a partir do mesmo IP (30 por minuto) | 429, com `Retry-After: 30` | `-32002 limite de requisições excedido` |
+| Requisição de navegador com `Origin` que não está em `ORIGENS_MCP` | 403 | `-32003 origem não permitida` |
 | Chave acima do limite de 240 chamadas por minuto | 429, com `Retry-After: 30` | `-32002 limite de requisições da chave excedido` |
 | Corpo que não é JSON-RPC | 400 | `-32600 requisição inválida` |
 | Método desconhecido | 200 | `-32601 método não suportado` |

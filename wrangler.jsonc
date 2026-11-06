@@ -20,7 +20,9 @@
     "ACCESS_AUD": "8524d5f8a831523bc0878f8444825341f6bb025dd4e14b0d3d1331c887553a7a",
     // Busca calibrada com scripts/avaliar-busca.mjs (avaliação de 30/10/2026 no faBRAINzio).
     "BUSCA_RERANK": "0",
-    "BUSCA_MINIMO": "0.4"
+    "BUSCA_MINIMO": "0.4",
+    // Origens de navegador aceitas no /mcp, separadas por vírgula. Vazio: qualquer requisição com Origin é recusada (403); agentes e CLIs não mandam Origin.
+    "ORIGENS_MCP": ""
   },
   // Limite por chave no /mcp: 240 chamadas por minuto (4 por segundo sustentado; o excedente recebe 429). O faBRAINzio usa uma
   // chave só para todos os usuários dele; se encostar no limite, suba o número e rode `npx wrangler deploy`.
