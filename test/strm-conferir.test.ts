@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { admin } from "../src/admin";
-import { amostrar, comparar, escolher } from "../scripts/strm-conferir.mjs";
+import { amostrar, comparar, escolher, normalizar } from "../scripts/strm-conferir.mjs";
 import { bancoTeste } from "./sqlite";
 
 const lig = (item: string, scf = "MON-01", forca = 10) => ({ item, itemNome: `Item ${item}`, relacao: "igual", forca, scf });
@@ -20,17 +20,43 @@ describe("comparar", () => {
     expect(ok.falhas).toBe(0);
     expect(ok.comuns[0].perdidos).toEqual(["1.0", "1.1"]);
   });
-  it("framework da versão anterior que sumiu falha; um novo só é listado", () => {
-    const r = comparar([fw("a", cem), fw("b", cem)], [fw("a", cem), fw("c", cem)]);
+  it("framework da versão anterior que sumiu sem parecido falha; um novo só é listado", () => {
+    const outros = Array.from({ length: 50 }, (_, i) => `X-${i}`);
+    const r = comparar([fw("a", cem), fw("b", cem)], [fw("a", cem), fw("c", outros)]);
     expect(r.soAntigo).toEqual(["b"]);
+    expect(r.sumidos).toEqual(["b"]);
+    expect(r.renomeados).toEqual([]);
     expect(r.soNovo).toEqual(["c"]);
     expect(r.falhas).toBe(1);
+  });
+  it("framework que mudou de id mas mantém os itens vira renomeado, não falha", () => {
+    const r = comparar([fw("general-sparta", cem)], [fw("general-sparta-4-0", cem.slice(0, 95))]);
+    expect(r.renomeados).toMatchObject([{ de: "general-sparta", para: "general-sparta-4-0" }]);
+    expect(r.sumidos).toEqual([]);
+    expect(r.falhas).toBe(0);
+  });
+  it("item escrito de outro jeito (zero à esquerda, espaço, travessão) não conta como perdido", () => {
+    const antigo = fw("a", ["AC-03(02)", "AC-05", "NFO–PL-8", "1.05"]);
+    const novo = fw("a", ["AC-3 (2)", "AC-5", "NFO-PL-8", "1.05"]);
+    expect(comparar([antigo], [novo]).comuns[0].perdidos).toEqual([]);
+    // zero depois de ponto fica: 1.05 não é 1.5
+    expect(comparar([fw("a", ["1.05"])], [fw("a", ["1.5"])]).comuns[0].perdidos).toEqual(["1.05"]);
   });
   it("mudança grande de ligações só avisa (a renumeração junta e separa controles)", () => {
     const dobro = { id: "a", nome: "a", ligacoes: cem.flatMap((i) => [lig(i, "MON-01"), lig(i, "MON-02")]) };
     const r = comparar([fw("a", cem)], [dobro]);
     expect(r.comuns[0]).toMatchObject({ aviso: true, falha: false, varLigacoesPct: 100 });
     expect(r.falhas).toBe(0);
+  });
+});
+
+describe("normalizar", () => {
+  it("junta as grafias do mesmo item", () => {
+    expect(normalizar("AC-03(02)")).toBe("ac-3(2)");
+    expect(normalizar("AC-3 (2)")).toBe("ac-3(2)");
+    expect(normalizar("NFO–PL-8")).toBe("nfo-pl-8");
+    expect(normalizar("ML1-P1")).toBe("ml1-p1");
+    expect(normalizar("8.15")).toBe("8.15");
   });
 });
 

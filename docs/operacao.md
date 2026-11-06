@@ -133,6 +133,7 @@ node scripts/conferir-strm.mjs "<pasta-das-planilhas-2026.1>" https://know.ness.
 - Compara por framework e por item (a numeração do próprio framework é estável; os controles SCF foram renumerados no 2026.3, então o par item × controle não serve).
 - `FALHA`: um framework perdeu mais de 2% dos itens (`--limite` muda), ou um framework da versão anterior sumiu. O script sai com código 1.
 - `aviso`: o número de ligações mudou mais de 15%, o que a renumeração pode explicar. Só informa.
+- Sem as planilhas da versão anterior (por exemplo, só o zip do SCF 2026.3, que vem em PDF), use `node scripts/conferir-strm.mjs --sem-anterior https://know.ness.com.br`: lista os frameworks de produção, marca como `FALHA` os que têm menos de 3 itens e imprime a amostra com o nome do PDF (`scf-strm-<id>.pdf`) para você conferir à mão. É uma conferência mais fraca: não compara com outra versão.
 - Sorteia 30 itens (`--amostra`) de 3 frameworks (`--frameworks 27002-2022,csf-2,txramp`, trecho do id) e mostra as ligações de antes e de depois, para você conferir à mão contra o PDF ou a planilha.
 
 ## Rotina
