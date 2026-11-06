@@ -42,6 +42,8 @@ Conferência no servidor: `uso_chaves` da chave `faBRAINzio` (ferramenta `buscar
 
 ## Conclusão (06/11/2026)
 
+Julgamento do dono: as respostas estão ok para o uso atual. O registro abaixo é a conferência feita contra o servidor e contra o texto da base, para decidir depois se a busca prévia vale o custo.
+
 A skill melhorou o **formato** em todas as respostas (Requisito e Leitura, normas citadas), mas **não garante a busca**: 3 de 4 conversas responderam sem chamar `buscar_conhecimento`, e uma delas citou um artigo errado com ar de certeza e outra disse que tinha buscado sem ter buscado. O modelo pequeno do faBRAINzio decide sozinho se chama a ferramenta, e um texto no prompt não basta.
 
 Próximo passo recomendado (decisão de desenho, fora desta skill): no faBRAINzio, o código faz a busca antes do modelo (recuperação prévia do trecho para a pergunta) e entrega os trechos já no prompt, na linha "o código calcula, o modelo redige". Assim a citação sempre vem de trecho real, e a skill só cuida do formato. Reforçar o texto da skill ("não diga que buscou se não chamou a ferramenta") é paliativo e não resolve.
