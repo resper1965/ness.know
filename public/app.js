@@ -300,6 +300,11 @@ function desenharChaves() {
           if (!c.ativo) tr.className = "inativa";
           const criada = dataDe(c.criado_em);
           const nome = [el("span", c.nome, "nome"), el("span", `${c.ativo ? "Criada" : "Revogada; criada"} em ${criada ? fmtData.format(criada) : "—"}`, "sub")];
+          const exp = c.ativo ? dataDe(c.expira_em) : null;
+          if (exp) {
+            const dias = Math.ceil((exp - Date.now()) / 86_400_000);
+            nome.push(el("span", dias <= 0 ? `Vencida em ${fmtData.format(exp)}` : `Vence em ${fmtData.format(exp)}${dias <= 14 ? ` (${plural(dias, "dia", "dias")})` : ""}`, dias <= 14 ? "sub vencendo" : "sub"));
+          }
           const restricoes = lerObjeto(c.documentos);
           const lista = lerLista(c.pacotes).map((s) => {
             const d = el("div", null, "escopo");
@@ -456,7 +461,8 @@ $("#nova").addEventListener("submit", async (e) => {
   b.disabled = true;
   b.textContent = "Gerando…";
   try {
-    const r = await api("/api/chaves", { method: "POST", body: JSON.stringify({ nome, pacotes: pacotesEscolhidos, documentos }) });
+    const dias = Number($("#validade").value);
+    const r = await api("/api/chaves", { method: "POST", body: JSON.stringify({ nome, pacotes: pacotesEscolhidos, documentos, ...(dias ? { dias } : {}) }) });
     // Nomes dos pacotes na mensagem pronta; pacote restrito a algumas normas leva o aviso.
     chaveAtual = { nome, token: r.token, pacotes: pacotesEscolhidos.map((s) => (nomes[s] ?? s) + (documentos[s] ? " (normas escolhidas)" : "")) };
     mostrarReceita();

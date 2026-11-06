@@ -21,6 +21,22 @@ export function validarPacote(b: Record<string, unknown>): Valido<{ slug: string
   return { ok: true, v: { slug, nome, descricao: txt(b.descricao, 1000) || null, instrucoes: txt(b.instrucoes, 20000), versao: txt(b.versao, 50) || null } };
 }
 
+/** Validade da chave (UTC, "AAAA-MM-DD HH:MM:SS"): `dias` a partir de agora ou `expira_em` AAAA-MM-DD (vale até o fim do dia). Nenhum dos dois = não expira. */
+export function validade(b: Record<string, unknown>, agora = Date.now()): Valido<string | null> {
+  const { dias, expira_em } = b;
+  if (dias === undefined && expira_em === undefined) return { ok: true, v: null };
+  if (dias !== undefined && expira_em !== undefined) return { ok: false, erro: "use dias ou expira_em, não os dois" };
+  if (dias !== undefined) {
+    if (!Number.isInteger(dias) || (dias as number) < 1 || (dias as number) > 3650) return { ok: false, erro: "dias: inteiro de 1 a 3650" };
+    return { ok: true, v: new Date(agora + (dias as number) * 86_400_000).toISOString().slice(0, 19).replace("T", " ") };
+  }
+  const d = typeof expira_em === "string" && /^\d{4}-\d{2}-\d{2}$/.test(expira_em) ? expira_em : "";
+  const fim = d ? Date.parse(`${d}T23:59:59Z`) : NaN;
+  if (Number.isNaN(fim)) return { ok: false, erro: "expira_em: data AAAA-MM-DD" };
+  if (fim <= agora) return { ok: false, erro: "expira_em precisa ser uma data futura" };
+  return { ok: true, v: `${d} 23:59:59` };
+}
+
 /** Slugs válidos, sem repetição. */
 const slugsDe = (x: unknown) => (Array.isArray(x) ? [...new Set(x.filter((s): s is string => typeof s === "string" && SLUG.test(s)))] : []);
 
@@ -56,7 +72,7 @@ export async function admin(req: Request, env: EnvConhecimento, email: string, c
   if (rota === "GET /api/eu") return Response.json({ email });
 
   // Chaves de API: o token aparece uma vez, na criação; no banco fica só o hash.
-  if (rota === "GET /api/chaves") return Response.json((await db.prepare("SELECT id, nome, pacotes, documentos, ativo, criado_por, criado_em, usado_em, (SELECT coalesce(sum(chamadas), 0) FROM uso_chaves u WHERE u.chave_id = chaves.id AND u.dia >= date('now', '-30 days')) AS chamadas_30d FROM chaves ORDER BY ativo DESC, nome").all()).results);
+  if (rota === "GET /api/chaves") return Response.json((await db.prepare("SELECT id, nome, pacotes, documentos, ativo, criado_por, criado_em, usado_em, expira_em, (SELECT coalesce(sum(chamadas), 0) FROM uso_chaves u WHERE u.chave_id = chaves.id AND u.dia >= date('now', '-30 days')) AS chamadas_30d FROM chaves ORDER BY ativo DESC, nome").all()).results);
   if (rota === "POST /api/chaves") {
     const b = await corpo(req);
     const nome = txt(b.nome, 100);
@@ -67,13 +83,15 @@ export async function admin(req: Request, env: EnvConhecimento, email: string, c
     if (faltam.length) return erro(`pacote não existe: ${faltam.join(", ")}`, 404);
     const r = await validarRestricoes(db, pacotes, b.documentos);
     if (!r.ok) return erro(r.erro);
+    const val = validade(b);
+    if (!val.ok) return erro(val.erro);
     const id = crypto.randomUUID();
     const token = novoToken();
     await db
-      .prepare("INSERT INTO chaves (id, nome, token_hash, pacotes, documentos, criado_por) VALUES (?, ?, ?, ?, ?, ?)")
-      .bind(id, nome, await hashToken(token), JSON.stringify(pacotes), JSON.stringify(r.v), email)
+      .prepare("INSERT INTO chaves (id, nome, token_hash, pacotes, documentos, criado_por, expira_em) VALUES (?, ?, ?, ?, ?, ?, ?)")
+      .bind(id, nome, await hashToken(token), JSON.stringify(pacotes), JSON.stringify(r.v), email, val.v)
       .run();
-    return Response.json({ id, nome, pacotes, documentos: r.v, token });
+    return Response.json({ id, nome, pacotes, documentos: r.v, expira_em: val.v, token });
   }
   const ch = caminho.match(/^\/api\/chaves\/([0-9a-f-]{36})$/);
   if (ch && req.method === "DELETE") {

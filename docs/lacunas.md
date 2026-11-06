@@ -52,7 +52,7 @@ Nenhuma pendência.
 | # | Lacuna | Efeito | Próximo passo | Prioridade |
 | --- | --- | --- | --- | --- |
 | 5.1 | Sem OAuth no `/mcp` | claude.ai na web e ChatGPT não conectam (só aceitam OAuth ou sem autenticação) | OAuth 2.1 com Cloudflare Access como provedor, mapeando o usuário para uma chave | P2 |
-| 5.4 | Chaves não expiram | Chave esquecida continua válida | Validade opcional na criação, com aviso na interface | P3 |
+| 5.4 | Validade de chave: feita no código (migração 0007, `dias` ou `expira_em`, aviso na lista); falta aplicar a migração e fazer o deploy | Até lá, chave esquecida continua válida | Aplicar a 0007 e o deploy; escolher a validade ao gerar as próximas chaves | P3 |
 | 5.5 | Mudar o que uma chave enxerga exige revogar e gerar outra | Troca de chave em todos os agentes que a usam | Aceitável; rever se houver muitos clientes | P3 |
 
 ## 6. Busca

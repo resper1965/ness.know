@@ -10,8 +10,15 @@ export interface Env extends EnvAcesso, EnvConhecimento, EnvMcp {
 
 export default {
   async fetch(req: Request, env: Env): Promise<Response> {
-    const { pathname } = new URL(req.url);
-    if (req.method === "GET" && pathname === "/health") return new Response("ok");
+    const { pathname, searchParams } = new URL(req.url);
+    if (req.method === "GET" && pathname === "/health") {
+      if (!searchParams.has("profundo")) return new Response("ok");
+      // Profundo: confere o D1, para um monitor externo distinguir "Worker no ar" de "Worker sem banco".
+      return env.DB.prepare("SELECT 1").first().then(
+        () => new Response("ok"),
+        () => new Response("banco indisponível", { status: 503 }),
+      );
+    }
     // Fora do Access: a autenticação é a chave de API.
     if (pathname === "/mcp") return mcp(req, env);
     if (pathname.startsWith("/api/")) {

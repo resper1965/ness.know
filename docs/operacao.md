@@ -7,7 +7,7 @@ Os comandos são para PowerShell, num clone fora do OneDrive (`C:\dev\ness.know`
 | Recurso | Nome | Situação em 03/11/2026 |
 | --- | --- | --- |
 | Worker | `ness-know` | Publicado em `know.ness.com.br` com o código do `main` (01/11/2026) |
-| D1 | `ness-know` | Migrações 0001 a 0004 aplicadas; SCF 2026.3 carregado (catálogo e STRM, 03/11/2026) |
+| D1 | `ness-know` | Migrações 0001 a 0004 aplicadas na época (as seguintes, até a 0007, estão em `migrations/` e se aplicam com o comando de migrações); SCF 2026.3 carregado (catálogo e STRM, 03/11/2026) |
 | R2 | `ness-know-arquivos` | Criado |
 | Vectorize | `ness-know-trechos` | Criado, com os índices de metadados `alvo` e `documento_id` |
 | Access | app `know.ness.com.br` (Allow, e-mails dos admins) e app `know.ness.com.br/mcp` (Bypass, Everyone) | Configurados |
@@ -130,11 +130,19 @@ npx wrangler deploy
 | Mandar a chave a um usuário | Logo depois de **Gerar chave**, clique em **Ver como conectar com esta chave**, escolha o agente dele e use **Copiar mensagem pronta**: o texto já traz os pacotes liberados, a receita com a chave, a conferência e os cuidados. A chave some ao recarregar a página. O usuário não precisa de acesso à interface |
 | Mudar o que uma chave enxerga | Gere uma nova chave e revogue a antiga |
 | Revogar | Aba **Chaves**, **Revogar**, **Confirmar** |
+| Dar validade a uma chave | Ao gerar, escolha **Validade** (30 dias a 1 ano). Chaves a menos de 14 dias de vencer aparecem em laranja; chave vencida recebe `401` |
 | Ver se um agente está usando | Coluna **Último uso** (atualizada a cada `initialize`) |
 | Conferir uma chave | Aba **Conectar um agente**, comando `curl`; `401` indica chave errada ou revogada |
 | Incluir um administrador | Acrescente o e-mail em `ADMIN_EMAILS` no `wrangler.jsonc` e na política do Access, e rode `npx wrangler deploy` |
 | Medir a busca | `node scripts/avaliar-busca.mjs <perguntas.json> $app [pacote,pacote]`; gabaritos prontos e resultados em [gabaritos/](gabaritos/README.md) |
 | Refazer os vetores | `node scripts/vetorizar.mjs $app` (só sobrescreve) |
+
+## Backup, monitoramento e alertas
+
+- **Restauração do banco (Time Travel).** O D1 guarda o histórico para voltar a qualquer minuto dos últimos 30 dias no plano Workers Paid (7 dias no gratuito), segundo a documentação da Cloudflare. **Confirme no painel** (Workers & Pages › D1 › `ness-know`) o plano e a janela da conta. Comandos: `npx wrangler d1 time-travel info ness-know` mostra o ponto atual, e `npx wrangler d1 time-travel restore ness-know --timestamp=<AAAA-MM-DDTHH:MM:SSZ>` volta ao instante escolhido (confira a sintaxe com `--help` antes de usar; a restauração substitui o estado atual, então anote o ponto atual antes).
+- **Exportação manual.** `npx wrangler d1 export ness-know --remote --output=backup.sql`. **Não foi testado aqui**: o banco tem uma tabela virtual (`trechos_fts`, FTS5) e a exportação do D1 pode recusar bancos com tabelas virtuais. Se recusar, o Time Travel é o caminho de backup. Os originais dos documentos ficam no R2 e os pacotes na pasta de origem, então o conteúdo se refaz com `carregar-pacote.mjs`.
+- **Saúde do serviço.** `GET /health` responde `ok` sem tocar no banco. `GET /health?profundo=1` faz um `SELECT 1` no D1 e responde `503 banco indisponível` se falhar. Para um monitor externo ver esse endereço, crie no Zero Trust uma aplicação do Access só para `know.ness.com.br/health` com política **Bypass › Everyone**, como a do caminho `/mcp` (Zero Trust › Access controls › Applications › Add an application › Self-hosted; destino `know.ness.com.br`, caminho `health`; política Bypass, Include Everyone). Sem isso o `/health` cai no login do Access.
+- **Alertas.** Configure em Notificações da Cloudflare (Notifications › Add) um aviso para erros do Worker `ness-know`, e aponte o monitor externo para `/health?profundo=1`. Este repositório não cria alertas; os passos exatos do painel mudam, então siga a tela.
 
 ## Solução de problemas
 
@@ -143,7 +151,9 @@ npx wrangler deploy
 | Interface mostra "Sua sessão expirou" logo ao abrir | Falta a aplicação do Access sem caminho, `ACCESS_AUD` errado ou e-mail fora de `ADMIN_EMAILS` | Confira os três e rode `npx wrangler deploy` |
 | `/mcp` pede login no navegador | A aplicação Bypass do caminho `mcp` não existe ou está com Allow | Ajuste no Zero Trust |
 | Agente recebe `429` | A chave passou de 240 chamadas por minuto (o faBRAINzio usa uma chave só para todos os usuários) | Espere 30 segundos. Se for uso normal, suba `limit` em `ratelimits` no `wrangler.jsonc` e rode `npx wrangler deploy` |
-| Agente recebe `401` | Chave errada, revogada ou sem o prefixo `Bearer` | Conferir com o `curl`; gerar outra |
+| Agente recebe `401` | Chave errada, revogada, **vencida** (a aba Chaves mostra "Vencida em …") ou sem o prefixo `Bearer` | Conferir com o `curl`; gerar outra |
+| Agente recebe `429` com `limite de requisições excedido` (sem "da chave") | Mais de 30 tentativas por minuto com chave ausente ou inválida a partir do mesmo IP (`LIMITE_AUTH`) | Corrigir a chave do agente; a espera é de 30 segundos |
+| Cliente de navegador recebe `403 origem não permitida` | O `Origin` dele não está em `ORIGENS_MCP` | Acrescentar a origem à var `ORIGENS_MCP` no `wrangler.jsonc` (lista separada por vírgula) e rodar `npx wrangler deploy`. Agentes e CLIs não mandam `Origin` e não precisam disso |
 | Busca semântica vazia numa chave restrita | Falta o índice de metadados `documento_id`, ou os vetores são anteriores a ele | Criar o índice e rodar `node scripts/vetorizar.mjs $app` |
 | Documento com situação "Falhou" | PDF sem camada de texto ou arquivo corrompido | Usar um PDF com texto (OCR) e recarregar |
 | Carga mostra `AVISO …: vetores não gravados` | O Workers AI ou o Vectorize falhou na hora de gerar os vetores. O documento e os trechos ficam gravados e a busca textual já o acha | Rode `node scripts/vetorizar.mjs $app` (só sobrescreve) |
