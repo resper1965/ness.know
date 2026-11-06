@@ -10,6 +10,8 @@ export interface EnvMcp extends EnvBusca {
   BUSCA_MINIMO?: string;
   /** Limite de chamadas por chave (Rate Limiting da Cloudflare). Sem o binding, não há limite (testes e wrangler dev sem ele). */
   LIMITE_MCP?: RateLimit;
+  /** Limite de tentativas com token ausente ou inválido, por IP. Sem o binding, não há limite. */
+  LIMITE_AUTH?: RateLimit;
 }
 
 /** Versões que este servidor implementa (HTTP sem sessão, só ferramentas). Pedido fora da lista recebe a mais nova. */
@@ -45,9 +47,9 @@ export function novoToken(): string {
   return `nesskb_${btoa(String.fromCharCode(...b)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")}`;
 }
 
-async function clienteDe(req: Request, db: D1Database): Promise<Cliente | null> {
-  const token = req.headers.get("authorization")?.match(/^Bearer\s+(\S+)$/i)?.[1];
-  if (!token) return null;
+const tokenDe = (req: Request) => req.headers.get("authorization")?.match(/^Bearer\s+(\S+)$/i)?.[1];
+
+async function clienteDe(token: string, db: D1Database): Promise<Cliente | null> {
   const c = await db
     .prepare("SELECT id, nome, pacotes, documentos FROM chaves WHERE token_hash = ? AND ativo = 1 AND (expira_em IS NULL OR expira_em > datetime('now'))")
     .bind(await hashToken(token))
@@ -233,10 +235,24 @@ async function registrarUso(db: D1Database, chaveId: string, ferramenta: string)
 const rpc = (id: unknown, result: unknown) => Response.json({ jsonrpc: "2.0", id, result });
 const rpcErro = (id: unknown, code: number, message: string, status = 200) => Response.json({ jsonrpc: "2.0", id: id ?? null, error: { code, message } }, { status });
 
+const limiteExcedido = () =>
+  Response.json({ jsonrpc: "2.0", id: null, error: { code: -32002, message: "limite de requisições excedido; tente de novo em instantes" } }, { status: 429, headers: { "retry-after": "30" } });
+
+/**
+ * Token ausente ou inválido: conta a falha por IP, e quem insiste recebe 429 em vez de 401.
+ * shortcut: o token errado já custou uma leitura no D1 quando chega aqui (só o token ausente a evita); suficiente contra laço e
+ * tentativa em série, não contra um volume que o Rate Limiting da Cloudflare deixaria passar. Subir para uma regra de WAF se precisar.
+ */
+async function recusar(req: Request, env: EnvMcp): Promise<Response> {
+  if (env.LIMITE_AUTH && !(await env.LIMITE_AUTH.limit({ key: req.headers.get("cf-connecting-ip") ?? "sem-ip" })).success) return limiteExcedido();
+  return rpcErro(null, -32001, "token inválido", 401);
+}
+
 export async function mcp(req: Request, env: EnvMcp): Promise<Response> {
   if (req.method !== "POST") return new Response("use POST", { status: 405, headers: { allow: "POST" } });
-  const cliente = await clienteDe(req, env.DB);
-  if (!cliente) return rpcErro(null, -32001, "token inválido", 401);
+  const token = tokenDe(req);
+  const cliente = token ? await clienteDe(token, env.DB) : null;
+  if (!cliente) return recusar(req, env);
   // Uma chave vazada ou um agente em laço não consome sem fim a cota do Workers AI e do Vectorize.
   if (env.LIMITE_MCP && !(await env.LIMITE_MCP.limit({ key: cliente.id })).success)
     return Response.json({ jsonrpc: "2.0", id: null, error: { code: -32002, message: "limite de requisições da chave excedido; tente de novo em instantes" } }, { status: 429, headers: { "retry-after": "30" } });

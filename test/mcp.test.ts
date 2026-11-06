@@ -179,6 +179,22 @@ describe("mcp", () => {
 
     expect((await chamar(comLimite(true), { jsonrpc: "2.0", id: 2, method: "ping" })).status).toBe(200);
     expect(chaves).toEqual(["c1", "c1"]); // o limite é por chave
-    expect((await chamar(comLimite(false), { jsonrpc: "2.0", id: 3, method: "ping" }, "errado")).status).toBe(401); // chave inválida não chega ao limitador
+    expect((await chamar(comLimite(false), { jsonrpc: "2.0", id: 3, method: "ping" }, "errado")).status).toBe(401); // chave inválida não chega ao limitador da chave
+  });
+  it("token ausente ou inválido conta por IP em LIMITE_AUTH: 401 dentro do limite, 429 depois; chave válida não passa por ele", async () => {
+    const { env, consultas } = await ambiente();
+    const ips: string[] = [];
+    const comAuth = (success: boolean) => ({ ...env, LIMITE_AUTH: { limit: async ({ key }: { key: string }) => (ips.push(key), { success }) } }) as unknown as typeof env;
+    const pedido = (e: typeof env, token?: string) =>
+      mcp(new Request("https://x/mcp", { method: "POST", headers: { "cf-connecting-ip": "203.0.113.9", ...(token ? { authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "ping" }) }), e);
+
+    expect((await pedido(comAuth(true))).status).toBe(401);
+    expect((await pedido(comAuth(true), "errado")).status).toBe(401);
+    expect(consultas.filter((c) => c.sql.includes("FROM chaves"))).toHaveLength(1); // sem token, nem chega ao banco
+    const r = await pedido(comAuth(false), "errado");
+    expect(r.status).toBe(429);
+    expect(r.headers.get("retry-after")).toBe("30");
+    expect((await pedido(comAuth(false), TOKEN)).status).toBe(200);
+    expect(ips).toEqual(["203.0.113.9", "203.0.113.9", "203.0.113.9"]);
   });
 });
