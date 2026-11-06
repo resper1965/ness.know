@@ -179,7 +179,7 @@ export async function admin(req: Request, env: EnvConhecimento, email: string, c
 
   // Skills: procedimentos que o agente segue ao usar as normas (ver docs/skills-plano.md).
   if (rota === "GET /api/skills")
-    return Response.json((await db.prepare("SELECT nome, descricao, normas, versao, atualizado_em, length(corpo) AS tamanho FROM skills ORDER BY nome").all()).results);
+    return Response.json((await db.prepare("SELECT nome, descricao, normas, buscas, versao, atualizado_em, length(corpo) AS tamanho FROM skills ORDER BY nome").all()).results);
   if (rota === "POST /api/skills") {
     const r = validarSkill(await corpo(req));
     if (!r.ok) return erro(r.erro);
@@ -187,9 +187,9 @@ export async function admin(req: Request, env: EnvConhecimento, email: string, c
     if (falta) return erro(falta);
     await db
       .prepare(
-        "INSERT INTO skills (nome, descricao, normas, corpo, versao) VALUES (?, ?, ?, ?, ?) ON CONFLICT (nome) DO UPDATE SET descricao = excluded.descricao, normas = excluded.normas, corpo = excluded.corpo, versao = excluded.versao, atualizado_em = datetime('now')",
+        "INSERT INTO skills (nome, descricao, normas, buscas, corpo, versao) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (nome) DO UPDATE SET descricao = excluded.descricao, normas = excluded.normas, buscas = excluded.buscas, corpo = excluded.corpo, versao = excluded.versao, atualizado_em = datetime('now')",
       )
-      .bind(r.v.nome, r.v.descricao, JSON.stringify(r.v.normas), r.v.corpo, r.v.versao)
+      .bind(r.v.nome, r.v.descricao, JSON.stringify(r.v.normas), JSON.stringify(r.v.buscas), r.v.corpo, r.v.versao)
       .run();
     return Response.json({ nome: r.v.nome });
   }

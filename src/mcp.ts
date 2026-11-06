@@ -209,10 +209,14 @@ async function chamar(env: EnvMcp, cliente: Cliente, nome: string, args: Record<
   if (nome === "obter_skill") {
     const pedida = typeof args.nome === "string" ? args.nome.trim().slice(0, 63) : "";
     if (!pedida) return texto("informe nome (os nomes estão em listar_pacotes, campo skills)", true);
-    const s = await env.DB.prepare("SELECT nome, descricao, normas, corpo, versao FROM skills WHERE nome = ?").bind(pedida).first<{ nome: string; descricao: string; normas: string; corpo: string; versao: string | null }>();
+    const s = await env.DB.prepare("SELECT nome, descricao, normas, buscas, corpo, versao FROM skills WHERE nome = ?").bind(pedida).first<{ nome: string; descricao: string; normas: string; buscas: string | null; corpo: string; versao: string | null }>();
     // Inexistente e não liberada dão a mesma resposta: a chave não descobre skills que não enxerga.
     if (!s || !visivel(restricoesDe(s.normas), cliente)) return texto(`skill não encontrada: ${pedida}. Os nomes estão em listar_pacotes, campo skills`, true);
-    return texto(JSON.stringify({ nome: s.nome, descricao: s.descricao, versao: s.versao, corpo: s.corpo, fonte: { sistema: "ness.KNOW", base: "skills", consulta: s.nome, coletado_em: new Date().toISOString() } }, null, 1));
+    let buscas: string[] = [];
+    try {
+      buscas = (JSON.parse(s.buscas || "[]") as unknown[]).filter((x): x is string => typeof x === "string");
+    } catch {}
+    return texto(JSON.stringify({ nome: s.nome, descricao: s.descricao, versao: s.versao, buscas, corpo: s.corpo, fonte: { sistema: "ness.KNOW", base: "skills", consulta: s.nome, coletado_em: new Date().toISOString() } }, null, 1));
   }
   return texto(`ferramenta desconhecida: ${nome}`, true);
 }

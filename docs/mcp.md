@@ -161,7 +161,7 @@ Uma skill é um procedimento curto que diz ao agente como usar as normas para um
 | --- | --- | --- | --- |
 | `nome` | string | sim | Nome da skill |
 
-Resposta: `nome`, `descricao`, `versao`, `corpo` (o procedimento, até 4.000 caracteres) e `fonte`.
+Resposta: `nome`, `descricao`, `versao`, `buscas` (até 5 consultas de continuação que a skill declara, `[]` quando não declara; o faBRAINzio as executa junto com a pergunta), `corpo` (o procedimento, até 4.000 caracteres) e `fonte`.
 
 Uma chave enxerga a skill só se tiver todos os pacotes que ela declara em `normas` e, em pacote restrito, as normas declaradas. Erros: `informe nome` e `skill não encontrada`. Skill inexistente e skill não liberada à chave recebem o mesmo erro, para a chave não descobrir o que não enxerga.
 

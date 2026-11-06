@@ -25,6 +25,20 @@ describe("validarSkill", () => {
   });
 });
 
+describe("validarSkill: buscas", () => {
+  const ok = { nome: "consultando-normas", descricao: "Use ao responder sobre normas", corpo: "Passo 1.", normas: {} };
+  it("sem buscas vale []; aceita até 5 textos curtos, sem vazios nem repetidos", () => {
+    expect(validarSkill(ok)).toMatchObject({ ok: true, v: { buscas: [] } });
+    expect(validarSkill({ ...ok, buscas: ["change enablement", " 8.32 gestão de mudanças ", "change enablement", ""] })).toMatchObject({ ok: true, v: { buscas: ["change enablement", "8.32 gestão de mudanças"] } });
+  });
+  it("recusa mais de 5, item longo demais e valor que não é lista de textos", () => {
+    expect(validarSkill({ ...ok, buscas: ["a1", "a2", "a3", "a4", "a5", "a6"] })).toMatchObject({ ok: false });
+    expect(validarSkill({ ...ok, buscas: ["x".repeat(121)] })).toMatchObject({ ok: false });
+    expect(validarSkill({ ...ok, buscas: "change enablement" })).toMatchObject({ ok: false });
+    expect(validarSkill({ ...ok, buscas: [1] })).toMatchObject({ ok: false });
+  });
+});
+
 describe("visivel", () => {
   it("sem normas vale para toda chave", () => expect(visivel({}, { pacotes: [], documentos: {} })).toBe(true));
   it("exige todos os pacotes", () => {
@@ -53,7 +67,7 @@ describe("normasExistem", () => {
 
 describe("admin /api/skills", () => {
   const novo = () => {
-    const DB = bancoTeste(migracao("0001_inicial"), migracao("0006_skills"));
+    const DB = bancoTeste(migracao("0001_inicial"), migracao("0006_skills"), migracao("0008_skills_buscas"));
     return { DB, env: { DB } as never };
   };
   const chamar = (env: never, metodo: string, caminho: string, corpo?: unknown) =>
@@ -68,6 +82,12 @@ describe("admin /api/skills", () => {
     expect(lista).toHaveLength(1);
     expect(lista[0]).toMatchObject({ nome: "consultando-normas", tamanho: 17 });
     expect(lista[0].corpo).toBeUndefined();
+  });
+  it("grava as buscas e a lista as mostra", async () => {
+    const { env } = novo();
+    expect((await chamar(env, "POST", "/api/skills", { ...skill, buscas: ["change enablement"] })).status).toBe(200);
+    const lista = (await (await chamar(env, "GET", "/api/skills")).json()) as { buscas: string }[];
+    expect(JSON.parse(lista[0].buscas)).toEqual(["change enablement"]);
   });
   it("recusa skill inválida e norma que não existe", async () => {
     const { env } = novo();
@@ -87,7 +107,7 @@ describe("admin /api/skills", () => {
 describe("mcp: skills", () => {
   const TOKEN = "nesskb_skill";
   async function ambiente(pacotes: string[], documentos: Record<string, string[]> = {}) {
-    const DB = bancoTeste(migracao("0001_inicial"), migracao("0002_chave_documentos"), migracao("0005_uso_chaves"), migracao("0006_skills"), migracao("0007_chave_validade"));
+    const DB = bancoTeste(migracao("0001_inicial"), migracao("0002_chave_documentos"), migracao("0005_uso_chaves"), migracao("0006_skills"), migracao("0007_chave_validade"), migracao("0008_skills_buscas"));
     await DB.prepare("INSERT INTO chaves (id, nome, token_hash, pacotes, documentos) VALUES ('c1', 'teste', ?, ?, ?)").bind(await hashToken(TOKEN), JSON.stringify(pacotes), JSON.stringify(documentos)).run();
     for (const slug of ["iso", "cis"]) await DB.prepare("INSERT INTO pacotes (slug, nome) VALUES (?, ?)").bind(slug, slug).run();
     const sk = (nome: string, normas: object) => DB.prepare("INSERT INTO skills (nome, descricao, normas, corpo) VALUES (?, ?, ?, ?)").bind(nome, `desc ${nome}`, JSON.stringify(normas), `corpo ${nome}`).run();
@@ -116,6 +136,12 @@ describe("mcp: skills", () => {
     const b = await chamar(env, "obter_skill", { nome: "nao-existe" });
     expect(a.result.isError).toBe(true);
     expect(a.result.content[0].text.replace("iso-e-cis", "X")).toBe(b.result.content[0].text.replace("nao-existe", "X"));
+  });
+  it("obter_skill devolve as buscas declaradas; skill antiga devolve []", async () => {
+    const env = await ambiente(["iso"]);
+    await env.DB.prepare("UPDATE skills SET buscas = ? WHERE nome = 'so-iso'").bind(JSON.stringify(["8.32 gestão de mudanças"])).run();
+    expect(JSON.parse((await chamar(env, "obter_skill", { nome: "so-iso" })).result.content[0].text).buscas).toEqual(["8.32 gestão de mudanças"]);
+    expect(JSON.parse((await chamar(env, "obter_skill", { nome: "geral" })).result.content[0].text).buscas).toEqual([]);
   });
   it("sem o nome, pede o nome; o uso conta como obter_skill", async () => {
     const env = await ambiente(["iso"]);
