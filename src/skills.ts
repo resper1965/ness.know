@@ -1,12 +1,16 @@
 // Regras das skills (procedimentos que o agente segue ao usar as normas): validação na carga e quem enxerga cada uma.
 const SLUG = /^[a-z0-9][a-z0-9-]{1,62}$/;
 export const MAX_CORPO = 4000;
+export const MAX_BUSCAS = 5;
+export const MAX_BUSCA = 120;
 
 type Valido<T> = { ok: true; v: T } | { ok: false; erro: string };
 export interface Skill {
   nome: string;
   descricao: string;
   normas: Record<string, string[]>;
+  /** Buscas de continuação que o faBRAINzio executa junto com a pergunta (o modelo pequeno não as faz sozinho). */
+  buscas: string[];
   corpo: string;
   versao: string | null;
 }
@@ -28,7 +32,12 @@ export function validarSkill(b: Record<string, unknown>): Valido<Skill> {
     if (!SLUG.test(slug) || !Array.isArray(lista) || !lista.every((t) => typeof t === "string")) return { ok: false, erro: `normas.${slug}: lista de títulos` };
     normas[slug] = [...new Set(lista.map((t) => t.trim()).filter(Boolean))];
   }
-  return { ok: true, v: { nome, descricao, normas, corpo, versao: txt(b.versao, 50) || null } };
+  const brutas = b.buscas ?? [];
+  if (!Array.isArray(brutas) || !brutas.every((x) => typeof x === "string")) return { ok: false, erro: "buscas: lista de textos" };
+  const buscas = [...new Set(brutas.map((x) => x.trim()).filter(Boolean))];
+  if (buscas.length > MAX_BUSCAS) return { ok: false, erro: `buscas: no máximo ${MAX_BUSCAS}` };
+  if (buscas.some((x) => x.length > MAX_BUSCA)) return { ok: false, erro: `buscas: cada texto com até ${MAX_BUSCA} caracteres` };
+  return { ok: true, v: { nome, descricao, normas, buscas, corpo, versao: txt(b.versao, 50) || null } };
 }
 
 /** Mensagem de erro se algum pacote ou título de `normas` não existe na base; null se está tudo lá. */

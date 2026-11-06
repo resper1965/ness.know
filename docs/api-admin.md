@@ -54,7 +54,7 @@ Procedimentos que o agente segue ao usar as normas (ver [skills-plano.md](skills
 | Rota | Descrição |
 | --- | --- |
 | `GET /api/skills` | Skills com `nome`, `descricao`, `normas` (JSON), `versao`, `atualizado_em` e `tamanho` (caracteres do corpo, que não vem na lista) |
-| `POST /api/skills` | Cria ou substitui: `nome`, `descricao`, `corpo` (até 4.000 caracteres), `normas?` (`{pacote: [títulos]}`; `{}` vale para toda chave; lista vazia exige só o pacote) e `versao?`. Pacote ou título que não existe dá `400` |
+| `POST /api/skills` | Cria ou substitui: `nome`, `descricao`, `corpo` (até 4.000 caracteres), `normas?` (`{pacote: [títulos]}`; `{}` vale para toda chave; lista vazia exige só o pacote), `buscas?` (até 5 textos de até 120 caracteres: consultas de continuação que o cliente executa) e `versao?`. Pacote ou título que não existe dá `400` |
 | `DELETE /api/skills/:nome` | Apaga a skill; `404` se não existe |
 
 `node scripts/carregar-skills.mjs <url> [pasta]` envia as pastas `skills/<nome>/SKILL.md`.
