@@ -31,11 +31,12 @@ Sem argumentos. Devolve os pacotes que a chave enxerga, com as instruções de u
         { "titulo": "NIST CSF 2.0", "versao": "2.0" }
       ]
     }
-  ]
+  ],
+  "skills": [{ "nome": "consultando-normas", "descricao": "Use ao responder qualquer pergunta sobre o que uma norma exige" }]
 }
 ```
 
-`restrito: true` aparece quando a chave enxerga só parte das normas do pacote. Nesse caso, `documentos` lista só as normas liberadas.
+`skills` lista só as skills que a chave enxerga (ver `obter_skill`). `restrito: true` aparece quando a chave enxerga só parte das normas do pacote. Nesse caso, `documentos` lista só as normas liberadas.
 
 Quando a chave tem o pacote `scf-strm`, ele vem também com `frameworks: [{ id, nome, itens }]`: são os ids a usar em `correlacionar`.
 
@@ -151,6 +152,18 @@ Como avaliar um controle do SCF. Exige o pacote `scf-strm`.
 Resposta: `scf`, `nome`, `dominio`, `descricao`, `pergunta` (pergunta de avaliação), `peso` (1 a 10), `cadencia`, `funcao_csf`, `legado` (ids anteriores), `objetivos` (`[{ id, objetivo }]`: o que verificar), `evidencias` (`[{ id, area, artefato, descricao }]`: o que pedir) e `maturidade` (`[{ nivel, rotulo, criterio }]`, de 0 a 5).
 
 Erros: chave sem o pacote, `informe scf (ex.: MON-02)` e `controle SCF desconhecido`.
+
+### `obter_skill`
+
+Uma skill é um procedimento curto que diz ao agente como usar as normas para um tipo de tarefa: quais buscas fazer, em que ordem e em que formato responder. Os nomes vêm de `listar_pacotes`, campo `skills`.
+
+| Argumento | Tipo | Obrigatório | Descrição |
+| --- | --- | --- | --- |
+| `nome` | string | sim | Nome da skill |
+
+Resposta: `nome`, `descricao`, `versao`, `corpo` (o procedimento, até 4.000 caracteres) e `fonte`.
+
+Uma chave enxerga a skill só se tiver todos os pacotes que ela declara em `normas` e, em pacote restrito, as normas declaradas. Erros: `informe nome` e `skill não encontrada`. Skill inexistente e skill não liberada à chave recebem o mesmo erro, para a chave não descobrir o que não enxerga.
 
 ## Erros
 
