@@ -328,8 +328,15 @@ export async function ingerir(env: EnvConhecimento, alvo: Alvo, meta: MetaDocume
     return { id, trechos: 0, erro };
   }
   const ins = env.DB.prepare("INSERT INTO trechos_fts (documento_id, escopo, dono, texto) VALUES (?, ?, ?, ?)");
-  const stmts = [doc.bind(...valores, "ok", null, autor), ...partes.map((p) => ins.bind(id, alvo.escopo, alvo.dono, p))];
-  for (let i = 0; i < stmts.length; i += 50) await env.DB.batch(stmts.slice(i, i + 50));
+  // O registro do documento entra por último: se um lote falhar, nada fica "ok" pela metade (os trechos soltos e o original saem).
+  const stmts = [...partes.map((p) => ins.bind(id, alvo.escopo, alvo.dono, p)), doc.bind(...valores, "ok", null, autor)];
+  try {
+    for (let i = 0; i < stmts.length; i += 50) await env.DB.batch(stmts.slice(i, i + 50));
+  } catch (e) {
+    await env.DB.prepare("DELETE FROM trechos_fts WHERE documento_id = ?").bind(id).run().catch(() => {});
+    await env.ARQUIVOS.delete(chave).catch(() => {});
+    throw e;
+  }
   // Sem vetores o documento continua achável pela busca textual; o aviso volta a quem carregou, para refazer com vetorizar.mjs.
   const aviso = await vetorizar(env, id, alvo, meta.titulo, partes).then(
     () => undefined,

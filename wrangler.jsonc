@@ -10,7 +10,7 @@
   "routes": [{ "pattern": "know.ness.com.br", "custom_domain": true }],
   "d1_databases": [{ "binding": "DB", "database_name": "ness-know", "database_id": "f5472779-9e83-48ba-b778-b1fd7e491d56", "migrations_dir": "migrations" }],
   "r2_buckets": [{ "binding": "ARQUIVOS", "bucket_name": "ness-know-arquivos" }],
-  // bge-m3: 1024 dimensões, cosseno; índice de metadados em "alvo" criado antes do primeiro vetor (docs/deploy.md).
+  // bge-m3: 1024 dimensões, cosseno; índice de metadados em "alvo" criado antes do primeiro vetor (docs/operacao.md).
   "vectorize": [{ "binding": "VETORES", "index_name": "ness-know-trechos" }],
   "ai": { "binding": "AI" },
   "vars": {
