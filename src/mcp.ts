@@ -1,6 +1,7 @@
 // ness.KNOW: base de conhecimento por MCP (Streamable HTTP, sem sessão): outros projetos consultam os pacotes que lhes foram liberados.
 // Autenticação por chave de API (Bearer), guardada só em hash na tabela `chaves`; /mcp fica fora do Cloudflare Access.
 import { buscarEm, type EnvBusca } from "./busca";
+import { visivel } from "./skills";
 import { cobertura, correlacionar, detalharControle, MAX_DESTINOS, MAX_IMPLEMENTADOS, PACOTE_STRM } from "./strm";
 
 export interface EnvMcp extends EnvBusca {
@@ -118,6 +119,12 @@ const FERRAMENTAS = [
     inputSchema: { type: "object", properties: { scf: { type: "string", description: "id do controle SCF (ex.: MON-02, IAC-06)" } }, required: ["scf"] },
     annotations: { readOnlyHint: true },
   },
+  {
+    name: "obter_skill",
+    description: "Devolve uma skill: o procedimento que diz como usar as normas para um tipo de tarefa (quais buscas fazer, em que ordem e em que formato responder). Os nomes estão em listar_pacotes, campo skills. Siga o procedimento ao responder.",
+    inputSchema: { type: "object", properties: { nome: { type: "string", description: "nome da skill, como em listar_pacotes" } }, required: ["nome"] },
+    annotations: { readOnlyHint: true },
+  },
 ];
 
 type Resposta = { content: { type: "text"; text: string }[]; isError?: boolean };
@@ -127,13 +134,14 @@ async function chamar(env: EnvMcp, cliente: Cliente, nome: string, args: Record<
   if (nome === "listar_pacotes") {
     if (!cliente.pacotes.length) return texto(JSON.stringify({ pacotes: [] }));
     const marcas = cliente.pacotes.map(() => "?").join(", ");
-    const [p, d] = await Promise.all([
+    const [p, d, sk] = await Promise.all([
       env.DB.prepare(`SELECT slug, nome, descricao, versao, instrucoes FROM pacotes WHERE slug IN (${marcas}) ORDER BY slug`)
         .bind(...cliente.pacotes)
         .all<{ slug: string; nome: string; descricao: string | null; versao: string | null; instrucoes: string }>(),
       env.DB.prepare(`SELECT dono, titulo, versao FROM documentos WHERE escopo = 'pacote' AND status = 'ok' AND dono IN (${marcas}) ORDER BY titulo`)
         .bind(...cliente.pacotes)
         .all<{ dono: string; titulo: string; versao: string | null }>(),
+      env.DB.prepare("SELECT nome, descricao, normas FROM skills ORDER BY nome").all<{ nome: string; descricao: string; normas: string }>(),
     ]);
     const frameworks = cliente.pacotes.includes(PACOTE_STRM)
       ? (await env.DB.prepare("SELECT id, nome, itens FROM strm_frameworks ORDER BY id").all<{ id: string; nome: string; itens: number }>()).results
@@ -143,7 +151,8 @@ async function chamar(env: EnvMcp, cliente: Cliente, nome: string, args: Record<
       const documentos = d.results.filter((y) => y.dono === x.slug && (!so || so.includes(y.titulo))).map((y) => ({ titulo: y.titulo, versao: y.versao }));
       return { ...x, ...(so ? { restrito: true } : {}), documentos, ...(x.slug === PACOTE_STRM ? { frameworks } : {}) };
     });
-    return texto(JSON.stringify({ pacotes }, null, 1));
+    const skills = sk.results.filter((x) => visivel(restricoesDe(x.normas), cliente)).map(({ nome, descricao }) => ({ nome, descricao }));
+    return texto(JSON.stringify({ pacotes, skills }, null, 1));
   }
   if (nome === "buscar_conhecimento") {
     const consulta = typeof args.consulta === "string" ? args.consulta.trim().slice(0, 2000) : "";
@@ -192,6 +201,14 @@ async function chamar(env: EnvMcp, cliente: Cliente, nome: string, args: Record<
     const r = await detalharControle(env.DB, scf);
     if ("erro" in r) return texto(r.erro, true);
     return texto(JSON.stringify({ ...r, fonte: { sistema: "ness.KNOW", base: "Secure Controls Framework (SCF)", consulta: scf, coletado_em: new Date().toISOString() } }, null, 1));
+  }
+  if (nome === "obter_skill") {
+    const pedida = typeof args.nome === "string" ? args.nome.trim().slice(0, 63) : "";
+    if (!pedida) return texto("informe nome (os nomes estão em listar_pacotes, campo skills)", true);
+    const s = await env.DB.prepare("SELECT nome, descricao, normas, corpo, versao FROM skills WHERE nome = ?").bind(pedida).first<{ nome: string; descricao: string; normas: string; corpo: string; versao: string | null }>();
+    // Inexistente e não liberada dão a mesma resposta: a chave não descobre skills que não enxerga.
+    if (!s || !visivel(restricoesDe(s.normas), cliente)) return texto(`skill não encontrada: ${pedida}. Os nomes estão em listar_pacotes, campo skills`, true);
+    return texto(JSON.stringify({ nome: s.nome, descricao: s.descricao, versao: s.versao, corpo: s.corpo, fonte: { sistema: "ness.KNOW", base: "skills", consulta: s.nome, coletado_em: new Date().toISOString() } }, null, 1));
   }
   return texto(`ferramenta desconhecida: ${nome}`, true);
 }

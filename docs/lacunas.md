@@ -43,7 +43,7 @@ Nenhuma pendência.
 
 | # | Lacuna | Efeito | Próximo passo | Prioridade |
 | --- | --- | --- | --- | --- |
-| 4.1 | Nenhuma skill implementada; o [plano](skills-plano.md) é proposta | O agente usa a base sem método: cita mal, busca uma vez, entrega prosa | Onda 1 (`consultando-normas`, `correlacionando-controles`, `avaliando-lacunas`, `avaliando-mudanca`), com teste de linha de base antes de cada uma | P2 |
+| 4.1 | Fatia 1 pronta no código (tabela, `obter_skill`, carga); falta a linha de base e a skill `consultando-normas`; o resto do [plano](skills-plano.md) é proposta | O agente usa a base sem método: cita mal, busca uma vez, entrega prosa | Onda 1 (`consultando-normas`, `correlacionando-controles`, `avaliando-lacunas`, `avaliando-mudanca`), com teste de linha de base antes de cada uma | P2 |
 | 4.2 | O plano não prevê skill para os pacotes novos (62304, 27037, 31000 como norma própria) nem para as ferramentas `cobertura` e `detalhar_controle` | Skills `avaliando-lacunas` e `preparando-auditoria` deixam as ferramentas de fora | Revisar o plano incluindo essas ferramentas e pacotes | P2 |
 | 4.3 | Não há forma de entrega definida (arquivo `SKILL.md` em repositório, `prompts` do MCP, ou instruções do pacote) | Cada cliente (Claude Code, faBRAINzio, ness.brain) recebe de um jeito | Decidir: recomendação é publicar como `prompts` do MCP, filtrados pela chave | P2 |
 

@@ -46,6 +46,18 @@ Corpo do `POST /api/chaves`:
 | `POST /api/pacotes/:slug/documentos` | Envia um documento (`multipart/form-data`: `arquivo`, `titulo?`, `tipo?`, `versao?`, `vigencia?`, `fonte?`). Até 15 MB. Um título que já existe no pacote substitui a versão anterior e devolve `substituidos` |
 | `DELETE /api/documentos/:id` | Apaga o documento, os trechos, os vetores e o arquivo |
 
+## Skills
+
+Procedimentos que o agente segue ao usar as normas (ver [skills-plano.md](skills-plano.md)).
+
+| Rota | Descrição |
+| --- | --- |
+| `GET /api/skills` | Skills com `nome`, `descricao`, `normas` (JSON), `versao`, `atualizado_em` e `tamanho` (caracteres do corpo, que não vem na lista) |
+| `POST /api/skills` | Cria ou substitui: `nome`, `descricao`, `corpo` (até 4.000 caracteres), `normas?` (`{pacote: [títulos]}`; `{}` vale para toda chave; lista vazia exige só o pacote) e `versao?`. Pacote ou título que não existe dá `400` |
+| `DELETE /api/skills/:nome` | Apaga a skill; `404` se não existe |
+
+`node scripts/carregar-skills.mjs <url> [pasta]` envia as pastas `skills/<nome>/SKILL.md`.
+
 O título identifica a norma de forma estável. Recarregar um documento troca o `id`, mas as chaves restritas por título continuam valendo. Renomear um título tira essa norma das chaves restritas a ele.
 
 ## Busca de teste

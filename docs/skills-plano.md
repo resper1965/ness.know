@@ -1,6 +1,6 @@
 # Plano de skills do ness.know
 
-Data: 30/10/2026. Situação: proposta, nada implementado. Lacunas do plano (ferramentas `cobertura` e `detalhar_controle`, pacotes novos, forma de entrega) em [lacunas.md](lacunas.md), seção 4.
+Data: 30/10/2026. Situação: fatia 1 implementada (tabela `skills`, ferramenta `obter_skill`, carga por `scripts/carregar-skills.mjs`; a skill `consultando-normas` aguarda a linha de base). Fatias 2 (`prompts/*`) e 3 (aba Skills) em aberto. Desenho: `docs/superpowers/specs/2026-11-06-skills-fatia-1-design.md`. Lacunas do plano (ferramentas `cobertura` e `detalhar_controle`, pacotes novos, forma de entrega) em [lacunas.md](lacunas.md), seção 4.
 
 ## Problema que as skills resolvem
 
