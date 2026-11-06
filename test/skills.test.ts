@@ -87,7 +87,7 @@ describe("admin /api/skills", () => {
 describe("mcp: skills", () => {
   const TOKEN = "nesskb_skill";
   async function ambiente(pacotes: string[], documentos: Record<string, string[]> = {}) {
-    const DB = bancoTeste(migracao("0001_inicial"), migracao("0002_chave_documentos"), migracao("0005_uso_chaves"), migracao("0006_skills"));
+    const DB = bancoTeste(migracao("0001_inicial"), migracao("0002_chave_documentos"), migracao("0005_uso_chaves"), migracao("0006_skills"), migracao("0007_chave_validade"));
     await DB.prepare("INSERT INTO chaves (id, nome, token_hash, pacotes, documentos) VALUES ('c1', 'teste', ?, ?, ?)").bind(await hashToken(TOKEN), JSON.stringify(pacotes), JSON.stringify(documentos)).run();
     for (const slug of ["iso", "cis"]) await DB.prepare("INSERT INTO pacotes (slug, nome) VALUES (?, ?)").bind(slug, slug).run();
     const sk = (nome: string, normas: object) => DB.prepare("INSERT INTO skills (nome, descricao, normas, corpo) VALUES (?, ?, ?, ?)").bind(nome, `desc ${nome}`, JSON.stringify(normas), `corpo ${nome}`).run();

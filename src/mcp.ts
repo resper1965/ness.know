@@ -49,7 +49,7 @@ async function clienteDe(req: Request, db: D1Database): Promise<Cliente | null> 
   const token = req.headers.get("authorization")?.match(/^Bearer\s+(\S+)$/i)?.[1];
   if (!token) return null;
   const c = await db
-    .prepare("SELECT id, nome, pacotes, documentos FROM chaves WHERE token_hash = ? AND ativo = 1")
+    .prepare("SELECT id, nome, pacotes, documentos FROM chaves WHERE token_hash = ? AND ativo = 1 AND (expira_em IS NULL OR expira_em > datetime('now'))")
     .bind(await hashToken(token))
     .first<{ id: string; nome: string; pacotes: string; documentos?: string }>();
   if (!c) return null;
