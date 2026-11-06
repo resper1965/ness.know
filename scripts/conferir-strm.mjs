@@ -63,8 +63,11 @@ if (!semAnterior) for (const c of r.comuns.filter((x) => x.falha || x.aviso || x
 if (!semAnterior) {
 const ok = r.comuns.filter((x) => !x.falha && !x.aviso && !x.novos.length && !x.perdidos.length).length;
 console.log(`\n${ok} de ${r.comuns.length} frameworks comuns sem diferença de itens.`);
-if (r.soAntigo.length) console.log(`FALHA: só na versão anterior (sumiram): ${r.soAntigo.join(", ")}`);
-if (r.soNovo.length) console.log(`Só em produção (novos): ${r.soNovo.join(", ")}`);
+for (const x of r.renomeados) console.log(`renomeado: ${x.de} → ${x.para} (${(x.similar * 100).toFixed(0)}% dos itens iguais)`);
+if (r.sumidos.length) console.log(`FALHA: só na versão anterior (sumiram, sem framework parecido em produção): ${r.sumidos.join(", ")}`);
+const renomeadosPara = new Set(r.renomeados.map((x) => x.para));
+const novos = r.soNovo.filter((id) => !renomeadosPara.has(id));
+if (novos.length) console.log(`Só em produção (${novos.length} novos): ${novos.join(", ")}`);
 }
 
 console.log(`\nAmostra para conferir à mão (${nAmostra} itens por framework${semAnterior ? "" : '; "antes" usa os controles SCF da versão anterior, que foram renumerados'}):`);
