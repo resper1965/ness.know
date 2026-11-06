@@ -181,6 +181,19 @@ describe("mcp", () => {
     expect(chaves).toEqual(["c1", "c1"]); // o limite é por chave
     expect((await chamar(comLimite(false), { jsonrpc: "2.0", id: 3, method: "ping" }, "errado")).status).toBe(401); // chave inválida não chega ao limitador da chave
   });
+  it("requisição com Origin fora de ORIGENS_MCP recebe 403 antes de qualquer consulta; sem Origin ou com Origin liberado segue", async () => {
+    const { env, consultas } = await ambiente();
+    const com = (origem?: string, lista?: string) =>
+      mcp(new Request("https://x/mcp", { method: "POST", headers: { authorization: `Bearer ${TOKEN}`, ...(origem ? { origin: origem } : {}) }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "ping" }) }), { ...env, ORIGENS_MCP: lista } as never);
+
+    const r = await com("https://site.malicioso");
+    expect(r.status).toBe(403);
+    expect(((await r.json()) as { error: { message: string } }).error.message).toContain("origem");
+    expect(consultas).toHaveLength(0);
+    expect((await com("https://claude.ai", "https://outro.app, https://claude.ai")).status).toBe(200);
+    expect((await com("https://site.malicioso", "https://claude.ai")).status).toBe(403);
+    expect((await com()).status).toBe(200); // cliente que não é navegador não manda Origin
+  });
   it("token ausente ou inválido conta por IP em LIMITE_AUTH: 401 dentro do limite, 429 depois; chave válida não passa por ele", async () => {
     const { env, consultas } = await ambiente();
     const ips: string[] = [];

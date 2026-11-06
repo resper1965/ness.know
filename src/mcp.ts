@@ -12,6 +12,8 @@ export interface EnvMcp extends EnvBusca {
   LIMITE_MCP?: RateLimit;
   /** Limite de tentativas com token ausente ou inválido, por IP. Sem o binding, não há limite. */
   LIMITE_AUTH?: RateLimit;
+  /** Origens de navegador aceitas no /mcp, separadas por vírgula. Requisição com Origin fora da lista é recusada; sem Origin (agente, CLI) passa. */
+  ORIGENS_MCP?: string;
 }
 
 /** Versões que este servidor implementa (HTTP sem sessão, só ferramentas). Pedido fora da lista recebe a mais nova. */
@@ -250,6 +252,9 @@ async function recusar(req: Request, env: EnvMcp): Promise<Response> {
 
 export async function mcp(req: Request, env: EnvMcp): Promise<Response> {
   if (req.method !== "POST") return new Response("use POST", { status: 405, headers: { allow: "POST" } });
+  // A especificação do MCP pede recusar Origin desconhecido: página aberta no navegador do usuário não fala com o servidor por ele.
+  const origem = req.headers.get("origin");
+  if (origem && !(env.ORIGENS_MCP ?? "").split(",").some((o) => o.trim() === origem)) return rpcErro(null, -32003, "origem não permitida", 403);
   const token = tokenDe(req);
   const cliente = token ? await clienteDe(token, env.DB) : null;
   if (!cliente) return recusar(req, env);
