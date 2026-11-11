@@ -306,7 +306,8 @@ function desenharChaves() {
             nome.push(el("span", dias <= 0 ? `Vencida em ${fmtData.format(exp)}` : `Vence em ${fmtData.format(exp)}${dias <= 14 ? ` (${plural(dias, "dia", "dias")})` : ""}`, dias <= 14 ? "sub vencendo" : "sub"));
           }
           const restricoes = lerObjeto(c.documentos);
-          const lista = lerLista(c.pacotes).map((s) => {
+          if (c.origem === "oauth") nome.push(el("span", `OAuth · ${c.pessoa}`, "sub"));
+          const lista = (c.origem === "oauth" ? [] : lerLista(c.pacotes)).map((s) => {
             const d = el("div", null, "escopo");
             d.append(el("span", nomes[s] ?? s));
             const total = pacotes.find((p) => p.slug === s)?.titulos.length;
@@ -314,6 +315,7 @@ function desenharChaves() {
             d.append(el("span", so ? `${so.length}${total ? ` de ${total}` : ""} normas: ${so.join(", ")}` : "pacote inteiro", "sub"));
             return d;
           });
+          if (c.origem === "oauth") lista.push(el("span", "Pelas regras de Acesso por pessoa", "sub"));
           const uso = c.usado_em ? el("span", quando(c.usado_em)) : el("span", "nunca", "apoio");
           if (c.usado_em) uso.title = fmtHora.format(dataDe(c.usado_em));
           const acao = celula(c.ativo ? botao("Revogar", "secundario pequeno", (e) => confirmarRevogacao(c, e.currentTarget.parentElement)) : null, "acao");
@@ -524,6 +526,69 @@ $("#teste").addEventListener("submit", async (e) => {
   }
 });
 
+/* ---------- Acesso por pessoa (chaves OAuth) ---------- */
+function caixasDePacotes(destino, marcados = []) {
+  destino.replaceChildren(
+    ...pacotes.map((p) => {
+      const l = el("label");
+      const i = el("input");
+      i.type = "checkbox";
+      i.value = p.slug;
+      i.checked = marcados.includes(p.slug);
+      l.append(i, el("span", p.nome));
+      return l;
+    }),
+  );
+  if (!pacotes.length) destino.append(el("p", "Carregue um pacote antes.", "apoio vazio"));
+}
+const marcados = (destino) => [...destino.querySelectorAll("input:checked")].map((i) => i.value);
+let regras = { padrao: { pacotes: [] }, pessoas: [] };
+async function carregarAcesso() {
+  regras = await api("/api/acesso");
+  caixasDePacotes($("#escolha-padrao"), regras.padrao.pacotes);
+  caixasDePacotes($("#escolha-pessoa"));
+  $("#lista-pessoas").replaceChildren(
+    ...(regras.pessoas.length
+      ? regras.pessoas.map((r) => {
+          const tr = el("tr");
+          const so = Object.keys(r.documentos || {});
+          const acao = celula(botao("Remover", "secundario pequeno", async (e) => {
+            e.currentTarget.disabled = true;
+            try {
+              await api(`/api/acesso/pessoa/${encodeURIComponent(r.email)}`, { method: "DELETE" });
+              await carregarAcesso();
+            } catch (err) {
+              falhou(err);
+              e.currentTarget.disabled = false;
+            }
+          }), "acao");
+          tr.append(celula([el("span", r.email, "nome"), el("span", `Definida por ${r.criado_por ?? "—"}`, "sub")]), celula(r.pacotes.length ? r.pacotes.map((s) => nomes[s] ?? s).join(", ") + (so.length ? ` (${so.length} com normas escolhidas)` : "") : el("span", "só o padrão", "apoio")), acao);
+          return tr;
+        })
+      : [vazio(3, "Nenhuma regra por pessoa", "Todos veem só o padrão acima.")]),
+  );
+}
+async function salvarRegra(form, caminho, corpo, erroEl) {
+  const b = form.querySelector("button[type=submit]");
+  b.disabled = true;
+  erroEl.hidden = true;
+  try {
+    await api(caminho, { method: "PUT", body: JSON.stringify(corpo) });
+    await carregarAcesso();
+  } catch (err) {
+    falhou(err, erroEl);
+  } finally {
+    b.disabled = false;
+  }
+}
+$("#form-padrao").addEventListener("submit", (e) => (e.preventDefault(), salvarRegra(e.currentTarget, "/api/acesso/padrao", { pacotes: marcados($("#escolha-padrao")) }, $("#erro-padrao"))));
+$("#form-pessoa").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const email = $("#email-pessoa").value.trim();
+  if (!email) return falhou(new Error("Informe o e-mail."), $("#erro-pessoa"));
+  salvarRegra(e.currentTarget, `/api/acesso/pessoa/${encodeURIComponent(email)}`, { pacotes: marcados($("#escolha-pessoa")) }, $("#erro-pessoa"));
+});
+
 /* ---------- Início ---------- */
 (async () => {
   $("#lista-chaves").replaceChildren(...esqueleto(4));
@@ -531,6 +596,7 @@ $("#teste").addEventListener("submit", async (e) => {
     $("#eu").textContent = (await api("/api/eu")).email;
     await carregarPacotes();
     await carregarChaves();
+    await carregarAcesso();
   } catch (err) {
     falhou(err);
   }

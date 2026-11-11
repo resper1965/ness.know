@@ -9,7 +9,7 @@ const migracao = (n: string) => readFileSync(`migrations/${n}.sql`, "utf8");
 
 describe("uso das chaves (SQL de verdade)", () => {
   it("conta as chamadas por ferramenta, atualiza o último uso e mostra no GET /api/chaves", async () => {
-    const DB = bancoTeste(migracao("0001_inicial"), migracao("0002_chave_documentos"), migracao("0005_uso_chaves"), migracao("0007_chave_validade"));
+    const DB = bancoTeste(migracao("0001_inicial"), migracao("0002_chave_documentos"), migracao("0005_uso_chaves"), migracao("0007_chave_validade"), migracao("0009_oauth"));
     await DB.prepare("INSERT INTO chaves (id, nome, token_hash, pacotes) VALUES ('c1', 'faBRAINzio', ?, '[]')").bind(await hashToken("nesskb_x")).run();
     const chamar = (corpo: unknown) =>
       mcp(new Request("https://x/mcp", { method: "POST", headers: { authorization: "Bearer nesskb_x" }, body: JSON.stringify(corpo) }), { DB, AI: {} } as never);

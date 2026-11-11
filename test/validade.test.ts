@@ -6,7 +6,7 @@ import { hashToken, mcp } from "../src/mcp";
 import { bancoTeste } from "./sqlite";
 
 const migracao = (n: string) => readFileSync(`migrations/${n}.sql`, "utf8");
-const novoBanco = () => bancoTeste(migracao("0001_inicial"), migracao("0002_chave_documentos"), migracao("0005_uso_chaves"), migracao("0007_chave_validade"));
+const novoBanco = () => bancoTeste(migracao("0001_inicial"), migracao("0002_chave_documentos"), migracao("0005_uso_chaves"), migracao("0007_chave_validade"), migracao("0009_oauth"));
 
 describe("validade da chave", () => {
   const ping = (DB: D1Database, token: string) =>

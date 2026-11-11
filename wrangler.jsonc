@@ -4,8 +4,8 @@
   "main": "src/worker.ts",
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat"],
-  // Interface de admin (chaves, pacotes, teste de busca). /mcp e /health passam pelo Worker antes dos arquivos.
-  "assets": { "directory": "public", "binding": "ASSETS", "run_worker_first": ["/api/*", "/mcp", "/health"] },
+  // Interface de admin (chaves, pacotes, teste de busca). /mcp, /health e o OAuth passam pelo Worker antes dos arquivos.
+  "assets": { "directory": "public", "binding": "ASSETS", "run_worker_first": ["/api/*", "/mcp", "/health", "/oauth/*", "/.well-known/*"] },
   // Domínio próprio. A zona ness.com.br precisa estar nesta conta Cloudflare.
   "routes": [{ "pattern": "know.ness.com.br", "custom_domain": true }],
   "d1_databases": [{ "binding": "DB", "database_name": "ness-know", "database_id": "f5472779-9e83-48ba-b778-b1fd7e491d56", "migrations_dir": "migrations" }],
@@ -29,6 +29,9 @@
   "ratelimits": [
     { "name": "LIMITE_MCP", "namespace_id": "1001", "simple": { "limit": 240, "period": 60 } },
     // Tentativas com token ausente ou inválido, por IP: 30 por minuto.
-    { "name": "LIMITE_AUTH", "namespace_id": "1002", "simple": { "limit": 30, "period": 60 } }
+    { "name": "LIMITE_AUTH", "namespace_id": "1002", "simple": { "limit": 30, "period": 60 } },
+    // Registro de cliente OAuth (/oauth/register): 10 por minuto por IP e 60 por minuto no total.
+    { "name": "LIMITE_REGISTRO_IP", "namespace_id": "1003", "simple": { "limit": 10, "period": 60 } },
+    { "name": "LIMITE_REGISTRO", "namespace_id": "1004", "simple": { "limit": 60, "period": 60 } }
   ]
 }

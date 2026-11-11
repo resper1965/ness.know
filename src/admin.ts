@@ -1,5 +1,6 @@
 // API de administração (atrás do Access, só ADMIN_EMAILS): chaves de API, pacotes, documentos, busca de teste e revetorização.
 import { apagarDocumento, buscarEm, type EnvConhecimento, ingerir, LIMITE_ARQUIVO, revetorizar } from "./busca";
+import { listaDe } from "./escopo";
 import { hashToken, novoToken, restricoesDe } from "./mcp";
 import { normasExistem, validarSkill } from "./skills";
 
@@ -65,6 +66,19 @@ export async function validarRestricoes(db: D1Database, pacotes: string[], bruto
   return { ok: true, v };
 }
 
+const auditar = (db: D1Database, ator: string, acao: string, detalhe: string) => db.prepare("INSERT INTO auditoria (ator, acao, detalhe) VALUES (?, ?, ?)").bind(ator, acao, detalhe).run();
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** Pacotes e restrições de uma regra de acesso, já conferidos contra o que existe. */
+async function regraDe(db: D1Database, b: Record<string, unknown>): Promise<Valido<{ pacotes: string[]; documentos: Record<string, string[]> }>> {
+  const pacotes = slugsDe(b.pacotes);
+  const existem = await pacotesQueExistem(db, pacotes);
+  const faltam = pacotes.filter((p) => !existem.includes(p));
+  if (faltam.length) return { ok: false, erro: `pacote não existe: ${faltam.join(", ")}` };
+  const r = await validarRestricoes(db, pacotes, b.documentos);
+  return r.ok ? { ok: true, v: { pacotes, documentos: r.v } } : r;
+}
+
 export async function admin(req: Request, env: EnvConhecimento, email: string, caminho: string): Promise<Response> {
   const db = env.DB;
   const rota = `${req.method} ${caminho}`;
@@ -72,7 +86,7 @@ export async function admin(req: Request, env: EnvConhecimento, email: string, c
   if (rota === "GET /api/eu") return Response.json({ email });
 
   // Chaves de API: o token aparece uma vez, na criação; no banco fica só o hash.
-  if (rota === "GET /api/chaves") return Response.json((await db.prepare("SELECT id, nome, pacotes, documentos, ativo, criado_por, criado_em, usado_em, expira_em, (SELECT coalesce(sum(chamadas), 0) FROM uso_chaves u WHERE u.chave_id = chaves.id AND u.dia >= date('now', '-30 days')) AS chamadas_30d FROM chaves ORDER BY ativo DESC, nome").all()).results);
+  if (rota === "GET /api/chaves") return Response.json((await db.prepare("SELECT id, nome, pacotes, documentos, ativo, criado_por, criado_em, usado_em, expira_em, pessoa, cliente_oauth, CASE WHEN pessoa IS NULL THEN 'agente' ELSE 'oauth' END AS origem, (SELECT coalesce(sum(chamadas), 0) FROM uso_chaves u WHERE u.chave_id = chaves.id AND u.dia >= date('now', '-30 days')) AS chamadas_30d FROM chaves ORDER BY ativo DESC, nome").all()).results);
   if (rota === "POST /api/chaves") {
     const b = await corpo(req);
     const nome = txt(b.nome, 100);
@@ -96,8 +110,41 @@ export async function admin(req: Request, env: EnvConhecimento, email: string, c
   const ch = caminho.match(/^\/api\/chaves\/([0-9a-f-]{36})$/);
   if (ch && req.method === "DELETE") {
     const r = await db.prepare("UPDATE chaves SET ativo = 0 WHERE id = ?").bind(ch[1]).run();
+    if (r.meta.changes) await auditar(db, email, "chave.revogar", ch[1]);
     return r.meta.changes ? Response.json({ ok: true }) : erro("chave não encontrada", 404);
   }
+
+  // Acesso por pessoa (chaves emitidas por OAuth): "padrão para todos" e regras por e-mail. Vale já na próxima chamada, sem reemitir chave.
+  if (rota === "GET /api/acesso") {
+    const linhas = (await db.prepare("SELECT tipo, sujeito, pacotes, documentos, criado_por, criado_em FROM acesso_regras ORDER BY tipo, sujeito").all<{ tipo: string; sujeito: string; pacotes: string; documentos: string; criado_por: string | null; criado_em: string }>()).results;
+    const forma = (r: (typeof linhas)[number]) => ({ pacotes: listaDe(r.pacotes), documentos: restricoesDe(r.documentos), criado_por: r.criado_por, criado_em: r.criado_em });
+    const padrao = linhas.find((r) => r.tipo === "padrao");
+    return Response.json({
+      padrao: padrao ? forma(padrao) : { pacotes: [], documentos: {}, criado_por: null, criado_em: null },
+      pessoas: linhas.filter((r) => r.tipo === "pessoa").map((r) => ({ email: r.sujeito, ...forma(r) })),
+    });
+  }
+  const ac = caminho.match(/^\/api\/acesso\/(padrao|pessoa\/([^/]+))$/);
+  if (ac && req.method === "PUT") {
+    const tipo = ac[2] === undefined ? "padrao" : "pessoa";
+    const sujeito = tipo === "padrao" ? "" : decodeURIComponent(ac[2]).trim().toLowerCase().slice(0, 200);
+    if (tipo === "pessoa" && !EMAIL.test(sujeito)) return erro("e-mail inválido");
+    const r = await regraDe(db, await corpo(req));
+    if (!r.ok) return erro(r.erro, r.erro.startsWith("pacote não existe") ? 404 : 400);
+    await db
+      .prepare("INSERT INTO acesso_regras (tipo, sujeito, pacotes, documentos, criado_por) VALUES (?, ?, ?, ?, ?) ON CONFLICT (tipo, sujeito) DO UPDATE SET pacotes = excluded.pacotes, documentos = excluded.documentos, criado_por = excluded.criado_por, criado_em = datetime('now')")
+      .bind(tipo, sujeito, JSON.stringify(r.v.pacotes), JSON.stringify(r.v.documentos), email)
+      .run();
+    await auditar(db, email, "acesso.definir", `${tipo === "padrao" ? "padrão" : sujeito}: ${r.v.pacotes.join(", ") || "nenhum pacote"}`);
+    return Response.json({ ok: true });
+  }
+  if (ac && ac[2] !== undefined && req.method === "DELETE") {
+    const sujeito = decodeURIComponent(ac[2]).trim().toLowerCase();
+    const r = await db.prepare("DELETE FROM acesso_regras WHERE tipo = 'pessoa' AND sujeito = ?").bind(sujeito).run();
+    if (r.meta.changes) await auditar(db, email, "acesso.remover", sujeito);
+    return r.meta.changes ? Response.json({ ok: true }) : erro("regra não encontrada", 404);
+  }
+  if (rota === "GET /api/auditoria") return Response.json((await db.prepare("SELECT quando, ator, acao, detalhe FROM auditoria ORDER BY id DESC LIMIT 100").all()).results);
 
   // Pacotes e documentos.
   if (rota === "GET /api/pacotes")

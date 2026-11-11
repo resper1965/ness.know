@@ -14,9 +14,9 @@ Erros vêm como `{ "erro": "mensagem" }`: `400` para entrada inválida, `401` se
 
 | Rota | Descrição |
 | --- | --- |
-| `GET /api/chaves` | Lista as chaves: `id`, `nome`, `pacotes` (JSON), `documentos` (JSON), `ativo`, `criado_por`, `criado_em`, `usado_em` (atualizado no máximo uma vez por hora), `expira_em` (UTC, nulo se não expira), `chamadas_30d` (chamadas autenticadas ao `/mcp` nos últimos 30 dias) |
+| `GET /api/chaves` | Lista as chaves: `id`, `nome`, `pacotes` (JSON), `documentos` (JSON), `ativo`, `criado_por`, `criado_em`, `usado_em` (atualizado no máximo uma vez por hora), `expira_em` (UTC, nulo se não expira), `origem` (`agente` ou `oauth`), `pessoa` e `cliente_oauth` (só nas emitidas por OAuth), `chamadas_30d` (chamadas autenticadas ao `/mcp` nos últimos 30 dias) |
 | `POST /api/chaves` | Cria uma chave. Devolve o `token` **uma única vez** |
-| `DELETE /api/chaves/:id` | Revoga a chave. O efeito é imediato e a chave não volta a valer |
+| `DELETE /api/chaves/:id` | Revoga a chave. O efeito é imediato e a chave não volta a valer. Grava em `auditoria` quem revogou |
 
 Corpo do `POST /api/chaves`:
 
@@ -36,6 +36,20 @@ Corpo do `POST /api/chaves`:
   - pacote que não está em `pacotes` dá `400`;
   - lista vazia dá `400`;
   - lista com todas as normas do pacote é guardada como pacote inteiro.
+
+## Acesso por pessoa (chaves OAuth)
+
+Regras que definem o que uma chave emitida por OAuth enxerga. O padrão vale para todos e a regra da pessoa soma a ele; pacote liberado inteiro por qualquer regra vale inteiro, e restrições por norma do mesmo pacote somam os títulos. Vale na próxima chamada.
+
+| Rota | Descrição |
+| --- | --- |
+| `GET /api/acesso` | `padrao` e `pessoas` (`email`, `pacotes`, `documentos`, `criado_por`, `criado_em`) |
+| `PUT /api/acesso/padrao` | Corpo `{ "pacotes": ["slug"], "documentos": { "slug": ["Título"] } }` (`documentos` opcional, como na chave) |
+| `PUT /api/acesso/pessoa/:email` | Mesmo corpo, para um e-mail. E-mail inválido: 400 |
+| `DELETE /api/acesso/pessoa/:email` | Remove a regra da pessoa |
+| `GET /api/auditoria` | Últimos 100 eventos: `quando`, `ator`, `acao` (`oauth.conceder`, `chave.revogar`, `acesso.definir`, `acesso.remover`), `detalhe`. Sem token nem conteúdo |
+
+Pacote inexistente: 404. Norma que não existe no pacote: 400.
 
 ## Pacotes e documentos
 
