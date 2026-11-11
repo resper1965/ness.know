@@ -1,10 +1,11 @@
 // ness.KNOW: base de normas, leis e frameworks da ness., consultada por MCP com chave de API.
-import { adminDe, type EnvAcesso } from "./acesso";
+import { adminDe, type EnvAcesso, emailDoAcesso } from "./acesso";
 import { admin } from "./admin";
 import type { EnvConhecimento } from "./busca";
 import { type EnvMcp, mcp } from "./mcp";
+import { autorizar, type EnvOauth, metadados, registrar, token } from "./oauth";
 
-export interface Env extends EnvAcesso, EnvConhecimento, EnvMcp {
+export interface Env extends EnvAcesso, EnvConhecimento, EnvMcp, EnvOauth {
   ASSETS: Fetcher;
 }
 
@@ -21,6 +22,15 @@ export default {
     }
     // Fora do Access: a autenticação é a chave de API.
     if (pathname === "/mcp") return mcp(req, env);
+    // OAuth do /mcp (oauth.ts). Descoberta, registro e token ficam fora do Access (Bypass); /oauth/authorize fica protegido.
+    const meta = req.method === "GET" ? metadados(pathname, new URL(req.url).origin) : null;
+    if (meta) return meta;
+    if (pathname === "/oauth/register") return registrar(req, env);
+    if (pathname === "/oauth/token") return token(req, env);
+    if (pathname === "/oauth/authorize") {
+      const pessoa = await emailDoAcesso(req, env); // qualquer pessoa liberada no Access, não só ADMIN_EMAILS
+      return pessoa ? autorizar(req, env, pessoa) : Response.json({ erro: "não autorizado" }, { status: 401 });
+    }
     if (pathname.startsWith("/api/")) {
       const email = await adminDe(req, env);
       if (!email) return Response.json({ erro: "não autorizado" }, { status: 401 });
