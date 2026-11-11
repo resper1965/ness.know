@@ -58,7 +58,7 @@
     h1 { flex: 1; min-width: 0; margin: 0; font: 600 20px/1.1 var(--font-head); letter-spacing: -.02em; }
     .conteudo { padding: 24px 28px 64px; max-width: 1180px; }
     .painel[hidden] { display: none; }
-    #copiar-mensagem[hidden] { display: none; }
+    #copiar-mensagem[hidden], #cancelar-padrao[hidden] { display: none; }
     .lead { color: var(--ink-3); margin: 0 0 24px; max-width: 72ch; }
     h2 { margin: 0; font: 600 15px/1.2 var(--font-head); letter-spacing: -.01em; }
     p { margin: 0 0 12px; }
@@ -151,6 +151,9 @@
     @keyframes sobe { from { transform: translateY(8px); opacity: 0; } }
     .callout strong { display: block; margin-bottom: 12px; font-weight: 500; color: var(--ink); }
     .callout .texto { margin-top: 12px; display: inline-block; }
+    #nova-saida .callout { margin: 0 0 20px; }
+    #prev-padrao { margin: 12px 0; padding: 0; }
+    #prev-padrao.alerta-prev { padding: 10px 12px; background: color-mix(in oklab, var(--bad) 12%, var(--paper)); box-shadow: inset 2px 0 0 var(--bad); color: var(--ink); }
     .alerta { margin-bottom: 16px; padding: 12px 16px; background: color-mix(in oklab, var(--bad) 12%, var(--paper)); box-shadow: inset 2px 0 0 var(--bad); color: var(--ink); }
     .alerta:empty { display: none; }
     .erro { color: #fca5a5; font-size: 12px; margin: 12px 0 0; }
@@ -266,6 +269,8 @@
         <div class="conteudo">
           <div class="alerta" role="alert"></div>
           <p class="lead">Cada agente recebe a sua chave e só enxerga os pacotes marcados nela. Para mudar os pacotes de uma chave, revogue e gere outra.</p>
+          <p class="oculto" id="nova-status" role="status"></p>
+          <div id="nova-saida"></div>
           <div class="duas">
             <form id="nova" class="folha" novalidate>
               <div class="topo"><h2>Nova chave</h2></div>
@@ -291,7 +296,6 @@
                 <div class="acoes"><button type="submit" class="primario" id="gerar">Gerar chave</button></div>
                 <p class="erro" id="nova-erro" role="alert" hidden></p>
               </div>
-              <div id="nova-saida" aria-live="polite"></div>
             </form>
             <div class="folha">
               <div class="topo"><h2>Chaves emitidas</h2><button type="button" class="texto" id="ver-revogadas" hidden></button></div>
@@ -314,7 +318,8 @@
               <div class="topo"><h2>Padrão para todos</h2></div>
               <div class="corpo">
                 <div class="escolha" id="escolha-padrao" role="group" aria-label="Pacotes do padrão"></div>
-                <div class="acoes"><button type="submit" class="primario">Salvar padrão</button></div>
+                <p class="apoio" id="prev-padrao" role="status"></p>
+                <div class="acoes"><button type="submit" class="primario" id="salvar-padrao" disabled>Salvar padrão</button><button type="button" class="secundario" id="cancelar-padrao" hidden>Cancelar</button></div>
                 <p class="erro" id="erro-padrao" role="alert" hidden></p>
               </div>
             </form>

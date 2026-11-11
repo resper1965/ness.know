@@ -424,7 +424,7 @@ function blocoPacote(p) {
   const topo = el("div", null, "pac-topo");
   const l = el("label");
   const c = el("input");
-  Object.assign(c, { type: "checkbox", checked: true, className: "p" });
+  Object.assign(c, { type: "checkbox", checked: false, className: "p" }); // nasce sem nada marcado: o padrão não é o privilégio máximo
   const t = el("span", p.nome);
   const resumo = el("small");
   t.append(resumo);
@@ -443,7 +443,7 @@ function blocoPacote(p) {
   for (const titulo of p.titulos) {
     const ln = el("label");
     const cn = el("input");
-    Object.assign(cn, { type: "checkbox", checked: true, value: titulo, className: "n" });
+    Object.assign(cn, { type: "checkbox", checked: false, value: titulo, className: "n" });
     ln.append(cn, el("span", titulo));
     normas.append(ln);
   }
@@ -522,8 +522,11 @@ $("#nova").addEventListener("submit", async (e) => {
     const caixa = el("div", null, "callout");
     caixa.append(el("strong", `Chave de ${nome} criada. Copie agora: ela não aparece de novo.`), codigo("token-novo", r.token), botao("Ver como conectar com esta chave", "texto", () => abrir("conectar", true)));
     $("#nova-saida").replaceChildren(caixa);
+    $("#nova-status").textContent = `Chave de ${nome} criada. O token está no topo da página e não aparece de novo.`; // o token em si fica fora da região "live"
     $("#nome").value = "";
     await carregarChaves();
+    caixa.scrollIntoView({ block: "center", behavior: "smooth" });
+    caixa.querySelector("button")?.focus();
   } catch (err) {
     falhou(err, erro);
   } finally {
@@ -598,6 +601,7 @@ async function carregarAcesso() {
   regras = await api("/api/acesso");
   caixasDePacotes($("#escolha-padrao"), regras.padrao.pacotes);
   caixasDePacotes($("#escolha-pessoa"));
+  if (typeof atualizarPadrao === "function") atualizarPadrao();
   $("#lista-pessoas").replaceChildren(
     ...(regras.pessoas.length
       ? regras.pessoas.map((r) => {
@@ -632,7 +636,47 @@ async function salvarRegra(form, caminho, corpo, erroEl) {
     b.disabled = false;
   }
 }
-$("#form-padrao").addEventListener("submit", (e) => (e.preventDefault(), salvarRegra(e.currentTarget, "/api/acesso/padrao", { pacotes: marcados($("#escolha-padrao")) }, $("#erro-padrao"))));
+/** Padrão para todos: só salva com mudança, mostra a diferença, pede confirmação e informa quando salvou. */
+let confirmandoPadrao = false;
+let salvoEm = "";
+const nomePacote = (s) => nomes[s] ?? s;
+function atualizarPadrao() {
+  const antes = regras.padrao.pacotes;
+  const agora = marcados($("#escolha-padrao"));
+  const mais = agora.filter((s) => !antes.includes(s));
+  const menos = antes.filter((s) => !agora.includes(s));
+  const mudou = mais.length || menos.length;
+  const prev = $("#prev-padrao");
+  prev.classList.toggle("alerta-prev", !!mudou && !agora.length);
+  if (!mudou) prev.textContent = salvoEm ? `Padrão salvo às ${salvoEm}. Vale para todos na próxima chamada.` : "Sem mudanças. Sem regra nenhuma, a pessoa que autoriza não vê nada.";
+  else {
+    const partes = [...mais.map((s) => `+ ${nomePacote(s)}`), ...menos.map((s) => `− ${nomePacote(s)}`)].join(", ");
+    prev.textContent = `${partes}. Vale para todos os colaboradores na próxima chamada.${agora.length ? "" : " Sem nenhum pacote, ninguém verá nada pelo OAuth."}`;
+  }
+  $("#salvar-padrao").disabled = !mudou;
+  if (!mudou) confirmandoPadrao = false;
+  $("#salvar-padrao").textContent = confirmandoPadrao ? "Confirmar para todos" : "Salvar padrão";
+  $("#cancelar-padrao").hidden = !confirmandoPadrao;
+}
+$("#escolha-padrao").addEventListener("change", () => ((confirmandoPadrao = false), (salvoEm = ""), atualizarPadrao()));
+$("#cancelar-padrao").addEventListener("click", () => {
+  confirmandoPadrao = false;
+  caixasDePacotes($("#escolha-padrao"), regras.padrao.pacotes);
+  atualizarPadrao();
+  $("#salvar-padrao").focus();
+});
+$("#form-padrao").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!confirmandoPadrao) {
+    confirmandoPadrao = true;
+    atualizarPadrao();
+    return $("#salvar-padrao").focus();
+  }
+  confirmandoPadrao = false;
+  await salvarRegra(e.currentTarget, "/api/acesso/padrao", { pacotes: marcados($("#escolha-padrao")) }, $("#erro-padrao"));
+  salvoEm = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" }).format(new Date());
+  atualizarPadrao();
+});
 $("#form-pessoa").addEventListener("submit", (e) => {
   e.preventDefault();
   const email = $("#email-pessoa").value.trim();
@@ -641,14 +685,30 @@ $("#form-pessoa").addEventListener("submit", (e) => {
 });
 
 /* ---------- Início ---------- */
+/** Carrega uma lista; se a API falhar, troca o esqueleto por uma mensagem com "Tentar de novo". */
+async function comRetentativa(carregar, tbody, colunas, titulo) {
+  try {
+    await carregar();
+  } catch (err) {
+    if (err instanceof SemAcesso) return falhou(err);
+    const tr = el("tr");
+    const td = el("td", null, "vazio");
+    td.colSpan = colunas;
+    td.append(el("strong", titulo), `${err.message} `, botao("Tentar de novo", "secundario pequeno", () => comRetentativa(carregar, tbody, colunas, titulo)));
+    tr.append(td);
+    tbody.replaceChildren(tr);
+    if (tbody.id === "lista-pacotes") $("#escolha").replaceChildren(el("p", "Os pacotes não carregaram; a chave só pode ser gerada depois de carregá-los.", "apoio vazio"));
+    atualizarFormulario();
+  }
+}
 (async () => {
   $("#lista-chaves").replaceChildren(...esqueleto(4));
   try {
     $("#eu").textContent = (await api("/api/eu")).email;
-    await carregarPacotes();
-    await carregarChaves();
-    await carregarAcesso();
   } catch (err) {
-    falhou(err);
+    if (err instanceof SemAcesso) return falhou(err);
   }
+  await comRetentativa(carregarPacotes, $("#lista-pacotes"), 4, "Não foi possível carregar os pacotes. ");
+  await comRetentativa(carregarChaves, $("#lista-chaves"), 4, "Não foi possível carregar as chaves. ");
+  await comRetentativa(carregarAcesso, $("#lista-pessoas"), 3, "Não foi possível carregar as regras de acesso. ");
 })();
