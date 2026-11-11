@@ -1,5 +1,6 @@
 // API de administração (atrás do Access, só ADMIN_EMAILS): chaves de API, pacotes, documentos, busca de teste e revetorização.
-import { apagarDocumento, buscarEm, type EnvConhecimento, ingerir, LIMITE_ARQUIVO, revetorizar } from "./busca";
+import { apagarDocumento, buscarEm, type EnvConhecimento, revetorizar } from "./busca";
+import { enviarDocumento, novoTokenEnvio } from "./envio";
 import { listaDe } from "./escopo";
 import { hashToken, novoToken, restricoesDe } from "./mcp";
 import { normasExistem, validarSkill } from "./skills";
@@ -114,6 +115,32 @@ export async function admin(req: Request, env: EnvConhecimento, email: string, c
     return r.meta.changes ? Response.json({ ok: true }) : erro("chave não encontrada", 404);
   }
 
+  // Chaves de envio: a empresa sobe o próprio conteúdo no pacote dela (docs/operacao.md). O token aparece uma vez; no banco fica o hash.
+  if (rota === "GET /api/chaves-envio") return Response.json((await db.prepare("SELECT id, nome, pacote, ativo, criado_por, criado_em, usado_em, expira_em FROM chaves_envio ORDER BY ativo DESC, nome").all()).results);
+  if (rota === "POST /api/chaves-envio") {
+    const b = await corpo(req);
+    const nome = txt(b.nome, 100);
+    const pacote = txt(b.pacote, 63);
+    if (!nome || !SLUG.test(pacote)) return erro("nome e pacote obrigatórios");
+    const p = await db.prepare("SELECT cota_documentos AS c FROM pacotes WHERE slug = ?").bind(pacote).first<{ c: number | null }>();
+    if (!p) return erro("pacote não existe", 404);
+    // Quem sobe o próprio conteúdo precisa de limite: sem cota, uma empresa encheria a base.
+    if (p.c == null) return erro("defina a cota de documentos do pacote antes de gerar uma chave de envio");
+    const val = validade({ dias: b.dias ?? (b.expira_em === undefined ? 365 : undefined), expira_em: b.expira_em });
+    if (!val.ok) return erro(val.erro);
+    const id = crypto.randomUUID();
+    const token = novoTokenEnvio();
+    await db.prepare("INSERT INTO chaves_envio (id, nome, token_hash, pacote, criado_por, expira_em) VALUES (?, ?, ?, ?, ?, ?)").bind(id, nome, await hashToken(token), pacote, email, val.v).run();
+    await auditar(db, email, "envio.chave.criar", `${nome} → ${pacote}`);
+    return Response.json({ id, nome, pacote, expira_em: val.v, token });
+  }
+  const ce = caminho.match(/^\/api\/chaves-envio\/([0-9a-f-]{36})$/);
+  if (ce && req.method === "DELETE") {
+    const r = await db.prepare("UPDATE chaves_envio SET ativo = 0 WHERE id = ?").bind(ce[1]).run();
+    if (r.meta.changes) await auditar(db, email, "envio.chave.revogar", ce[1]);
+    return r.meta.changes ? Response.json({ ok: true }) : erro("chave não encontrada", 404);
+  }
+
   // Acesso por pessoa (chaves emitidas por OAuth): "padrão para todos" e regras por e-mail. Vale já na próxima chamada, sem reemitir chave.
   if (rota === "GET /api/acesso") {
     const linhas = (await db.prepare("SELECT tipo, sujeito, pacotes, documentos, criado_por, criado_em FROM acesso_regras ORDER BY tipo, sujeito").all<{ tipo: string; sujeito: string; pacotes: string; documentos: string; criado_por: string | null; criado_em: string }>()).results;
@@ -183,13 +210,14 @@ export async function admin(req: Request, env: EnvConhecimento, email: string, c
     const slug = pe[1];
     if (!(await pacotesQueExistem(db, [slug])).length) return erro("pacote não existe", 404);
     const usa = (sql: string) => db.prepare(sql).bind(slug).all<Record<string, string>>().then((r) => r.results);
-    const [chaves, regras, skills] = await Promise.all([
+    const [chaves, regras, skills, envios] = await Promise.all([
       usa("SELECT id, nome FROM chaves WHERE ativo = 1 AND EXISTS (SELECT 1 FROM json_each(chaves.pacotes) WHERE value = ?)"),
       usa("SELECT tipo, sujeito FROM acesso_regras WHERE EXISTS (SELECT 1 FROM json_each(acesso_regras.pacotes) WHERE value = ?)"),
       usa("SELECT nome FROM skills WHERE EXISTS (SELECT 1 FROM json_each(skills.normas) WHERE key = ?)"),
+      usa("SELECT id, nome FROM chaves_envio WHERE ativo = 1 AND pacote = ?"),
     ]);
-    if (chaves.length || regras.length || skills.length)
-      return Response.json({ erro: "o pacote ainda é usado: revogue as chaves, tire-o das regras de acesso e das skills antes de excluir", chaves, regras, skills }, { status: 409 });
+    if (chaves.length || regras.length || skills.length || envios.length)
+      return Response.json({ erro: "o pacote ainda é usado: revogue as chaves (inclusive as de envio), tire-o das regras de acesso e das skills antes de excluir", chaves, regras, skills, envios }, { status: 409 });
     const docs = (await db.prepare("SELECT id FROM documentos WHERE escopo = 'pacote' AND dono = ?").bind(slug).all<{ id: string }>()).results;
     for (const d of docs) await apagarDocumento(env, d.id); // se um falhar, o erro sobe e o pacote fica: basta repetir
     await db.prepare("DELETE FROM pacotes WHERE slug = ?").bind(slug).run();
@@ -203,24 +231,7 @@ export async function admin(req: Request, env: EnvConhecimento, email: string, c
     );
   if (pd && req.method === "POST") {
     if (!(await pacotesQueExistem(db, [pd[1]])).length) return erro("pacote não existe", 404);
-    const f = await req.formData().catch(() => null);
-    const arquivo = f?.get("arquivo");
-    if (!(arquivo instanceof File) || !arquivo.size) return erro("envie o campo 'arquivo'");
-    if (arquivo.size > LIMITE_ARQUIVO) return erro("arquivo maior que 15 MB");
-    const m = (k: string) => (typeof f?.get(k) === "string" ? String(f.get(k)).trim().slice(0, 300) || undefined : undefined);
-    const titulo = m("titulo") ?? arquivo.name;
-    // Cota: recarregar o mesmo título substitui o anterior e não conta de novo.
-    const cota = (await db.prepare("SELECT cota_documentos AS c FROM pacotes WHERE slug = ?").bind(pd[1]).first<{ c: number | null }>())?.c;
-    if (cota != null) {
-      const usados = (await db.prepare("SELECT count(DISTINCT titulo) AS n FROM documentos WHERE escopo = 'pacote' AND dono = ? AND titulo != ?").bind(pd[1], titulo).first<{ n: number }>())?.n ?? 0;
-      if (usados >= cota) return erro(`cota de ${cota} documentos do pacote atingida`, 422);
-    }
-    const r = await ingerir(env, { escopo: "pacote", dono: pd[1] }, { titulo, tipo: m("tipo"), fonte: m("fonte"), versao: m("versao"), vigencia: m("vigencia") }, arquivo, email);
-    if (r.erro) return Response.json(r, { status: 422 });
-    // Recarregar o mesmo título substitui a versão anterior: rodar o carregador de novo não duplica trechos.
-    const antigos = await db.prepare("SELECT id FROM documentos WHERE escopo = 'pacote' AND dono = ? AND titulo = ? AND id != ?").bind(pd[1], titulo, r.id).all<{ id: string }>();
-    for (const a of antigos.results) await apagarDocumento(env, a.id);
-    return Response.json({ ...r, substituidos: antigos.results.length });
+    return enviarDocumento(env, pd[1], await req.formData().catch(() => null), email);
   }
   const doc = caminho.match(/^\/api\/documentos\/([0-9a-f-]{36})$/);
   if (doc && req.method === "DELETE") return (await apagarDocumento(env, doc[1])) ? Response.json({ ok: true }) : erro("documento não encontrado", 404);

@@ -32,6 +32,8 @@
     { "name": "LIMITE_AUTH", "namespace_id": "1002", "simple": { "limit": 30, "period": 60 } },
     // Registro de cliente OAuth (/oauth/register): 10 por minuto por IP e 60 por minuto no total.
     { "name": "LIMITE_REGISTRO_IP", "namespace_id": "1003", "simple": { "limit": 10, "period": 60 } },
-    { "name": "LIMITE_REGISTRO", "namespace_id": "1004", "simple": { "limit": 60, "period": 60 } }
+    { "name": "LIMITE_REGISTRO", "namespace_id": "1004", "simple": { "limit": 60, "period": 60 } },
+    // Envio de conteúdo pela empresa (/api/envio/*): 30 chamadas por minuto por chave de envio.
+    { "name": "LIMITE_ENVIO", "namespace_id": "1005", "simple": { "limit": 30, "period": 60 } }
   ]
 }

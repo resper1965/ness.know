@@ -38,6 +38,10 @@
 | OAuth: registro em massa | Cota por IP antes da global (Rate Limiting); só cliente público e `redirect_uris` validadas |
 | Pessoa que perde o acesso à ness. | A chave dura 30 dias e o escopo é recalculado a cada chamada; remover a regra tira o acesso na hora, e o painel revoga a chave |
 | Chave revogada voltando por reautorização | A emissão só atualiza chave ativa; revogada continua revogada |
+| Envio pela empresa: chave de envio vazada | Vale para um pacote só, vence em 1 ano, revoga-se na hora; só grava no pacote dela e não lê pelo MCP. Limite de 30 chamadas por minuto, e a cota de documentos barra encher a base |
+| Envio pela empresa: empresa A mexendo no pacote da B | A chave guarda o pacote; listar, enviar e apagar usam só esse pacote. Apagar um id de outro pacote responde 404 |
+| Envio pela empresa: arquivo malicioso ou com instruções embutidas | Tamanho limitado (15 MB), conversão no Workers AI e nada é executado; o MCP devolve trechos como dado. Conteúdo ilegal ou licenciado de terceiros enviado pela empresa é responsabilidade contratual, não do código |
+| Envio pela empresa: adivinhar a chave | Token de 256 bits, só o hash no banco, e 429 por IP para quem erra em série |
 | Conteúdo de documento com instruções embutidas (injeção de prompt) | O MCP devolve trechos como dado; os clientes devem tratá-los como dado (orientação em `docs/mcp.md`) |
 | Arquivo malicioso na carga | Só administradores carregam. O arquivo vai para o R2 e é convertido pelo Workers AI; nada é executado |
 
