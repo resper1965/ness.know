@@ -91,7 +91,7 @@ describe("autorização", () => {
   it("exige PKCE S256", async () => {
     const env = novoEnv();
     const c = await registrarCliente(env);
-    for (const extra of [{ code_challenge_method: "plain" }, { code_challenge: "curto" }]) {
+    for (const extra of [{ code_challenge_method: "plain" }, { code_challenge: "curto" }] as Record<string, string>[]) {
       const { r } = await pedir(env, c, "ana@ness.com.br", extra);
       expect(r.status).toBe(302);
       expect(r.headers.get("location")).toContain("error=invalid_request");
@@ -145,7 +145,7 @@ describe("token", () => {
     const env = novoEnv();
     const c = await registrarCliente(env);
     const cod = await codigo(env, c);
-    for (const extra of [{ code_verifier: "errado".repeat(10) }, { client_id: "oa-outro" }, { redirect_uri: "https://evil.com/cb" }])
+    for (const extra of [{ code_verifier: "errado".repeat(10) }, { client_id: "oa-outro" }, { redirect_uri: "https://evil.com/cb" }] as Record<string, string>[])
       expect((await trocar(env, cod, { client_id: c, ...extra })).status).toBe(400);
     expect((await trocar(env, cod, { client_id: c })).status).toBe(200); // a troca certa ainda funciona
   });
