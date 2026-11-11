@@ -1,8 +1,11 @@
 // ness.KNOW: base de conhecimento por MCP (Streamable HTTP, sem sessão): outros projetos consultam os pacotes que lhes foram liberados.
 // Autenticação por chave de API (Bearer), guardada só em hash na tabela `chaves`; /mcp fica fora do Cloudflare Access.
 import { buscarEm, type EnvBusca } from "./busca";
+import { escopoDe, listaDe, restricoesDe } from "./escopo";
 import { visivel } from "./skills";
 import { cobertura, correlacionar, detalharControle, MAX_DESTINOS, MAX_IMPLEMENTADOS, PACOTE_STRM } from "./strm";
+
+export { restricoesDe };
 
 export interface EnvMcp extends EnvBusca {
   /** Ajustes medidos com scripts/avaliar-busca.mjs: "1" liga o rerank; número troca a nota mínima da semântica. */
@@ -27,17 +30,6 @@ export interface Cliente {
   documentos: Record<string, string[]>;
 }
 
-/** Lê o JSON {slug: [títulos]} da chave, descartando o que não for lista de textos. */
-export function restricoesDe(json: string | null | undefined): Record<string, string[]> {
-  try {
-    const o = JSON.parse(json || "{}") as unknown;
-    if (!o || typeof o !== "object" || Array.isArray(o)) return {};
-    return Object.fromEntries(Object.entries(o).flatMap(([k, v]) => (Array.isArray(v) ? [[k, v.filter((x): x is string => typeof x === "string")]] : [])));
-  } catch {
-    return {};
-  }
-}
-
 export async function hashToken(token: string): Promise<string> {
   const h = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token)));
   return Array.from(h, (b) => b.toString(16).padStart(2, "0")).join("");
@@ -53,15 +45,13 @@ const tokenDe = (req: Request) => req.headers.get("authorization")?.match(/^Bear
 
 async function clienteDe(token: string, db: D1Database): Promise<Cliente | null> {
   const c = await db
-    .prepare("SELECT id, nome, pacotes, documentos FROM chaves WHERE token_hash = ? AND ativo = 1 AND (expira_em IS NULL OR expira_em > datetime('now'))")
+    .prepare("SELECT id, nome, pacotes, documentos, pessoa FROM chaves WHERE token_hash = ? AND ativo = 1 AND (expira_em IS NULL OR expira_em > datetime('now'))")
     .bind(await hashToken(token))
-    .first<{ id: string; nome: string; pacotes: string; documentos?: string }>();
+    .first<{ id: string; nome: string; pacotes: string; documentos?: string; pessoa?: string | null }>();
   if (!c) return null;
-  let pacotes: string[] = [];
-  try {
-    pacotes = (JSON.parse(c.pacotes) as unknown[]).filter((x): x is string => typeof x === "string");
-  } catch {}
-  return { id: c.id, nome: c.nome, pacotes, documentos: restricoesDe(c.documentos) };
+  // Chave emitida por OAuth: o escopo é o da pessoa hoje (regras podem ter mudado desde a emissão); o gravado na chave é ignorado.
+  if (c.pessoa) return { id: c.id, nome: c.nome, ...(await escopoDe(db, c.pessoa)) };
+  return { id: c.id, nome: c.nome, pacotes: listaDe(c.pacotes), documentos: restricoesDe(c.documentos) };
 }
 
 const FERRAMENTAS = [
@@ -251,7 +241,10 @@ const limiteExcedido = () =>
  */
 async function recusar(req: Request, env: EnvMcp): Promise<Response> {
   if (env.LIMITE_AUTH && !(await env.LIMITE_AUTH.limit({ key: req.headers.get("cf-connecting-ip") ?? "sem-ip" })).success) return limiteExcedido();
-  return rpcErro(null, -32001, "token inválido", 401);
+  // resource_metadata leva o cliente OAuth à descoberta (oauth.ts); cliente com chave nesskb_ ignora.
+  const r = rpcErro(null, -32001, "token inválido", 401);
+  r.headers.set("www-authenticate", `Bearer realm="ness-know-mcp", resource_metadata="${new URL(req.url).origin}/.well-known/oauth-protected-resource"`);
+  return r;
 }
 
 export async function mcp(req: Request, env: EnvMcp): Promise<Response> {
