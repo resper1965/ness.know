@@ -7,7 +7,7 @@ Os comandos são para PowerShell, num clone fora do OneDrive (`C:\dev\ness.know`
 | Recurso | Nome | Situação em 03/11/2026 |
 | --- | --- | --- |
 | Worker | `ness-know` | Publicado em `know.ness.com.br` com o código do `main` (01/11/2026) |
-| D1 | `ness-know` | Migrações 0001 a 0004 aplicadas na época (as seguintes, até a 0009, estão em `migrations/` e se aplicam com o comando de migrações); SCF 2026.3 carregado (catálogo e STRM, 03/11/2026) |
+| D1 | `ness-know` | Migrações 0001 a 0004 aplicadas na época (as seguintes, até a 0010, estão em `migrations/` e se aplicam com o comando de migrações); SCF 2026.3 carregado (catálogo e STRM, 03/11/2026) |
 | R2 | `ness-know-arquivos` | Criado |
 | Vectorize | `ness-know-trechos` | Criado, com os índices de metadados `alvo` e `documento_id` |
 | Access | app `know.ness.com.br` (Allow, e-mails dos admins) e app `know.ness.com.br/mcp` (Bypass, Everyone) | Configurados. Para o OAuth faltam os Bypass e a aplicação de `/oauth/authorize` (seção abaixo) |
@@ -52,6 +52,21 @@ O código já está pronto (`src/oauth.ts`, migração 0009). Falta configurar o
 5. Aplique a migração e publique: `npx wrangler d1 migrations apply ness-know --remote` e `npx wrangler deploy`. Os dois limites novos (`LIMITE_REGISTRO_IP` e `LIMITE_REGISTRO`) são criados no deploy.
 6. Na aba **Acesso por pessoa**, defina o padrão para todos (por exemplo, as leis públicas). Sem regra nenhuma, a pessoa autoriza e não vê nada.
 7. Confira: `curl https://know.ness.com.br/.well-known/oauth-authorization-server` devolve o JSON de descoberta, e conectar o ness.work pelo endereço `https://know.ness.com.br/mcp` abre o consentimento.
+
+## Uma base por empresa (cliente com a própria instância)
+
+Cada empresa tem um **pacote** e uma **chave** só dela. O filtro é aplicado no servidor: a chave de uma empresa não alcança o pacote de outra, nem pedindo pelo nome. A empresa cola o endereço `https://know.ness.com.br/mcp` e a chave no Cloudflare OS dela.
+
+**Criar:**
+1. Carregue o pacote (`node scripts/carregar-pacote.mjs <pasta> <url>`; o `slug` em `pacote.json` identifica a empresa, por exemplo `cliente-x`).
+2. Na aba **Pacotes**, abra o pacote e defina a **cota de documentos**, se quiser limitar.
+3. Na aba **Chaves**, gere uma chave com o pacote da empresa (e, se for o caso, os pacotes comuns), com **validade** (por exemplo, 1 ano). A chave aparece uma vez; entregue por um canal seguro.
+4. Acompanhe o uso na lista de chaves ("chamadas em 30 dias"). O limite de 240 chamadas por minuto vale por chave.
+
+**Remover** (a empresa saiu ou pediu a exclusão dos dados):
+1. Revogue a chave (aba Chaves) e tire o pacote das regras de acesso e das skills. Enquanto algo usar o pacote, a exclusão responde 409 e lista o que falta.
+2. Na aba **Pacotes**, abra o pacote, clique em **Excluir pacote** e digite o slug. Isso apaga os documentos, os arquivos, os trechos e os vetores. Não dá para desfazer.
+3. Se o faBRAINzio liga o pacote a uma organização (`org_pacotes`), tire a ligação lá: o ness.know não enxerga essa tabela.
 
 ## Carregar ou atualizar pacotes
 

@@ -152,7 +152,7 @@ export async function admin(req: Request, env: EnvConhecimento, email: string, c
       (
         await db
           .prepare(
-            "SELECT p.slug, p.nome, p.descricao, p.versao, p.atualizado_em, (SELECT count(*) FROM documentos d WHERE d.escopo = 'pacote' AND d.dono = p.slug AND d.status = 'ok') AS documentos, (SELECT json_group_array(titulo) FROM (SELECT d.titulo FROM documentos d WHERE d.escopo = 'pacote' AND d.dono = p.slug AND d.status = 'ok' ORDER BY d.titulo)) AS titulos FROM pacotes p ORDER BY p.slug",
+            "SELECT p.slug, p.nome, p.descricao, p.versao, p.atualizado_em, p.cota_documentos, (SELECT count(*) FROM documentos d WHERE d.escopo = 'pacote' AND d.dono = p.slug AND d.status = 'ok') AS documentos, (SELECT json_group_array(titulo) FROM (SELECT d.titulo FROM documentos d WHERE d.escopo = 'pacote' AND d.dono = p.slug AND d.status = 'ok' ORDER BY d.titulo)) AS titulos FROM pacotes p ORDER BY p.slug",
           )
           .all()
       ).results,
@@ -168,6 +168,34 @@ export async function admin(req: Request, env: EnvConhecimento, email: string, c
       .run();
     return Response.json({ slug: r.v.slug });
   }
+  const pc = caminho.match(/^\/api\/pacotes\/([a-z0-9-]+)\/cota$/);
+  if (pc && req.method === "PUT") {
+    const c = (await corpo(req)).cota_documentos;
+    if (c !== null && (!Number.isInteger(c) || (c as number) < 1 || (c as number) > 100000)) return erro("cota_documentos: inteiro de 1 a 100000, ou null para sem limite");
+    const r = await db.prepare("UPDATE pacotes SET cota_documentos = ? WHERE slug = ?").bind(c, pc[1]).run();
+    if (!r.meta.changes) return erro("pacote não existe", 404);
+    await auditar(db, email, "pacote.cota", `${pc[1]}: ${c ?? "sem limite"}`);
+    return Response.json({ ok: true });
+  }
+  // Saída de uma empresa: apaga o pacote e todos os documentos (arquivo, trechos e vetores). Recusa enquanto algo ainda o usa.
+  const pe = caminho.match(/^\/api\/pacotes\/([a-z0-9-]+)$/);
+  if (pe && req.method === "DELETE") {
+    const slug = pe[1];
+    if (!(await pacotesQueExistem(db, [slug])).length) return erro("pacote não existe", 404);
+    const usa = (sql: string) => db.prepare(sql).bind(slug).all<Record<string, string>>().then((r) => r.results);
+    const [chaves, regras, skills] = await Promise.all([
+      usa("SELECT id, nome FROM chaves WHERE ativo = 1 AND EXISTS (SELECT 1 FROM json_each(chaves.pacotes) WHERE value = ?)"),
+      usa("SELECT tipo, sujeito FROM acesso_regras WHERE EXISTS (SELECT 1 FROM json_each(acesso_regras.pacotes) WHERE value = ?)"),
+      usa("SELECT nome FROM skills WHERE EXISTS (SELECT 1 FROM json_each(skills.normas) WHERE key = ?)"),
+    ]);
+    if (chaves.length || regras.length || skills.length)
+      return Response.json({ erro: "o pacote ainda é usado: revogue as chaves, tire-o das regras de acesso e das skills antes de excluir", chaves, regras, skills }, { status: 409 });
+    const docs = (await db.prepare("SELECT id FROM documentos WHERE escopo = 'pacote' AND dono = ?").bind(slug).all<{ id: string }>()).results;
+    for (const d of docs) await apagarDocumento(env, d.id); // se um falhar, o erro sobe e o pacote fica: basta repetir
+    await db.prepare("DELETE FROM pacotes WHERE slug = ?").bind(slug).run();
+    await auditar(db, email, "pacote.excluir", `${slug}: ${docs.length} documentos`);
+    return Response.json({ ok: true, documentos: docs.length });
+  }
   const pd = caminho.match(/^\/api\/pacotes\/([a-z0-9-]+)\/documentos$/);
   if (pd && req.method === "GET")
     return Response.json(
@@ -181,6 +209,12 @@ export async function admin(req: Request, env: EnvConhecimento, email: string, c
     if (arquivo.size > LIMITE_ARQUIVO) return erro("arquivo maior que 15 MB");
     const m = (k: string) => (typeof f?.get(k) === "string" ? String(f.get(k)).trim().slice(0, 300) || undefined : undefined);
     const titulo = m("titulo") ?? arquivo.name;
+    // Cota: recarregar o mesmo título substitui o anterior e não conta de novo.
+    const cota = (await db.prepare("SELECT cota_documentos AS c FROM pacotes WHERE slug = ?").bind(pd[1]).first<{ c: number | null }>())?.c;
+    if (cota != null) {
+      const usados = (await db.prepare("SELECT count(DISTINCT titulo) AS n FROM documentos WHERE escopo = 'pacote' AND dono = ? AND titulo != ?").bind(pd[1], titulo).first<{ n: number }>())?.n ?? 0;
+      if (usados >= cota) return erro(`cota de ${cota} documentos do pacote atingida`, 422);
+    }
     const r = await ingerir(env, { escopo: "pacote", dono: pd[1] }, { titulo, tipo: m("tipo"), fonte: m("fonte"), versao: m("versao"), vigencia: m("vigencia") }, arquivo, email);
     if (r.erro) return Response.json(r, { status: 422 });
     // Recarregar o mesmo título substitui a versão anterior: rodar o carregador de novo não duplica trechos.

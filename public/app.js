@@ -61,7 +61,7 @@ async function api(caminho, opcoes = {}) {
   }
   if (r.status === 401 || r.status === 403 || r.redirected || r.type === "opaqueredirect") throw new SemAcesso();
   const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(j.erro ? `${j.erro[0].toUpperCase()}${j.erro.slice(1)}.` : `O servidor respondeu ${r.status}. Tente de novo em instantes.`);
+  if (!r.ok) throw Object.assign(new Error(j.erro ? `${j.erro[0].toUpperCase()}${j.erro.slice(1)}.` : `O servidor respondeu ${r.status}. Tente de novo em instantes.`), { dados: j });
   return j;
 }
 function falhou(err, destino) {
@@ -220,7 +220,7 @@ async function carregarPacotes() {
           const nome = [abre];
           if (p.descricao) nome.push(el("span", p.descricao, "sub"));
           nome.push(el("code", p.slug, "sub"));
-          tr.append(celula(nome), celula(p.versao || "—", "esconde-estreito"), celula(p.atualizado_em ? fmtData.format(dataDe(p.atualizado_em)) : "—", "esconde-estreito"), celula(String(p.documentos), "num"));
+          tr.append(celula(nome), celula(p.versao || "—", "esconde-estreito"), celula(p.atualizado_em ? fmtData.format(dataDe(p.atualizado_em)) : "—", "esconde-estreito"), celula(p.cota_documentos ? `${p.documentos} de ${p.cota_documentos}` : String(p.documentos), "num"));
           const td = el("td");
           td.colSpan = 4;
           detalhe.append(td);
@@ -245,6 +245,57 @@ async function carregarPacotes() {
   );
 }
 
+/** Cota de documentos e exclusão do pacote (saída de uma empresa). */
+function gestaoDoPacote(p) {
+  const g = el("div", null, "gestao");
+  const msg = el("p", null, "apoio");
+  msg.setAttribute("role", "status");
+  const cota = el("input");
+  Object.assign(cota, { type: "number", min: 1, max: 100000, placeholder: "sem limite", value: p.cota_documentos ?? "" });
+  cota.setAttribute("aria-label", `Cota de documentos de ${p.nome}`);
+  const salvar = botao("Salvar cota", "secundario pequeno", async () => {
+    salvar.disabled = true;
+    try {
+      await api(`/api/pacotes/${p.slug}/cota`, { method: "PUT", body: JSON.stringify({ cota_documentos: cota.value ? Number(cota.value) : null }) });
+      msg.textContent = cota.value ? `Cota de ${cota.value} documentos salva.` : "Sem limite de documentos.";
+    } catch (err) {
+      err instanceof SemAcesso ? falhou(err) : (msg.textContent = err.message);
+    } finally {
+      salvar.disabled = false;
+    }
+  });
+  const excluir = botao("Excluir pacote", "perigo pequeno", () => confirmarExclusao(p, g, msg));
+  g.append(el("span", "Cota de documentos", "apoio"), cota, salvar, excluir, msg);
+  return g;
+}
+function confirmarExclusao(p, g, msg) {
+  const voltar = () => g.replaceWith(gestaoDoPacote(p));
+  const digitado = el("input");
+  Object.assign(digitado, { type: "text", placeholder: p.slug, autocomplete: "off" });
+  digitado.setAttribute("aria-label", `Digite ${p.slug} para confirmar`);
+  const aviso = el("p", `Apaga o pacote ${p.nome} e todos os ${p.documentos} documentos, arquivos e vetores. Não dá para desfazer. Digite ${p.slug} para confirmar.`, "apoio");
+  const sim = botao("Excluir de vez", "perigo pequeno", async () => {
+    sim.disabled = true;
+    try {
+      await api(`/api/pacotes/${p.slug}`, { method: "DELETE" });
+      await carregarPacotes();
+      await carregarChaves();
+    } catch (err) {
+      if (err instanceof SemAcesso) return falhou(err);
+      const d = err.dados ?? {};
+      const usos = [...(d.chaves ?? []).map((c) => `chave ${c.nome}`), ...(d.regras ?? []).map((r) => (r.tipo === "padrao" ? "o padrão de acesso" : `regra de ${r.sujeito}`)), ...(d.skills ?? []).map((k) => `skill ${k.nome}`)];
+      aviso.textContent = usos.length ? `${err.message} Ainda usam: ${usos.join(", ")}.` : err.message;
+      sim.disabled = digitado.value !== p.slug;
+    }
+  });
+  sim.disabled = true;
+  digitado.addEventListener("input", () => (sim.disabled = digitado.value !== p.slug));
+  const caixa = el("div", null, "gestao");
+  caixa.append(aviso, digitado, botao("Cancelar", "secundario pequeno", voltar), sim);
+  g.replaceWith(caixa);
+  digitado.focus();
+}
+
 async function alternarDocumentos(p, abre, detalhe) {
   const abrindo = abre.getAttribute("aria-expanded") !== "true";
   abre.setAttribute("aria-expanded", String(abrindo));
@@ -252,7 +303,7 @@ async function alternarDocumentos(p, abre, detalhe) {
   if (!abrindo || detalhe.dataset.carregado) return;
   const caixa = el("div", null, "docs");
   caixa.append(el("p", "Carregando documentos…", "apoio"));
-  detalhe.firstChild.replaceChildren(caixa);
+  detalhe.firstChild.replaceChildren(caixa, gestaoDoPacote(p));
   try {
     const docs = await api(`/api/pacotes/${p.slug}/documentos`);
     detalhe.dataset.carregado = "1";

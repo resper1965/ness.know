@@ -74,8 +74,8 @@
 
     /* Campos */
     label, .rotulo { display: block; margin: 0 0 8px; font: 500 12px/1 var(--font-body); color: var(--ink-2); }
-    input[type=text], input[type=search], select { width: 100%; height: var(--control-h); padding: 0 10px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); border-radius: 0; transition: border-color var(--rapido) var(--ease); }
-    input[type=text]:hover, input[type=search]:hover, select:hover { border-color: rgba(255, 255, 255, .22); }
+    input[type=text], input[type=search], input[type=number], select { width: 100%; height: var(--control-h); padding: 0 10px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); border-radius: 0; transition: border-color var(--rapido) var(--ease); }
+    input[type=text]:hover, input[type=search]:hover, input[type=number]:hover, select:hover { border-color: rgba(255, 255, 255, .22); }
     input::placeholder { color: var(--ink-4); }
     input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
     select { appearance: none; padding-right: 28px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
@@ -138,6 +138,9 @@
     .abre .i { width: 14px; height: 14px; color: var(--ink-4); transition: transform var(--rapido) var(--ease); }
     .abre[aria-expanded=true] .i { transform: rotate(90deg); color: var(--accent); }
     tr.detalhe > td { padding: 0 16px 16px 40px; background: var(--surface); }
+    .gestao { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; }
+    .gestao input { width: 150px; }
+    .gestao .apoio { flex-basis: 100%; margin: 0; }
     .docs table { border: 1px solid var(--line); }
     .docs th, .docs table td { background: var(--paper); }
     .docs table td { padding: 10px 14px; font-size: 12px; }

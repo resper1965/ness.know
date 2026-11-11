@@ -47,7 +47,7 @@ Regras que definem o que uma chave emitida por OAuth enxerga. O padrão vale par
 | `PUT /api/acesso/padrao` | Corpo `{ "pacotes": ["slug"], "documentos": { "slug": ["Título"] } }` (`documentos` opcional, como na chave) |
 | `PUT /api/acesso/pessoa/:email` | Mesmo corpo, para um e-mail. E-mail inválido: 400 |
 | `DELETE /api/acesso/pessoa/:email` | Remove a regra da pessoa |
-| `GET /api/auditoria` | Últimos 100 eventos: `quando`, `ator`, `acao` (`oauth.conceder`, `chave.revogar`, `acesso.definir`, `acesso.remover`), `detalhe`. Sem token nem conteúdo |
+| `GET /api/auditoria` | Últimos 100 eventos: `quando`, `ator`, `acao` (`oauth.conceder`, `chave.revogar`, `acesso.definir`, `acesso.remover`, `pacote.cota`, `pacote.excluir`), `detalhe`. Sem token nem conteúdo |
 
 Pacote inexistente: 404. Norma que não existe no pacote: 400.
 
@@ -60,6 +60,13 @@ Pacote inexistente: 404. Norma que não existe no pacote: 400.
 | `GET /api/pacotes/:slug/documentos` | Documentos do pacote: `id`, `titulo`, `tipo`, `versao`, `vigencia`, `fonte`, `status`, `erro`, `criado_em` |
 | `POST /api/pacotes/:slug/documentos` | Envia um documento (`multipart/form-data`: `arquivo`, `titulo?`, `tipo?`, `versao?`, `vigencia?`, `fonte?`). Até 15 MB. Um título que já existe no pacote substitui a versão anterior e devolve `substituidos` |
 | `DELETE /api/documentos/:id` | Apaga o documento, os trechos, os vetores e o arquivo |
+
+| Rota | Descrição |
+| --- | --- |
+| `PUT /api/pacotes/:slug/cota` | Corpo `{ "cota_documentos": 50 }` (inteiro de 1 a 100000) ou `null` para sem limite. Acima da cota, o upload de um título **novo** recebe 422; recarregar um título existente (que substitui o anterior) não conta de novo |
+| `DELETE /api/pacotes/:slug` | Exclui o pacote e todos os documentos (arquivo no R2, trechos e vetores). Responde 409, sem apagar nada, enquanto uma chave ativa, uma regra de acesso (padrão ou por pessoa) ou uma skill ainda listar o pacote; o corpo traz `chaves`, `regras` e `skills` que o usam. Grava em `auditoria` |
+
+`GET /api/pacotes` traz também `cota_documentos`.
 
 ## Skills
 
