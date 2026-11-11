@@ -28,7 +28,7 @@ export default {
     if (pathname === "/oauth/register") return registrar(req, env);
     if (pathname === "/oauth/token") return token(req, env);
     if (pathname === "/oauth/authorize") {
-      const pessoa = await emailDoAcesso(req, env); // qualquer pessoa liberada no Access, não só ADMIN_EMAILS
+      const pessoa = await emailDoAcesso(req, { ACCESS_TEAM: env.ACCESS_TEAM, ACCESS_AUD: env.ACCESS_AUD_OAUTH ?? env.ACCESS_AUD }); // qualquer pessoa liberada no Access, não só ADMIN_EMAILS
       return pessoa ? autorizar(req, env, pessoa) : Response.json({ erro: "não autorizado" }, { status: 401 });
     }
     if (pathname.startsWith("/api/")) {

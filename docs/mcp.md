@@ -165,6 +165,22 @@ Resposta: `nome`, `descricao`, `versao`, `buscas` (até 5 consultas de continua�
 
 Uma chave enxerga a skill só se tiver todos os pacotes que ela declara em `normas` e, em pacote restrito, as normas declaradas. Erros: `informe nome` e `skill não encontrada`. Skill inexistente e skill não liberada à chave recebem o mesmo erro, para a chave não descobrir o que não enxerga.
 
+## Conexão por OAuth (ness.work e outros clientes MCP)
+
+Clientes que não aceitam chave colada conectam por OAuth 2.1 e cada pessoa autoriza com o próprio login (Cloudflare Access + Entra ID). O cliente descobre tudo sozinho a partir do 401 do `/mcp`, cujo `WWW-Authenticate` traz `resource_metadata`.
+
+| Endereço | Função |
+| --- | --- |
+| `GET /.well-known/oauth-protected-resource` (também `/mcp`) | RFC 9728: `resource` = `https://know.ness.com.br/mcp` |
+| `GET /.well-known/oauth-authorization-server` (também `/mcp`) | RFC 8414: só `code_challenge_methods_supported: ["S256"]` e `token_endpoint_auth_methods_supported: ["none"]` |
+| `POST /oauth/register` | RFC 7591, só cliente público. `redirect_uris`: de 1 a 5, https (http só em localhost), sem fragmento nem usuário/senha. Limite por IP e no total |
+| `GET /oauth/authorize` | Atrás do Access. Mostra o consentimento com o nome do cliente; exige PKCE S256 |
+| `POST /oauth/token` | Troca o código (uso único, 60 s) por uma chave `nesskb_` pessoal, válida por 30 dias |
+
+O token é uma chave comum: o mesmo `Authorization: Bearer nesskb_…`, o mesmo limite por chave e a mesma contagem de uso. Diferenças: ela é da pessoa (e do cliente), e **o que ela enxerga vem das regras de acesso por pessoa, avaliadas a cada chamada**, não do que foi gravado na emissão. Mudou a regra, mudou o acesso, sem emitir de novo. Sem regra nenhuma, a pessoa não vê nada. Reautorizar substitui a chave anterior da mesma pessoa e cliente; uma chave revogada no painel não volta por reautorização. Não há refresh token: a cada 30 dias o cliente pede a autorização de novo.
+
+As chaves por agente (criadas no painel) continuam como antes.
+
 ## Erros
 
 | Situação | HTTP | JSON-RPC |

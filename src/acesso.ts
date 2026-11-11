@@ -4,6 +4,8 @@ import { createRemoteJWKSet, jwtVerify } from "jose";
 export interface EnvAcesso {
   ACCESS_TEAM: string; // <time>.cloudflareaccess.com
   ACCESS_AUD: string; // "Application Audience (AUD) Tag" do app no Access
+  /** AUD da aplicação do Access só de /oauth/authorize (outra aplicação, outra tag). Sem ela, vale o ACCESS_AUD. */
+  ACCESS_AUD_OAUTH?: string;
   ADMIN_EMAILS: string; // quem administra, separados por vírgula
 }
 

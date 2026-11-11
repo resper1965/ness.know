@@ -32,6 +32,12 @@
 | Vazamento do banco | Tokens só em hash |
 | Agente pedindo pacote ou norma fora da chave | Filtro aplicado no servidor; o pedido do agente só restringe |
 | Erro de configuração no Access | JWT conferido no Worker e lista de admins |
+| OAuth: redirecionamento aberto | `redirect_uri` tem de ser igual a um registrado; cliente ou endereço desconhecido responde 400 sem redirecionar |
+| OAuth: CSRF no consentimento | O POST só vale com o id do pedido que o GET serviu àquela pessoa; pedido de outra pessoa, inexistente ou vencido (10 min) responde 400 |
+| OAuth: código interceptado | PKCE S256 obrigatório; código de uso único, 60 s, guardado em hash; troca errada (client, redirect ou verifier) não queima o código |
+| OAuth: registro em massa | Cota por IP antes da global (Rate Limiting); só cliente público e `redirect_uris` validadas |
+| Pessoa que perde o acesso à ness. | A chave dura 30 dias e o escopo é recalculado a cada chamada; remover a regra tira o acesso na hora, e o painel revoga a chave |
+| Chave revogada voltando por reautorização | A emissão só atualiza chave ativa; revogada continua revogada |
 | Conteúdo de documento com instruções embutidas (injeção de prompt) | O MCP devolve trechos como dado; os clientes devem tratá-los como dado (orientação em `docs/mcp.md`) |
 | Arquivo malicioso na carga | Só administradores carregam. O arquivo vai para o R2 e é convertido pelo Workers AI; nada é executado |
 
