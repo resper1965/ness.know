@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Enviar documentos · ness.know</title>
+<style>
+  :root { color-scheme: dark; --paper: #0b1326; --surface: #14214a; --line: #26365f; --ink: #f1f5f9; --ink-3: #a9b6cb; --accent: #00ade8; --bad: #ff6b6b; --ok: #34d399; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 44rem; margin: 0 auto; padding: 32px 16px 64px; }
+  .marca { font-weight: 600; font-size: 20px; letter-spacing: -.01em; }
+  .marca span { color: var(--accent); }
+  h1 { font-size: 22px; margin: 24px 0 4px; }
+  h2 { font-size: 16px; margin: 0 0 12px; }
+  p { margin: 0 0 12px; }
+  .apoio { color: var(--ink-3); font-size: 13px; }
+  .caixa { background: var(--surface); border: 1px solid var(--line); padding: 20px; margin: 20px 0; }
+  label { display: block; font-size: 13px; margin-bottom: 6px; }
+  input[type=password], input[type=text], input[type=file] { width: 100%; min-height: 44px; padding: 10px 12px; background: var(--paper); color: var(--ink); border: 1px solid var(--line); font: inherit; border-radius: 0; }
+  button { min-height: 44px; padding: 0 18px; font: inherit; font-weight: 600; border: 1px solid var(--accent); background: var(--accent); color: #031018; cursor: pointer; }
+  button.sec { background: none; color: var(--accent); }
+  button.perigo { background: none; color: var(--bad); border-color: var(--bad); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .linha { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+  li:first-child { border-top: 0; }
+  li .t { min-width: 0; overflow-wrap: anywhere; }
+  .st-ok { color: var(--ok); } .st-erro { color: var(--bad); }
+  .erro { color: var(--bad); }
+  progress { width: 100%; height: 6px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <div class="marca">ness<span>.</span>know</div>
+  <h1>Enviar documentos</h1>
+  <p class="apoio">Os documentos que você enviar ficam disponíveis só para o ambiente da sua empresa.</p>
+
+  <form class="caixa" id="entrada" novalidate>
+    <label for="chave">Chave de envio</label>
+    <input id="chave" type="password" autocomplete="off" spellcheck="false" placeholder="nessup_…">
+    <p class="apoio" style="margin-top:8px">Recebida de quem administra o ness.know. Ela não fica salva neste navegador: ao recarregar a página, informe de novo.</p>
+    <div class="linha"><button type="submit" id="entrar">Entrar</button></div>
+    <p class="erro" id="erro-entrada" role="alert" hidden></p>
+  </form>
+
+  <section id="area" hidden>
+    <div class="caixa">
+      <h2 id="pacote"></h2>
+      <p class="apoio" id="uso" role="status"></p>
+      <form id="envio" novalidate>
+        <label for="arquivos">Documentos (PDF, Word, HTML, CSV, texto ou Markdown, até 15 MB cada)</label>
+        <input id="arquivos" type="file" multiple accept=".pdf,.docx,.txt,.md,.html,.csv">
+        <p class="apoio" style="margin-top:8px">O título de cada documento é o nome do arquivo. Enviar de novo um arquivo com o mesmo nome substitui a versão anterior.</p>
+        <div class="linha"><button type="submit" id="enviar" disabled>Enviar</button></div>
+      </form>
+      <ul id="andamento" aria-live="polite"></ul>
+    </div>
+    <div class="caixa">
+      <h2>Documentos enviados</h2>
+      <p class="apoio" id="vazio" hidden>Nenhum documento enviado ainda.</p>
+      <ul id="lista"></ul>
+    </div>
+  </section>
+</main>
+<script>
+"use strict";
+const $ = (s) => document.querySelector(s);
+const el = (tag, txt, cls) => { const e = document.createElement(tag); if (txt != null) e.textContent = txt; if (cls) e.className = cls; return e; };
+let chave = ""; // só em memória: não vai para storage nem para a URL
+
+async function api(caminho, opcoes = {}) {
+  let r;
+  try { r = await fetch(caminho, { ...opcoes, headers: { authorization: `Bearer ${chave}` } }); }
+  catch { throw new Error("Sem conexão. Confira a internet e tente de novo."); }
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    const e = new Error(r.status === 401 ? "Chave de envio inválida, vencida ou revogada." : r.status === 429 ? "Muitas tentativas. Aguarde um instante e tente de novo." : j.erro ? `${j.erro[0].toUpperCase()}${j.erro.slice(1)}.` : `O servidor respondeu ${r.status}.`);
+    e.status = r.status;
+    throw e;
+  }
+  return j;
+}
+
+async function carregar() {
+  const j = await api("/api/envio/documentos");
+  $("#pacote").textContent = j.pacote.nome;
+  const cota = j.pacote.cota_documentos;
+  $("#uso").textContent = cota ? `${j.pacote.usados} de ${cota} documentos usados.` : `${j.pacote.usados} documentos.`;
+  $("#vazio").hidden = j.documentos.length > 0;
+  $("#lista").replaceChildren(...j.documentos.map((d) => {
+    const li = el("li");
+    const t = el("div", null, "t");
+    t.append(el("div", d.titulo), el("div", d.status === "ok" ? "Pronto para consulta" : `Falhou: ${d.erro || "erro ao ler o arquivo"}`, `apoio ${d.status === "ok" ? "st-ok" : "st-erro"}`));
+    const b = el("button", "Apagar", "perigo");
+    b.type = "button";
+    b.setAttribute("aria-label", `Apagar ${d.titulo}`);
+    b.addEventListener("click", async () => {
+      if (!confirm(`Apagar "${d.titulo}"? Isso não pode ser desfeito.`)) return;
+      b.disabled = true;
+      try { await api(`/api/envio/documentos/${d.id}`, { method: "DELETE" }); await carregar(); }
+      catch (err) { b.disabled = false; $("#uso").textContent = err.message; }
+    });
+    li.append(t, b);
+    return li;
+  }));
+}
+
+$("#entrada").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const erro = $("#erro-entrada");
+  erro.hidden = true;
+  chave = $("#chave").value.trim();
+  if (!chave) { erro.textContent = "Informe a chave de envio."; erro.hidden = false; return; }
+  $("#entrar").disabled = true;
+  try {
+    await carregar();
+    $("#entrada").hidden = true;
+    $("#area").hidden = false;
+    $("#chave").value = "";
+  } catch (err) {
+    chave = "";
+    erro.textContent = err.message;
+    erro.hidden = false;
+  } finally { $("#entrar").disabled = false; }
+});
+
+$("#arquivos").addEventListener("change", () => { $("#enviar").disabled = !$("#arquivos").files.length; });
+
+$("#envio").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const arquivos = [...$("#arquivos").files];
+  if (!arquivos.length) return;
+  $("#enviar").disabled = true;
+  const andamento = $("#andamento");
+  andamento.replaceChildren();
+  for (const a of arquivos) {
+    const li = el("li");
+    const t = el("div", null, "t");
+    t.append(el("div", a.name));
+    const estado = el("div", "Enviando…", "apoio");
+    t.append(estado);
+    li.append(t);
+    andamento.append(li);
+    try {
+      const f = new FormData();
+      f.set("arquivo", a);
+      f.set("titulo", a.name.replace(/\.[^.]+$/, ""));
+      const r = await api("/api/envio/documentos", { method: "POST", body: f });
+      estado.textContent = r.substituidos ? "Enviado (substituiu a versão anterior)." : "Enviado.";
+      estado.classList.add("st-ok");
+    } catch (err) {
+      estado.textContent = err.message;
+      estado.classList.add("st-erro");
+      if (err.status === 401) break; // chave perdeu a validade no meio do envio
+    }
+  }
+  $("#arquivos").value = "";
+  try { await carregar(); } catch {}
+});
+</script>
+</body>
+</html>

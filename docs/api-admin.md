@@ -37,6 +37,28 @@ Corpo do `POST /api/chaves`:
   - lista vazia dá `400`;
   - lista com todas as normas do pacote é guardada como pacote inteiro.
 
+## Chaves de envio (a empresa sobe o próprio conteúdo)
+
+| Rota | Descrição |
+| --- | --- |
+| `GET /api/chaves-envio` | Lista: `id`, `nome`, `pacote`, `ativo`, `criado_por`, `criado_em`, `usado_em`, `expira_em`. Nunca traz o token |
+| `POST /api/chaves-envio` | Corpo `{ "nome": "Cliente X", "pacote": "cliente-x", "dias": 365 }` (`dias` ou `expira_em`; sem nenhum, vale 365 dias). Devolve o `token` (`nessup_…`) **uma única vez**. Recusa pacote inexistente (404) e pacote **sem cota** de documentos (400) |
+| `DELETE /api/chaves-envio/:id` | Revoga na hora. Grava em `auditoria` quem revogou |
+
+### API da empresa (`/api/envio/*`, fora do Access)
+
+Autenticação: `Authorization: Bearer nessup_…`. A chave vale para o pacote dela e nenhum outro. Chave ausente, errada, vencida ou revogada: 401 (e 429 para quem insiste, por IP). Limite de 30 chamadas por minuto por chave.
+
+| Rota | Descrição |
+| --- | --- |
+| `GET /api/envio/documentos` | `pacote` (`nome`, `cota_documentos`, `usados`) e `documentos` (`id`, `titulo`, `tipo`, `versao`, `vigencia`, `status`, `erro`, `criado_em`) |
+| `POST /api/envio/documentos` | `multipart/form-data`: `arquivo` (até 15 MB) e, opcionais, `titulo`, `tipo`, `versao`, `vigencia`, `fonte`. Mesmo título substitui o anterior sem gastar cota. Acima da cota: 422 |
+| `DELETE /api/envio/documentos/:id` | Apaga um documento do próprio pacote. Id de outro pacote responde 404 |
+
+```bash
+curl -H "Authorization: Bearer $CHAVE_DE_ENVIO" -F "arquivo=@politica.pdf" -F "titulo=Política de acesso" https://know.ness.com.br/api/envio/documentos
+```
+
 ## Acesso por pessoa (chaves OAuth)
 
 Regras que definem o que uma chave emitida por OAuth enxerga. O padrão vale para todos e a regra da pessoa soma a ele; pacote liberado inteiro por qualquer regra vale inteiro, e restrições por norma do mesmo pacote somam os títulos. Vale na próxima chamada.
@@ -47,7 +69,7 @@ Regras que definem o que uma chave emitida por OAuth enxerga. O padrão vale par
 | `PUT /api/acesso/padrao` | Corpo `{ "pacotes": ["slug"], "documentos": { "slug": ["Título"] } }` (`documentos` opcional, como na chave) |
 | `PUT /api/acesso/pessoa/:email` | Mesmo corpo, para um e-mail. E-mail inválido: 400 |
 | `DELETE /api/acesso/pessoa/:email` | Remove a regra da pessoa |
-| `GET /api/auditoria` | Últimos 100 eventos: `quando`, `ator`, `acao` (`oauth.conceder`, `chave.revogar`, `acesso.definir`, `acesso.remover`, `pacote.cota`, `pacote.excluir`), `detalhe`. Sem token nem conteúdo |
+| `GET /api/auditoria` | Últimos 100 eventos: `quando`, `ator`, `acao` (`oauth.conceder`, `chave.revogar`, `acesso.definir`, `acesso.remover`, `pacote.cota`, `pacote.excluir`, `envio.chave.criar`, `envio.chave.revogar`, `envio.enviar`, `envio.apagar`), `detalhe`. Sem token nem conteúdo |
 
 Pacote inexistente: 404. Norma que não existe no pacote: 400.
 
@@ -64,7 +86,7 @@ Pacote inexistente: 404. Norma que não existe no pacote: 400.
 | Rota | Descrição |
 | --- | --- |
 | `PUT /api/pacotes/:slug/cota` | Corpo `{ "cota_documentos": 50 }` (inteiro de 1 a 100000) ou `null` para sem limite. Acima da cota, o upload de um título **novo** recebe 422; recarregar um título existente (que substitui o anterior) não conta de novo |
-| `DELETE /api/pacotes/:slug` | Exclui o pacote e todos os documentos (arquivo no R2, trechos e vetores). Responde 409, sem apagar nada, enquanto uma chave ativa, uma regra de acesso (padrão ou por pessoa) ou uma skill ainda listar o pacote; o corpo traz `chaves`, `regras` e `skills` que o usam. Grava em `auditoria` |
+| `DELETE /api/pacotes/:slug` | Exclui o pacote e todos os documentos (arquivo no R2, trechos e vetores). Responde 409, sem apagar nada, enquanto uma chave ativa (do MCP ou de envio), uma regra de acesso (padrão ou por pessoa) ou uma skill ainda listar o pacote; o corpo traz `chaves`, `regras`, `skills` e `envios` que o usam. Grava em `auditoria` |
 
 `GET /api/pacotes` traz também `cota_documentos`.
 

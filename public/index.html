@@ -151,7 +151,7 @@
     @keyframes sobe { from { transform: translateY(8px); opacity: 0; } }
     .callout strong { display: block; margin-bottom: 12px; font-weight: 500; color: var(--ink); }
     .callout .texto { margin-top: 12px; display: inline-block; }
-    #nova-saida .callout { margin: 0 0 20px; }
+    #nova-saida .callout, #envio-saida .callout { margin: 0 0 20px; }
     #prev-padrao { margin: 12px 0; padding: 0; }
     #prev-padrao.alerta-prev { padding: 10px 12px; background: color-mix(in oklab, var(--bad) 12%, var(--paper)); box-shadow: inset 2px 0 0 var(--bad); color: var(--ink); }
     .alerta { margin-bottom: 16px; padding: 12px 16px; background: color-mix(in oklab, var(--bad) 12%, var(--paper)); box-shadow: inset 2px 0 0 var(--bad); color: var(--ink); }
@@ -231,6 +231,7 @@
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <symbol id="i-chave" viewBox="0 0 24 24"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5"/></symbol>
     <symbol id="i-pacotes" viewBox="0 0 24 24"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></symbol>
+    <symbol id="i-envio" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/></symbol>
     <symbol id="i-plug" viewBox="0 0 24 24"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/></symbol>
     <symbol id="i-busca" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
     <symbol id="i-sair" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></symbol>
@@ -254,6 +255,7 @@
         <button role="tab" id="tab-chaves" aria-controls="chaves" aria-selected="true"><svg class="i"><use href="#i-chave"/></svg>Chaves<span class="cont" id="n-chaves"></span></button>
         <button role="tab" id="tab-acesso" aria-controls="acesso" aria-selected="false" tabindex="-1"><svg class="i"><use href="#i-chave"/></svg>Acesso por pessoa</button>
         <button role="tab" id="tab-pacotes" aria-controls="pacotes" aria-selected="false" tabindex="-1"><svg class="i"><use href="#i-pacotes"/></svg>Pacotes<span class="cont" id="n-pacotes"></span></button>
+        <button role="tab" id="tab-envio" aria-controls="envio" aria-selected="false" tabindex="-1"><svg class="i"><use href="#i-envio"/></svg>Envio por empresa</button>
         <button role="tab" id="tab-conectar" aria-controls="conectar" aria-selected="false" tabindex="-1"><svg class="i"><use href="#i-plug"/></svg>Conectar um agente</button>
         <button role="tab" id="tab-testar" aria-controls="testar" aria-selected="false" tabindex="-1"><svg class="i"><use href="#i-busca"/></svg>Testar a busca</button>
       </nav>
@@ -342,6 +344,40 @@
               <thead><tr><th>Pessoa</th><th>Pacotes</th><th><span class="oculto">Ações</span></th></tr></thead>
               <tbody id="lista-pessoas"></tbody>
             </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="painel" id="envio" role="tabpanel" aria-labelledby="tab-envio" hidden>
+        <header class="banda"><h1>Envio por empresa</h1></header>
+        <div class="conteudo">
+          <div class="alerta" role="alert"></div>
+          <p class="lead">A empresa sobe o próprio conteúdo no pacote dela com uma chave de envio, que é diferente da chave do MCP (essa só lê). A chave vale para um pacote só e vence em 1 ano. Antes, defina a cota de documentos do pacote, na aba Pacotes.</p>
+          <p class="oculto" id="envio-status" role="status"></p>
+          <div id="envio-saida"></div>
+          <div class="duas">
+            <form id="form-envio" class="folha" novalidate>
+              <div class="topo"><h2>Nova chave de envio</h2></div>
+              <div class="corpo">
+                <div class="campo">
+                  <label for="envio-nome">Empresa</label>
+                  <input id="envio-nome" type="text" required maxlength="100" placeholder="Ex.: Cliente X" autocomplete="off">
+                </div>
+                <div class="campo">
+                  <label for="envio-pacote">Pacote da empresa</label>
+                  <select id="envio-pacote"></select>
+                </div>
+                <div class="acoes"><button type="submit" class="primario" id="gerar-envio" disabled>Gerar chave de envio</button></div>
+                <p class="erro" id="envio-erro" role="alert" hidden></p>
+              </div>
+            </form>
+            <div class="folha">
+              <div class="topo"><h2>Chaves de envio</h2></div>
+              <table>
+                <thead><tr><th>Empresa</th><th>Pacote</th><th><span class="oculto">Ações</span></th></tr></thead>
+                <tbody id="lista-envio"></tbody>
+              </table>
+            </div>
           </div>
         </div>
       </section>

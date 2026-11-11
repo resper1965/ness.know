@@ -257,7 +257,9 @@ function gestaoDoPacote(p) {
     salvar.disabled = true;
     try {
       await api(`/api/pacotes/${p.slug}/cota`, { method: "PUT", body: JSON.stringify({ cota_documentos: cota.value ? Number(cota.value) : null }) });
+      p.cota_documentos = cota.value ? Number(cota.value) : null;
       msg.textContent = cota.value ? `Cota de ${cota.value} documentos salva.` : "Sem limite de documentos.";
+      opcoesEnvio();
     } catch (err) {
       err instanceof SemAcesso ? falhou(err) : (msg.textContent = err.message);
     } finally {
@@ -283,7 +285,7 @@ function confirmarExclusao(p, g, msg) {
     } catch (err) {
       if (err instanceof SemAcesso) return falhou(err);
       const d = err.dados ?? {};
-      const usos = [...(d.chaves ?? []).map((c) => `chave ${c.nome}`), ...(d.regras ?? []).map((r) => (r.tipo === "padrao" ? "o padrão de acesso" : `regra de ${r.sujeito}`)), ...(d.skills ?? []).map((k) => `skill ${k.nome}`)];
+      const usos = [...(d.chaves ?? []).map((c) => `chave ${c.nome}`), ...(d.regras ?? []).map((r) => (r.tipo === "padrao" ? "o padrão de acesso" : `regra de ${r.sujeito}`)), ...(d.skills ?? []).map((k) => `skill ${k.nome}`), ...(d.envios ?? []).map((k) => `chave de envio ${k.nome}`)];
       aviso.textContent = usos.length ? `${err.message} Ainda usam: ${usos.join(", ")}.` : err.message;
       sim.disabled = digitado.value !== p.slug;
     }
@@ -684,6 +686,96 @@ $("#form-pessoa").addEventListener("submit", (e) => {
   salvarRegra(e.currentTarget, `/api/acesso/pessoa/${encodeURIComponent(email)}`, { pacotes: marcados($("#escolha-pessoa")) }, $("#erro-pessoa"));
 });
 
+/* ---------- Envio por empresa (chaves de envio) ---------- */
+let chavesEnvio = [];
+/** Só pacote com cota entra: quem sobe o próprio conteúdo precisa de limite. */
+function opcoesEnvio() {
+  const sel = $("#envio-pacote");
+  const antes = sel.value;
+  sel.replaceChildren(
+    ...pacotes.map((p) => {
+      const o = el("option", p.cota_documentos ? p.nome : `${p.nome} (defina a cota na aba Pacotes)`);
+      o.value = p.slug;
+      o.disabled = !p.cota_documentos;
+      return o;
+    }),
+  );
+  const livre = pacotes.find((p) => p.cota_documentos);
+  sel.value = pacotes.some((p) => p.slug === antes && p.cota_documentos) ? antes : (livre?.slug ?? "");
+  atualizarEnvio();
+}
+function atualizarEnvio() {
+  $("#gerar-envio").disabled = !$("#envio-nome").value.trim() || !$("#envio-pacote").value;
+}
+$("#envio-nome").addEventListener("input", atualizarEnvio);
+async function carregarEnvio() {
+  chavesEnvio = await api("/api/chaves-envio");
+  opcoesEnvio();
+  desenharEnvio();
+}
+function desenharEnvio() {
+  const ativas = chavesEnvio.filter((c) => c.ativo);
+  $("#lista-envio").replaceChildren(
+    ...(ativas.length
+      ? ativas.map((c) => {
+          const tr = el("tr");
+          const venc = dataDe(c.expira_em);
+          const nome = [el("span", c.nome, "nome"), el("span", `Vence em ${venc ? fmtData.format(venc) : "—"}${c.usado_em ? ` · usada ${quando(c.usado_em)}` : " · nunca usada"}`, "sub")];
+          const acao = celula(botao("Revogar", "secundario pequeno", (e) => confirmarRevogacaoEnvio(c, e.currentTarget.parentElement)), "acao");
+          tr.append(celula(nome), celula(nomes[c.pacote] ?? c.pacote), acao);
+          return tr;
+        })
+      : [vazio(3, "Nenhuma chave de envio", "Gere a primeira ao lado para a empresa subir o conteúdo dela.")]),
+  );
+}
+function confirmarRevogacaoEnvio(c, td) {
+  const voltar = () => desenharEnvio();
+  const sim = botao(`Revogar ${c.nome}`, "perigo pequeno", async () => {
+    sim.disabled = true;
+    try {
+      await api(`/api/chaves-envio/${c.id}`, { method: "DELETE" });
+      await carregarEnvio();
+    } catch (err) {
+      falhou(err);
+      voltar();
+    }
+  });
+  const caixa = el("span", null, "confirma");
+  caixa.append(el("span", "A empresa perde o envio agora.", "apoio"), botao("Cancelar", "secundario pequeno", voltar), sim);
+  td.replaceChildren(caixa);
+  sim.focus();
+  caixa.addEventListener("keydown", (e) => e.key === "Escape" && voltar());
+}
+$("#form-envio").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const erro = $("#envio-erro");
+  erro.hidden = true;
+  const nome = $("#envio-nome").value.trim();
+  const pacote = $("#envio-pacote").value;
+  if (!nome || !pacote) return;
+  const b = $("#gerar-envio");
+  b.disabled = true;
+  try {
+    const r = await api("/api/chaves-envio", { method: "POST", body: JSON.stringify({ nome, pacote }) });
+    const caixa = el("div", null, "callout");
+    caixa.append(
+      el("strong", `Chave de envio de ${nome} criada. Copie agora: ela não aparece de novo.`),
+      codigo("token-envio", r.token),
+      el("p", `Entregue à empresa, por um canal seguro, esta chave e o endereço ${location.origin}/enviar. Ela vence em 1 ano.`, "apoio"),
+    );
+    $("#envio-saida").replaceChildren(caixa);
+    $("#envio-status").textContent = `Chave de envio de ${nome} criada. O token está no topo da página e não aparece de novo.`;
+    $("#envio-nome").value = "";
+    await carregarEnvio();
+    caixa.scrollIntoView({ block: "center", behavior: "smooth" });
+    caixa.querySelector("button")?.focus();
+  } catch (err) {
+    falhou(err, erro);
+  } finally {
+    atualizarEnvio();
+  }
+});
+
 /* ---------- Início ---------- */
 /** Carrega uma lista; se a API falhar, troca o esqueleto por uma mensagem com "Tentar de novo". */
 async function comRetentativa(carregar, tbody, colunas, titulo) {
@@ -711,4 +803,5 @@ async function comRetentativa(carregar, tbody, colunas, titulo) {
   await comRetentativa(carregarPacotes, $("#lista-pacotes"), 4, "Não foi possível carregar os pacotes. ");
   await comRetentativa(carregarChaves, $("#lista-chaves"), 4, "Não foi possível carregar as chaves. ");
   await comRetentativa(carregarAcesso, $("#lista-pessoas"), 3, "Não foi possível carregar as regras de acesso. ");
+  await comRetentativa(carregarEnvio, $("#lista-envio"), 3, "Não foi possível carregar as chaves de envio. ");
 })();

@@ -2,10 +2,11 @@
 import { adminDe, type EnvAcesso, emailDoAcesso } from "./acesso";
 import { admin } from "./admin";
 import type { EnvConhecimento } from "./busca";
+import { envio, type EnvEnvio } from "./envio";
 import { type EnvMcp, mcp } from "./mcp";
 import { autorizar, type EnvOauth, metadados, registrar, token } from "./oauth";
 
-export interface Env extends EnvAcesso, EnvConhecimento, EnvMcp, EnvOauth {
+export interface Env extends EnvAcesso, EnvConhecimento, EnvMcp, EnvOauth, EnvEnvio {
   ASSETS: Fetcher;
 }
 
@@ -31,6 +32,8 @@ export default {
       const pessoa = await emailDoAcesso(req, { ACCESS_TEAM: env.ACCESS_TEAM, ACCESS_AUD: env.ACCESS_AUD_OAUTH ?? env.ACCESS_AUD }); // qualquer pessoa liberada no Access, não só ADMIN_EMAILS
       return pessoa ? autorizar(req, env, pessoa) : Response.json({ erro: "não autorizado" }, { status: 401 });
     }
+    // Envio pela empresa: a autenticação é a chave de envio (Bearer), não o Access (envio.ts).
+    if (pathname.startsWith("/api/envio/")) return envio(req, env, pathname);
     if (pathname.startsWith("/api/")) {
       const email = await adminDe(req, env);
       if (!email) return Response.json({ erro: "não autorizado" }, { status: 401 });

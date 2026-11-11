@@ -7,7 +7,7 @@ Os comandos são para PowerShell, num clone fora do OneDrive (`C:\dev\ness.know`
 | Recurso | Nome | Situação em 03/11/2026 |
 | --- | --- | --- |
 | Worker | `ness-know` | Publicado em `know.ness.com.br` com o código do `main` (01/11/2026) |
-| D1 | `ness-know` | Migrações 0001 a 0004 aplicadas na época (as seguintes, até a 0010, estão em `migrations/` e se aplicam com o comando de migrações); SCF 2026.3 carregado (catálogo e STRM, 03/11/2026) |
+| D1 | `ness-know` | Migrações 0001 a 0004 aplicadas na época (as seguintes, até a 0011, estão em `migrations/` e se aplicam com o comando de migrações); SCF 2026.3 carregado (catálogo e STRM, 03/11/2026) |
 | R2 | `ness-know-arquivos` | Criado |
 | Vectorize | `ness-know-trechos` | Criado, com os índices de metadados `alvo` e `documento_id` |
 | Access | app `know.ness.com.br` (Allow, e-mails dos admins) e app `know.ness.com.br/mcp` (Bypass, Everyone) | Configurados. Para o OAuth faltam os Bypass e a aplicação de `/oauth/authorize` (seção abaixo) |
@@ -62,9 +62,14 @@ Cada empresa tem um **pacote** e uma **chave** só dela. O filtro é aplicado no
 2. Na aba **Pacotes**, abra o pacote e defina a **cota de documentos**, se quiser limitar.
 3. Na aba **Chaves**, gere uma chave com o pacote da empresa (e, se for o caso, os pacotes comuns), com **validade** (por exemplo, 1 ano). A chave aparece uma vez; entregue por um canal seguro.
 4. Acompanhe o uso na lista de chaves ("chamadas em 30 dias"). O limite de 240 chamadas por minuto vale por chave.
+5. **Se a empresa sobe o próprio conteúdo:** na aba **Envio por empresa**, gere uma **chave de envio** para o pacote dela (precisa de cota, definida no passo 2). É outra credencial, com outro prefixo (`nessup_`): ela só grava no pacote da empresa, não lê pelo MCP, e a chave do MCP não grava. Entregue à empresa essa chave e o endereço `https://know.ness.com.br/enviar`. A chave vence em 1 ano e se revoga na mesma aba.
+
+**Access para o envio pela empresa** (uma vez): a empresa não tem login no Access da ness., então estes caminhos precisam de **Bypass** (política Bypass, Include Everyone), como o `/mcp`: `enviar` e `api/envio/*`. Quem os protege é a chave de envio, o limite por chave (30 chamadas por minuto) e o limite de falhas por IP. O resto do painel continua atrás do Access. Depois do deploy, teste: abrir `https://know.ness.com.br/enviar` sem login deve mostrar a página, e `curl https://know.ness.com.br/api/envio/documentos` deve responder 401 em JSON (e não redirecionar para o login).
+
+**O que a empresa pode fazer com a chave de envio:** listar, enviar (até 15 MB por arquivo e até a cota de documentos) e apagar documentos do próprio pacote. Enviar de novo um arquivo com o mesmo título substitui a versão anterior sem gastar cota. Ela não vê outros pacotes, não cria chaves e não mexe em regras de acesso. Cada envio e cada exclusão entram em `auditoria` (`envio.enviar`, `envio.apagar`), com o título e sem o conteúdo.
 
 **Remover** (a empresa saiu ou pediu a exclusão dos dados):
-1. Revogue a chave (aba Chaves) e tire o pacote das regras de acesso e das skills. Enquanto algo usar o pacote, a exclusão responde 409 e lista o que falta.
+1. Revogue a chave do MCP (aba Chaves) e a de envio (aba Envio por empresa) e tire o pacote das regras de acesso e das skills. Enquanto algo usar o pacote, a exclusão responde 409 e lista o que falta.
 2. Na aba **Pacotes**, abra o pacote, clique em **Excluir pacote** e digite o slug. Isso apaga os documentos, os arquivos, os trechos e os vetores. Não dá para desfazer.
 3. Se o faBRAINzio liga o pacote a uma organização (`org_pacotes`), tire a ligação lá: o ness.know não enxerga essa tabela.
 
