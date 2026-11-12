@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Documentação · ness.know</title>
+<meta name="description" content="Como consultar a base de conhecimento da ness. por MCP e como enviar o conteúdo da sua empresa pela API.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+  :root { color-scheme: dark; --paper: #0b1326; --surface: #14214a; --line: #26365f; --ink: #f1f5f9; --ink-3: #a9b6cb; --accent: #00ade8; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .pagina { max-width: 52rem; margin: 0 auto; padding: 32px 16px 80px; }
+  .marca { font-weight: 600; font-size: 20px; letter-spacing: -.01em; }
+  .marca span { color: var(--accent); }
+  nav { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 20px 0 8px; padding: 12px 0; border-block: 1px solid var(--line); font-size: 14px; }
+  a { color: var(--accent); }
+  h1 { font-size: 28px; line-height: 1.2; margin: 24px 0 8px; }
+  h2 { font-size: 21px; margin: 44px 0 12px; scroll-margin-top: 16px; }
+  h3 { font-size: 16px; margin: 28px 0 8px; }
+  p, ul, ol { margin: 0 0 14px; }
+  li { margin-bottom: 4px; }
+  .apoio { color: var(--ink-3); font-size: 14px; }
+  code { font: 13px/1.4 ui-monospace, "SFMono-Regular", Consolas, monospace; background: var(--surface); padding: 2px 6px; }
+  pre { margin: 0 0 16px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--line); overflow-x: auto; }
+  p code, li code, td code { overflow-wrap: anywhere; }
+  pre code { background: none; padding: 0; white-space: pre; }
+  table { width: 100%; border-collapse: collapse; margin: 0 0 16px; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--ink-3); font-weight: 500; }
+  .tabela { overflow-x: auto; }
+  .aviso { padding: 12px 16px; background: var(--surface); box-shadow: inset 3px 0 0 var(--accent); margin: 0 0 16px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="pagina">
+  <div class="marca">ness<span>.</span>know</div>
+  <h1>Documentação</h1>
+  <p class="apoio">A base de conhecimento da ness.: normas, leis e frameworks. Você consulta pelo MCP, com a chave de leitura, e envia o conteúdo da sua empresa pela API, com a chave de envio. Esta página não precisa de login.</p>
+
+  <nav aria-label="Nesta página">
+    <a href="#visao">Visão geral</a>
+    <a href="#consultar">Consultar (MCP)</a>
+    <a href="#enviar">Enviar conteúdo</a>
+    <a href="#limites">Erros e limites</a>
+    <a href="#agentes">Para agentes</a>
+  </nav>
+
+  <h2 id="visao">Visão geral</h2>
+  <p>São duas credenciais, de propósito separadas:</p>
+  <div class="tabela"><table>
+    <thead><tr><th>Credencial</th><th>Prefixo</th><th>Para que serve</th><th>Onde usar</th></tr></thead>
+    <tbody>
+      <tr><td>Chave de leitura</td><td><code>nesskb_</code></td><td>Consultar o conteúdo pelo MCP. Só lê.</td><td>No agente ou no Cloudflare OS da sua empresa</td></tr>
+      <tr><td>Chave de envio</td><td><code>nessup_</code></td><td>Enviar, listar e apagar documentos do pacote da sua empresa. Só grava.</td><td>Só com quem administra o conteúdo. <strong>Nunca no agente.</strong></td></tr>
+    </tbody>
+  </table></div>
+  <p>As duas são entregues pela ness., aparecem uma única vez e valem para os pacotes da sua empresa. Se uma vazar, avise a ness. para revogar e emitir outra.</p>
+
+  <h2 id="consultar">Consultar (MCP)</h2>
+  <div class="tabela"><table>
+    <tbody>
+      <tr><th>Endereço</th><td><code>https://know.ness.com.br/mcp</code></td></tr>
+      <tr><th>Transporte</th><td>MCP Streamable HTTP, sem sessão: cada requisição é um <code>POST</code> com JSON-RPC 2.0 independente, e a resposta é JSON</td></tr>
+      <tr><th>Autenticação</th><td><code>Authorization: Bearer nesskb_…</code> em toda requisição</td></tr>
+      <tr><th>Versões do protocolo</th><td><code>2025-06-18</code> (padrão) e <code>2025-03-26</code></td></tr>
+      <tr><th>Métodos</th><td><code>initialize</code>, <code>ping</code>, <code>tools/list</code>, <code>tools/call</code></td></tr>
+    </tbody>
+  </table></div>
+  <p>Num cliente MCP (como o Cloudflare OS), basta informar o endereço e a chave de leitura como credencial Bearer. As ferramentas aparecem sozinhas.</p>
+
+  <h3>Ferramentas</h3>
+  <div class="tabela"><table>
+    <thead><tr><th>Ferramenta</th><th>O que faz</th></tr></thead>
+    <tbody>
+      <tr><td><code>listar_pacotes</code></td><td>Lista os pacotes liberados para a sua chave, com instruções de uso, documentos e versões e as skills disponíveis. Chame uma vez por sessão.</td></tr>
+      <tr><td><code>buscar_conhecimento</code></td><td>Busca por significado e por palavra nos documentos liberados. Aceita pergunta em português sobre texto em inglês. Devolve trechos com documento, versão, seção e uma referência (<code>know-…</code>) para citar. Argumentos: <code>consulta</code> (obrigatório), <code>pacotes</code> e <code>limite</code> (1 a 20, padrão 8).</td></tr>
+      <tr><td><code>obter_skill</code></td><td>Devolve um procedimento de uso das normas para um tipo de tarefa (quais buscas fazer, em que ordem e em que formato responder). Argumento: <code>nome</code>, como em <code>listar_pacotes</code>.</td></tr>
+      <tr><td><code>correlacionar</code>, <code>cobertura</code>, <code>detalhar_controle</code></td><td>Correspondência entre frameworks e avaliação de lacunas (SCF STRM). Só aparecem com dados se o pacote <code>scf-strm</code> estiver liberado para a sua chave.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Exemplo</h3>
+<pre><code>curl -s https://know.ness.com.br/mcp \
+  -H "Authorization: Bearer $NESS_KNOW_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"buscar_conhecimento","arguments":{"consulta":"retenção de logs","limite":5}}}'</code></pre>
+  <p>O resultado vem em <code>result.content[0].text</code>, como texto JSON, como manda o protocolo. Para ver todas as ferramentas e seus argumentos, use <code>{"jsonrpc":"2.0","id":1,"method":"tools/list"}</code>.</p>
+
+  <h2 id="enviar">Enviar conteúdo</h2>
+  <p>O envio coloca o conteúdo da sua empresa no pacote dela. Quem consulta pelo MCP passa a enxergá-lo, sem fazer mais nada.</p>
+
+  <h3>Pela página</h3>
+  <ol>
+    <li>Abra <a href="/enviar">https://know.ness.com.br/enviar</a>.</li>
+    <li>Cole a chave de envio e clique em <strong>Entrar</strong>. Aparecem o nome do pacote e o uso da cota.</li>
+    <li>Escolha os arquivos (PDF, Word, HTML, CSV, texto ou Markdown, até 15 MB cada) e clique em <strong>Enviar</strong>.</li>
+  </ol>
+  <p class="apoio">A chave fica só na memória da página: ao recarregar, informe de novo.</p>
+
+  <h3>Pela API</h3>
+  <p>A especificação completa está em <a href="/openapi.json">/openapi.json</a> (OpenAPI 3.1). Autenticação: <code>Authorization: Bearer nessup_…</code>.</p>
+  <div class="tabela"><table>
+    <thead><tr><th>Rota</th><th>O que faz</th></tr></thead>
+    <tbody>
+      <tr><td><code>GET /api/envio/documentos</code></td><td>Lista os documentos do pacote, com o uso da cota.</td></tr>
+      <tr><td><code>POST /api/envio/documentos</code></td><td>Envia um documento (<code>multipart/form-data</code>, campo <code>arquivo</code>). Campos opcionais: <code>titulo</code>, <code>tipo</code>, <code>versao</code>, <code>vigencia</code>, <code>fonte</code>.</td></tr>
+      <tr><td><code>DELETE /api/envio/documentos/{id}</code></td><td>Apaga um documento do pacote da sua empresa.</td></tr>
+    </tbody>
+  </table></div>
+<pre><code>curl -H "Authorization: Bearer $CHAVE_DE_ENVIO" \
+     -F "arquivo=@politica.pdf" \
+     -F "titulo=Política de acesso" \
+     https://know.ness.com.br/api/envio/documentos</code></pre>
+  <div class="aviso">
+    <strong>Regras do envio</strong>
+    <ul>
+      <li>O título padrão é o nome do arquivo. Enviar um arquivo com o <strong>mesmo título</strong> substitui o anterior e não gasta cota.</li>
+      <li>Cada pacote tem uma <strong>cota de documentos</strong>. Acima dela, um título novo é recusado (422). Apague um documento ou peça mais cota à ness.</li>
+      <li>Um arquivo que não pôde ser lido fica registrado com status <code>erro</code> e <strong>conta na cota</strong> até ser apagado ou reenviado.</li>
+      <li>Envie só o que a sua empresa pode usar e compartilhar com o seu ambiente. Conteúdo de terceiros com licença própria é de responsabilidade de quem envia.</li>
+    </ul>
+  </div>
+
+  <h2 id="limites">Erros e limites</h2>
+  <div class="tabela"><table>
+    <thead><tr><th>Situação</th><th>Resposta</th></tr></thead>
+    <tbody>
+      <tr><td>Chave ausente, errada, vencida ou revogada</td><td><code>401</code>. No MCP, JSON-RPC <code>-32001</code>.</td></tr>
+      <tr><td>Muitas tentativas com chave errada</td><td><code>429</code>, com <code>Retry-After: 30</code>.</td></tr>
+      <tr><td>Limite por chave: MCP 240 chamadas por minuto; envio 30 por minuto</td><td><code>429</code>, com <code>Retry-After: 30</code>. Espere e tente de novo.</td></tr>
+      <tr><td>Envio sem o campo <code>arquivo</code>, vazio ou maior que 15 MB</td><td><code>400</code> com <code>{"erro": "…"}</code>.</td></tr>
+      <tr><td>Cota atingida, ou arquivo ilegível</td><td><code>422</code> com <code>{"erro": "…"}</code>.</td></tr>
+      <tr><td>Documento inexistente, ou de outro pacote</td><td><code>404</code>.</td></tr>
+      <tr><td><code>GET</code> no <code>/mcp</code></td><td><code>405</code>. O MCP só aceita <code>POST</code>.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2 id="agentes">Para agentes</h2>
+  <p>Há um resumo em texto simples, pensado para um agente ler: <a href="/llms.txt">/llms.txt</a>. Ele traz o endereço do MCP, como usar as ferramentas, a regra de citar documento, versão e seção, e o aviso de que o conteúdo dos trechos é dado e não instrução.</p>
+  <p class="apoio">Dúvidas ou uma chave nova: fale com a ness. Esta página não tem informação sobre a administração da base, que é feita só pela ness.</p>
+</div>
+</body>
+</html>

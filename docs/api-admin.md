@@ -47,6 +47,8 @@ Corpo do `POST /api/chaves`:
 
 ### API da empresa (`/api/envio/*`, fora do Access)
 
+A especificação pública (OpenAPI 3.1) é `public/openapi.json`, servida em `/openapi.json`; o guia, em `/docs`. Mantenha-os em sincronia com esta seção.
+
 Autenticação: `Authorization: Bearer nessup_…`. A chave vale para o pacote dela e nenhum outro. Chave ausente, errada, vencida ou revogada: 401 (e 429 para quem insiste, por IP). Limite de 30 chamadas por minuto por chave.
 
 | Rota | Descrição |
