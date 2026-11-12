@@ -1,0 +1,105 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "ness.know: envio de documentos",
+    "version": "1.0.0",
+    "description": "API para a empresa enviar o próprio conteúdo ao pacote dela no ness.know. A chave de envio (nessup_…) vale para um pacote só; ela grava, não lê pelo MCP. Para consultar o conteúdo, use o servidor MCP em https://know.ness.com.br/mcp com a chave de leitura (nesskb_…). Documentação: https://know.ness.com.br/docs"
+  },
+  "servers": [{ "url": "https://know.ness.com.br" }],
+  "security": [{ "chaveDeEnvio": [] }],
+  "paths": {
+    "/api/envio/documentos": {
+      "get": {
+        "operationId": "listarDocumentos",
+        "summary": "Lista os documentos do pacote e o uso da cota",
+        "responses": {
+          "200": { "description": "Pacote e documentos", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Lista" } } } },
+          "401": { "$ref": "#/components/responses/NaoAutorizado" },
+          "429": { "$ref": "#/components/responses/Limite" }
+        }
+      },
+      "post": {
+        "operationId": "enviarDocumento",
+        "summary": "Envia um documento",
+        "description": "Converte o arquivo em texto e indexa. Um arquivo com o mesmo título de um documento existente substitui o anterior e não gasta cota. Acima da cota, um título novo é recusado.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["arquivo"],
+                "properties": {
+                  "arquivo": { "type": "string", "format": "binary", "description": "PDF, Word, HTML, CSV, texto ou Markdown, até 15 MB" },
+                  "titulo": { "type": "string", "maxLength": 300, "description": "Padrão: o nome do arquivo. O mesmo título substitui a versão anterior" },
+                  "tipo": { "type": "string", "maxLength": 300 },
+                  "versao": { "type": "string", "maxLength": 300 },
+                  "vigencia": { "type": "string", "maxLength": 300 },
+                  "fonte": { "type": "string", "maxLength": 300 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Documento enviado e indexado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Enviado" } } } },
+          "400": { "description": "Campo arquivo ausente, vazio ou maior que 15 MB", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } },
+          "401": { "$ref": "#/components/responses/NaoAutorizado" },
+          "422": { "description": "Cota de documentos atingida, ou arquivo que não pôde ser lido (o documento fica registrado com erro)", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } },
+          "429": { "$ref": "#/components/responses/Limite" }
+        }
+      }
+    },
+    "/api/envio/documentos/{id}": {
+      "delete": {
+        "operationId": "apagarDocumento",
+        "summary": "Apaga um documento do próprio pacote",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": {
+          "200": { "description": "Documento apagado", "content": { "application/json": { "schema": { "type": "object", "properties": { "ok": { "type": "boolean" } } } } } },
+          "401": { "$ref": "#/components/responses/NaoAutorizado" },
+          "404": { "description": "Documento inexistente ou de outro pacote", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } },
+          "429": { "$ref": "#/components/responses/Limite" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": { "chaveDeEnvio": { "type": "http", "scheme": "bearer", "description": "Chave de envio (nessup_…), entregue pela ness. Vence em 1 ano." } },
+    "responses": {
+      "NaoAutorizado": { "description": "Chave ausente, errada, vencida ou revogada", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } },
+      "Limite": { "description": "Limite de 30 chamadas por minuto por chave, ou muitas tentativas com chave errada. Tente de novo depois de Retry-After segundos", "headers": { "Retry-After": { "schema": { "type": "integer" } } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } }
+    },
+    "schemas": {
+      "Erro": { "type": "object", "required": ["erro"], "properties": { "erro": { "type": "string" } } },
+      "Enviado": {
+        "type": "object",
+        "required": ["id", "trechos", "substituidos"],
+        "properties": { "id": { "type": "string", "format": "uuid" }, "trechos": { "type": "integer", "description": "Quantidade de trechos indexados" }, "substituidos": { "type": "integer", "description": "Documentos anteriores com o mesmo título que foram substituídos" }, "aviso": { "type": "string" } }
+      },
+      "Lista": {
+        "type": "object",
+        "required": ["pacote", "documentos"],
+        "properties": {
+          "pacote": { "type": "object", "properties": { "nome": { "type": "string" }, "cota_documentos": { "type": ["integer", "null"] }, "usados": { "type": "integer" } } },
+          "documentos": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string", "format": "uuid" },
+                "titulo": { "type": "string" },
+                "tipo": { "type": ["string", "null"] },
+                "versao": { "type": ["string", "null"] },
+                "vigencia": { "type": ["string", "null"] },
+                "status": { "type": "string", "enum": ["ok", "erro"] },
+                "erro": { "type": ["string", "null"] },
+                "criado_em": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
