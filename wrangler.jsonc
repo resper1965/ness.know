@@ -18,6 +18,8 @@
     "ADMIN_EMAILS": "resper@bekaa.eu,resper@ness.com.br",
     "ACCESS_TEAM": "ness.cloudflareaccess.com",
     "ACCESS_AUD": "8524d5f8a831523bc0878f8444825341f6bb025dd4e14b0d3d1331c887553a7a",
+    // AUD da aplicação do Access só de /oauth/authorize (política "colaboradores ness"; src/oauth.ts, docs/operacao.md).
+    "ACCESS_AUD_OAUTH": "cb41ce4b667273e820d2776936d4e5eac5f4752560e63ce3e380f94aa38aa536",
     // Busca calibrada com scripts/avaliar-busca.mjs (avaliação de 30/10/2026 no faBRAINzio).
     "BUSCA_RERANK": "0",
     "BUSCA_MINIMO": "0.4",
