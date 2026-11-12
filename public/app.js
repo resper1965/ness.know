@@ -650,10 +650,11 @@ function atualizarPadrao() {
   const mudou = mais.length || menos.length;
   const prev = $("#prev-padrao");
   prev.classList.toggle("alerta-prev", !!mudou && !agora.length);
+  prev.classList.toggle("mudanca", !!mudou && !!agora.length);
   if (!mudou) prev.textContent = salvoEm ? `Padrão salvo às ${salvoEm}. Vale para todos na próxima chamada.` : "Sem mudanças. Sem regra nenhuma, a pessoa que autoriza não vê nada.";
   else {
     const partes = [...mais.map((s) => `+ ${nomePacote(s)}`), ...menos.map((s) => `− ${nomePacote(s)}`)].join(", ");
-    prev.textContent = `${partes}. Vale para todos os colaboradores na próxima chamada.${agora.length ? "" : " Sem nenhum pacote, ninguém verá nada pelo OAuth."}`;
+    prev.textContent = `Vai mudar para todos os colaboradores, na próxima chamada: ${partes}.${agora.length ? "" : " Sem nenhum pacote, ninguém verá nada pelo OAuth."}`;
   }
   $("#salvar-padrao").disabled = !mudou;
   if (!mudou) confirmandoPadrao = false;
