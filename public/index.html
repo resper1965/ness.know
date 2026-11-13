@@ -11,19 +11,29 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    /* Design system de produto ness. (família n.*): tema escuro, BlueDot como único accent, raio 0, hairlines, sem gradiente, blur ou sombra fora do que flutua. */
-    :root {
-      --accent: #00ade8; --accent-hover: #008ebf; --accent-ink: #04121c; --accent-tint: rgba(0, 173, 232, .12); --accent-claro: #7fd6f6;
-      --paper: #0b1326; --surface: #162244; --surface-2: #1e2d52; --line: rgba(255, 255, 255, .10);
-      --ink: #f1f5f9; --ink-2: #cbd5e1; --ink-3: #94a3b8; --ink-4: #8fa0b6;
-      --ok: #10b981; --warn: #f59e0b; --bad: #ef4444;
+/* Tokens do design system ness. (tema escuro; fonte: tokens.json do pacote, decisões de 13/11/2026). Hex de cor só neste bloco. */
+    :root, [data-theme="dark"] {
+      --ness-bluedot: #00ade8; --ness-bluedot-hover: #008ebf; --ness-bluedot-active: #007aa3; --ness-bluedot-tint: rgba(0, 173, 232, .12);
+      --ness-accent-ink: #04121c; --ness-accent-text: #00ade8; --ness-accent-text-strong: #7fd6f6;
+      --ness-paper: #0e1116; --ness-surface: #16191f; --ness-surface-2: #1e232b; --ness-line: rgba(255, 255, 255, .14);
+      --ness-ink: #f1f5f9; --ness-ink-2: #cbd5e1; --ness-ink-3: #94a3b8; --ness-ink-4: #8fa0b6;
+      --ness-ok: #10b981; --ness-warn: #f59e0b; --ness-bad: #f87171; --ness-info: #00ade8;
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, .45), 0 4px 6px -4px rgba(0, 0, 0, .3);
       --font-head: "Montserrat", system-ui, sans-serif; --font-body: "Inter", system-ui, sans-serif; --font-mono: "JetBrains Mono", ui-monospace, monospace;
-      --ease: cubic-bezier(.16, 1, .3, 1); --rapido: 150ms;
-      --shell-h: 64px; --side-w: 232px; --control-h: 34px; --control-h-sm: 30px;
+      /* Nomes locais da página, apontando para os tokens. */
+      --accent: var(--ness-bluedot); --accent-hover: var(--ness-bluedot-hover); --accent-ink: var(--ness-accent-ink); --accent-tint: var(--ness-bluedot-tint);
+      --accent-text: var(--ness-accent-text); --accent-claro: var(--ness-accent-text-strong);
+      --paper: var(--ness-paper); --surface: var(--ness-surface); --surface-2: var(--ness-surface-2); --line: var(--ness-line);
+      --ink: var(--ness-ink); --ink-2: var(--ness-ink-2); --ink-3: var(--ness-ink-3); --ink-4: var(--ness-ink-4);
+      --ok: var(--ness-ok); --warn: var(--ness-warn); --bad: var(--ness-bad);
       color-scheme: dark;
     }
+    :root {
+      --ease: cubic-bezier(.16, 1, .3, 1); --rapido: 150ms;
+      --shell-h: 64px; --side-w: 232px; --control-h: 34px; --control-h-sm: 30px;
+    }
     *, *::before, *::after { box-sizing: border-box; }
-    ::selection { background: rgba(0, 173, 232, .28); color: var(--ink); }
+    ::selection { background: color-mix(in srgb, var(--accent) 28%, transparent); color: var(--ink); }
     html { scrollbar-color: var(--surface-2) var(--paper); }
     body { margin: 0; background: var(--paper); color: var(--ink); font: 400 13px/1.5 var(--font-body); caret-color: var(--accent); -webkit-font-smoothing: antialiased; }
     button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; border-radius: 0; }
@@ -50,7 +60,7 @@
     .conta { flex: none; border-top: 1px solid var(--line); padding: 16px 20px; display: grid; gap: 10px; }
     .conta .quem { font-size: 12px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .sair { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: var(--control-h-sm); padding: 0 12px; border: 1px solid var(--line); color: var(--ink-2); font: 500 12px/1 var(--font-body); text-decoration: none; transition: border-color var(--rapido) var(--ease), color var(--rapido) var(--ease); }
-    .sair:hover { border-color: rgba(255, 255, 255, .28); color: var(--ink); }
+    .sair:hover { border-color: var(--ink-4); color: var(--ink); }
     .banda-marca .sair { display: none; }
 
     .trabalho { min-width: 0; }
@@ -76,7 +86,7 @@
     /* Campos */
     label, .rotulo { display: block; margin: 0 0 8px; font: 500 12px/1 var(--font-body); color: var(--ink-2); }
     input[type=text], input[type=search], input[type=number], select { width: 100%; height: var(--control-h); padding: 0 10px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); border-radius: 0; transition: border-color var(--rapido) var(--ease); }
-    input[type=text]:hover, input[type=search]:hover, input[type=number]:hover, select:hover { border-color: rgba(255, 255, 255, .22); }
+    input[type=text]:hover, input[type=search]:hover, input[type=number]:hover, select:hover { border-color: var(--ink-4); }
     input::placeholder { color: var(--ink-4); }
     input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
     select { appearance: none; padding-right: 28px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
@@ -104,7 +114,7 @@
     .primario { background: var(--accent); color: var(--accent-ink); }
     .primario:hover:not(:disabled) { background: var(--accent-hover); }
     .secundario { border-color: var(--line); color: var(--ink-2); }
-    .secundario:hover:not(:disabled) { border-color: rgba(255, 255, 255, .28); color: var(--ink); }
+    .secundario:hover:not(:disabled) { border-color: var(--ink-4); color: var(--ink); }
     .perigo { border-color: var(--bad); color: var(--bad); }
     .perigo:hover:not(:disabled) { background: color-mix(in oklab, var(--bad) 16%, transparent); }
     .pequeno { height: var(--control-h-sm); padding: 0 12px; }
@@ -158,7 +168,7 @@
     #prev-padrao.alerta-prev { padding: 10px 12px; background: color-mix(in oklab, var(--bad) 12%, var(--paper)); box-shadow: inset 2px 0 0 var(--bad); color: var(--ink); }
     .alerta { margin-bottom: 16px; padding: 12px 16px; background: color-mix(in oklab, var(--bad) 12%, var(--paper)); box-shadow: inset 2px 0 0 var(--bad); color: var(--ink); }
     .alerta:empty { display: none; }
-    .erro { color: #fca5a5; font-size: 12px; margin: 12px 0 0; }
+    .erro { color: var(--bad); font-size: 12px; margin: 12px 0 0; }
 
     /* Código copiável */
     .codigo { display: flex; border: 1px solid var(--line); background: var(--paper); }
@@ -169,7 +179,7 @@
     /* Conectar */
     .clientes { display: flex; flex-wrap: wrap; gap: 6px; }
     .chip { display: inline-flex; align-items: center; height: var(--control-h-sm); padding: 0 12px; font-size: 12px; white-space: nowrap; border: 1px solid var(--line); color: var(--ink-3); transition: border-color var(--rapido) var(--ease), color var(--rapido) var(--ease); }
-    .chip:hover { color: var(--ink); border-color: rgba(255, 255, 255, .22); }
+    .chip:hover { color: var(--ink); border-color: var(--ink-4); }
     .chip[aria-pressed=true] { border-color: var(--accent); color: var(--accent-claro); background: var(--accent-tint); }
     .ficha { display: grid; grid-template-columns: 140px 1fr; gap: 10px 20px; margin: 20px 0; }
     .ficha dt { color: var(--ink-3); }

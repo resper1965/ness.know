@@ -1,4 +1,4 @@
-// ness.KNOW — admin. Todo texto vindo do servidor entra por textContent.
+// ness.know — admin. Todo texto vindo do servidor entra por textContent.
 import { mensagemPronta } from "./mensagem.js";
 const $ = (s) => document.querySelector(s);
 const el = (tag, txt, cls) => {
@@ -57,7 +57,7 @@ async function api(caminho, opcoes = {}) {
   try {
     r = await fetch(caminho, { credentials: "same-origin", redirect: "manual", ...opcoes, headers: { "content-type": "application/json", ...(opcoes.headers || {}) } });
   } catch {
-    throw new Error("Sem conexão com o ness.KNOW. Confira a internet e tente de novo.");
+    throw new Error("Sem conexão com o ness.know. Confira a internet e tente de novo.");
   }
   if (r.status === 401 || r.status === 403 || r.redirected || r.type === "opaqueredirect") throw new SemAcesso();
   const j = await r.json().catch(() => ({}));
@@ -150,7 +150,7 @@ const receitas = (chave) => [
     onde: "NÃO use \"Adicionar conector personalizado\" (ele só aceita OAuth e vai falhar). Abra Configurações › Desenvolvedor › Editar config (no Mac: ~/Library/Application Support/Claude/claude_desktop_config.json), cole o bloco abaixo dentro de mcpServers e reinicie o Claude com Cmd+Q (Windows: feche pela bandeja). Exige Node instalado (nodejs.org, versão LTS).",
     texto: JSON.stringify({ mcpServers: { "ness-know": { command: "npx", args: ["-y", "mcp-remote", URL_MCP, "--header", `Authorization: Bearer ${chave}`] } } }, null, 2),
   },
-  { id: "chatgpt", nome: "ChatGPT e Claude web", onde: "Ainda não é possível.", texto: "Os conectores do ChatGPT e do claude.ai só aceitam OAuth ou acesso sem autenticação.\nO ness.KNOW usa chave no cabeçalho; por enquanto, use um dos outros agentes.", sem: true },
+  { id: "chatgpt", nome: "ChatGPT e Claude web", onde: "Ainda não é possível.", texto: "Os conectores do ChatGPT e do claude.ai só aceitam OAuth ou acesso sem autenticação.\nO ness.know usa chave no cabeçalho; por enquanto, use um dos outros agentes.", sem: true },
 ];
 
 function mostrarReceita() {

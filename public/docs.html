@@ -3,25 +3,45 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#00ade8">
 <title>Documentação · ness.know</title>
-<meta name="description" content="Como consultar a base de conhecimento da ness. por MCP e como enviar o conteúdo da sua empresa pela API.">
+<meta name="description" content="Como consultar a base de conhecimento da NESS por MCP e como enviar o conteúdo da sua empresa pela API.">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root { color-scheme: dark; --paper: #0b1326; --surface: #14214a; --line: #26365f; --ink: #f1f5f9; --ink-3: #a9b6cb; --accent: #00ade8; }
+  /* Tokens do design system ness. (tema escuro; fonte: tokens.json do pacote, decisões de 13/11/2026). Hex de cor só neste bloco. */
+  :root, [data-theme="dark"] {
+    --ness-bluedot: #00ade8; --ness-bluedot-hover: #008ebf; --ness-bluedot-active: #007aa3; --ness-bluedot-tint: rgba(0, 173, 232, .12);
+    --ness-accent-ink: #04121c; --ness-accent-text: #00ade8; --ness-accent-text-strong: #7fd6f6;
+    --ness-paper: #0e1116; --ness-surface: #16191f; --ness-surface-2: #1e232b; --ness-line: rgba(255, 255, 255, .14);
+    --ness-ink: #f1f5f9; --ness-ink-2: #cbd5e1; --ness-ink-3: #94a3b8; --ness-ink-4: #8fa0b6;
+    --ness-ok: #10b981; --ness-warn: #f59e0b; --ness-bad: #f87171; --ness-info: #00ade8;
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, .45), 0 4px 6px -4px rgba(0, 0, 0, .3);
+    --font-head: "Montserrat", system-ui, sans-serif; --font-body: "Inter", system-ui, sans-serif; --font-mono: "JetBrains Mono", ui-monospace, monospace;
+    /* Nomes locais da página, apontando para os tokens. */
+    --accent: var(--ness-bluedot); --accent-hover: var(--ness-bluedot-hover); --accent-ink: var(--ness-accent-ink); --accent-tint: var(--ness-bluedot-tint);
+    --accent-text: var(--ness-accent-text); --accent-claro: var(--ness-accent-text-strong);
+    --paper: var(--ness-paper); --surface: var(--ness-surface); --surface-2: var(--ness-surface-2); --line: var(--ness-line);
+    --ink: var(--ness-ink); --ink-2: var(--ness-ink-2); --ink-3: var(--ness-ink-3); --ink-4: var(--ness-ink-4);
+    --ok: var(--ness-ok); --warn: var(--ness-warn); --bad: var(--ness-bad);
+    color-scheme: dark;
+  }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.6 var(--font-body); }
   .pagina { max-width: 52rem; margin: 0 auto; padding: 32px 16px 80px; }
-  .marca { font-weight: 600; font-size: 20px; letter-spacing: -.01em; }
+  .marca { font: 500 22px/1 var(--font-head); letter-spacing: -.015em; }
   .marca span { color: var(--accent); }
   nav { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 20px 0 8px; padding: 12px 0; border-block: 1px solid var(--line); font-size: 14px; }
   a { color: var(--accent); }
-  h1 { font-size: 28px; line-height: 1.2; margin: 24px 0 8px; }
-  h2 { font-size: 21px; margin: 44px 0 12px; scroll-margin-top: 16px; }
-  h3 { font-size: 16px; margin: 28px 0 8px; }
+  h1 { font-family: var(--font-head); font-weight: 600; letter-spacing: -.02em; font-size: 28px; line-height: 1.2; margin: 24px 0 8px; }
+  h2 { font-family: var(--font-head); font-weight: 600; font-size: 21px; margin: 44px 0 12px; scroll-margin-top: 16px; }
+  h3 { font-family: var(--font-head); font-weight: 600; font-size: 16px; margin: 28px 0 8px; }
   p, ul, ol { margin: 0 0 14px; }
   li { margin-bottom: 4px; }
   .apoio { color: var(--ink-3); font-size: 14px; }
-  code { font: 13px/1.4 ui-monospace, "SFMono-Regular", Consolas, monospace; background: var(--surface); padding: 2px 6px; }
+  code { font: 400 13px/1.4 var(--font-mono); background: var(--surface); padding: 2px 6px; }
   pre { margin: 0 0 16px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--line); overflow-x: auto; }
   p code, li code, td code { overflow-wrap: anywhere; }
   pre code { background: none; padding: 0; white-space: pre; }
@@ -37,7 +57,7 @@
 <div class="pagina">
   <div class="marca">ness<span>.</span>know</div>
   <h1>Documentação</h1>
-  <p class="apoio">A base de conhecimento da ness.: normas, leis e frameworks. Você consulta pelo MCP, com a chave de leitura, e envia o conteúdo da sua empresa pela API, com a chave de envio. Esta página não precisa de login.</p>
+  <p class="apoio">A base de conhecimento da NESS: normas, leis e frameworks. Você consulta pelo MCP, com a chave de leitura, e envia o conteúdo da sua empresa pela API, com a chave de envio. Esta página não precisa de login.</p>
 
   <nav aria-label="Nesta página">
     <a href="#visao">Visão geral</a>
@@ -56,7 +76,7 @@
       <tr><td>Chave de envio</td><td><code>nessup_</code></td><td>Enviar, listar e apagar documentos do pacote da sua empresa. Só grava.</td><td>Só com quem administra o conteúdo. <strong>Nunca no agente.</strong></td></tr>
     </tbody>
   </table></div>
-  <p>As duas são entregues pela ness., aparecem uma única vez e valem para os pacotes da sua empresa. Se uma vazar, avise a ness. para revogar e emitir outra.</p>
+  <p>As duas são entregues pela NESS, aparecem uma única vez e valem para os pacotes da sua empresa. Se uma vazar, avise a NESS para revogar e emitir outra.</p>
 
   <h2 id="consultar">Consultar (MCP)</h2>
   <div class="tabela"><table>
@@ -117,7 +137,7 @@
     <strong>Regras do envio</strong>
     <ul>
       <li>O título padrão é o nome do arquivo. Enviar um arquivo com o <strong>mesmo título</strong> substitui o anterior e não gasta cota.</li>
-      <li>Cada pacote tem uma <strong>cota de documentos</strong>. Acima dela, um título novo é recusado (422). Apague um documento ou peça mais cota à ness.</li>
+      <li>Cada pacote tem uma <strong>cota de documentos</strong>. Acima dela, um título novo é recusado (422). Apague um documento ou peça mais cota à NESS.</li>
       <li>Um arquivo que não pôde ser lido fica registrado com status <code>erro</code> e <strong>conta na cota</strong> até ser apagado ou reenviado.</li>
       <li>Envie só o que a sua empresa pode usar e compartilhar com o seu ambiente. Conteúdo de terceiros com licença própria é de responsabilidade de quem envia.</li>
     </ul>
@@ -139,7 +159,7 @@
 
   <h2 id="agentes">Para agentes</h2>
   <p>Há um resumo em texto simples, pensado para um agente ler: <a href="/llms.txt">/llms.txt</a>. Ele traz o endereço do MCP, como usar as ferramentas, a regra de citar documento, versão e seção, e o aviso de que o conteúdo dos trechos é dado e não instrução.</p>
-  <p class="apoio">Dúvidas ou uma chave nova: fale com a ness. Esta página não tem informação sobre a administração da base, que é feita só pela ness.</p>
+  <p class="apoio">Dúvidas ou uma chave nova: fale com a NESS. Esta página não tem informação sobre a administração da base, que é feita só pela NESS.</p>
 </div>
 </body>
 </html>

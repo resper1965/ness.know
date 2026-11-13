@@ -7,7 +7,7 @@
  */
 export function mensagemPronta({ nome, pacotes, agente, onde, receita, conferir }) {
   return [
-    "Olá! Segue o seu acesso ao ness.KNOW, a base de normas, leis e frameworks da ness. que o seu agente de IA consulta (somente leitura).",
+    "Olá! Segue o seu acesso ao ness.know, a base de normas, leis e frameworks da NESS que o seu agente de IA consulta (somente leitura).",
     "",
     `Chave: ${nome}`,
     `Pacotes liberados: ${pacotes.length ? pacotes.join("; ") : "nenhum"}`,
