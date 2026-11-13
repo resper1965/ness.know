@@ -1,5 +1,6 @@
 // ness.know — admin. Todo texto vindo do servidor entra por textContent.
 import { mensagemPronta } from "./mensagem.js";
+import { resumoDoPadrao } from "./padrao.js";
 const $ = (s) => document.querySelector(s);
 const el = (tag, txt, cls) => {
   const e = document.createElement(tag);
@@ -643,19 +644,12 @@ let confirmandoPadrao = false;
 let salvoEm = "";
 const nomePacote = (s) => nomes[s] ?? s;
 function atualizarPadrao() {
-  const antes = regras.padrao.pacotes;
-  const agora = marcados($("#escolha-padrao"));
-  const mais = agora.filter((s) => !antes.includes(s));
-  const menos = antes.filter((s) => !agora.includes(s));
-  const mudou = mais.length || menos.length;
+  const r = resumoDoPadrao(regras.padrao.pacotes, marcados($("#escolha-padrao")), nomePacote, salvoEm);
+  const mudou = r.mudou;
   const prev = $("#prev-padrao");
-  prev.classList.toggle("alerta-prev", !!mudou && !agora.length);
-  prev.classList.toggle("mudanca", !!mudou && !!agora.length);
-  if (!mudou) prev.textContent = salvoEm ? `Padrão salvo às ${salvoEm}. Vale para todos na próxima chamada.` : "Sem mudanças. Sem regra nenhuma, a pessoa que autoriza não vê nada.";
-  else {
-    const partes = [...mais.map((s) => `+ ${nomePacote(s)}`), ...menos.map((s) => `− ${nomePacote(s)}`)].join(", ");
-    prev.textContent = `Vai mudar para todos os colaboradores, na próxima chamada: ${partes}.${agora.length ? "" : " Sem nenhum pacote, ninguém verá nada pelo OAuth."}`;
-  }
+  prev.classList.toggle("alerta-prev", r.mudou && r.vazio);
+  prev.classList.toggle("mudanca", r.mudou && !r.vazio);
+  prev.textContent = r.texto;
   $("#salvar-padrao").disabled = !mudou;
   if (!mudou) confirmandoPadrao = false;
   $("#salvar-padrao").textContent = confirmandoPadrao ? "Confirmar para todos" : "Salvar padrão";

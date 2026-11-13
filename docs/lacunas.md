@@ -51,8 +51,6 @@ Nenhuma pendência.
 
 | # | Lacuna | Efeito | Próximo passo | Prioridade |
 | --- | --- | --- | --- | --- |
-| 5.1 | OAuth no `/mcp`: feito no código (migração 0009, `src/oauth.ts`, `docs/mcp.md`), pelo caminho do ness.brain; falta aplicar a migração, o deploy e as aplicações do Access (`docs/operacao.md`) | Até lá, o ness.work e o claude.ai na web não conectam (só aceitam OAuth) | Aplicar, configurar o Access e conectar o ness.work; depois, refresh token se a reconexão de 30 dias incomodar | P2 |
-| 5.4 | Validade de chave: feita no código (migração 0007, `dias` ou `expira_em`, aviso na lista); falta aplicar a migração e fazer o deploy | Até lá, chave esquecida continua válida | Aplicar a 0007 e o deploy; escolher a validade ao gerar as próximas chaves | P3 |
 | 5.5 | Mudar o que uma chave enxerga exige revogar e gerar outra | Troca de chave em todos os agentes que a usam | Aceitável; rever se houver muitos clientes | P3 |
 
 ## 6. Busca
@@ -76,4 +74,3 @@ Nenhuma pendência.
 1. 3.1 (conferência da extração), antes de qualquer cliente usar `cobertura` num relatório.
 2. 2.1 (ONS), para o faBRAINzio.
 3. 4.1 e 4.3 (primeira onda de skills e forma de entrega).
-4. 5.1 (OAuth), antes de abrir a base a mais clientes.

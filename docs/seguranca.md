@@ -37,6 +37,7 @@
 | OAuth: código interceptado | PKCE S256 obrigatório; código de uso único, 60 s, guardado em hash; troca errada (client, redirect ou verifier) não queima o código |
 | OAuth: registro em massa | Cota por IP antes da global (Rate Limiting); só cliente público e `redirect_uris` validadas |
 | Pessoa que perde o acesso à ness. | A chave dura 30 dias e o escopo é recalculado a cada chamada; remover a regra tira o acesso na hora, e o painel revoga a chave |
+| Registro dinâmico enchendo o banco | Cota por IP e total; a cada registro válido, apagam-se códigos vencidos e clientes sem chave e sem pedido há mais de 30 dias. Cliente com chave (mesmo vencida) fica |
 | Chave revogada voltando por reautorização | A emissão só atualiza chave ativa; revogada continua revogada |
 | Envio pela empresa: chave de envio vazada | Vale para um pacote só, vence em 1 ano, revoga-se na hora; só grava no pacote dela e não lê pelo MCP. Limite de 30 chamadas por minuto, e a cota de documentos barra encher a base |
 | Envio pela empresa: empresa A mexendo no pacote da B | A chave guarda o pacote; listar, enviar e apagar usam só esse pacote. Apagar um id de outro pacote responde 404 |
