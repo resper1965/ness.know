@@ -65,7 +65,7 @@
     }
   },
   "components": {
-    "securitySchemes": { "chaveDeEnvio": { "type": "http", "scheme": "bearer", "description": "Chave de envio (nessup_…), entregue pela ness. Vence em 1 ano." } },
+    "securitySchemes": { "chaveDeEnvio": { "type": "http", "scheme": "bearer", "description": "Chave de envio (nessup_…), entregue pela NESS. Vence em 1 ano." } },
     "responses": {
       "NaoAutorizado": { "description": "Chave ausente, errada, vencida ou revogada", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } },
       "Limite": { "description": "Limite de 30 chamadas por minuto por chave, ou muitas tentativas com chave errada. Tente de novo depois de Retry-After segundos", "headers": { "Retry-After": { "schema": { "type": "integer" } } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Erro" } } } }

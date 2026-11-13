@@ -1,11 +1,11 @@
 # ness.know
 
-> Base de conhecimento da ness.: normas, leis e frameworks (ISO, ABNT, NIST, CIS, ITIL, regulação), servida por MCP para agentes e por uma API de envio para a empresa subir o próprio conteúdo. Português do Brasil.
+> Base de conhecimento da NESS: normas, leis e frameworks (ISO, ABNT, NIST, CIS, ITIL, regulação), servida por MCP para agentes e por uma API de envio para a empresa subir o próprio conteúdo. Português do Brasil.
 
 ## Consultar (MCP)
 
 - Endereço: https://know.ness.com.br/mcp (MCP Streamable HTTP, sem sessão; cada requisição é um JSON-RPC 2.0 por POST).
-- Autenticação: cabeçalho `Authorization: Bearer nesskb_…` (chave de leitura, entregue pela ness.). A chave vê só os pacotes liberados para ela.
+- Autenticação: cabeçalho `Authorization: Bearer nesskb_…` (chave de leitura, entregue pela NESS). A chave vê só os pacotes liberados para ela.
 - Ferramentas: `listar_pacotes`, `buscar_conhecimento`, `obter_skill`, e, quando o pacote scf-strm estiver liberado, `correlacionar`, `cobertura` e `detalhar_controle`. Use `tools/list` para ver os argumentos.
 
 ### Como um agente deve usar
