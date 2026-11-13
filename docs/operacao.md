@@ -10,7 +10,7 @@ Os comandos são para PowerShell, num clone fora do OneDrive (`C:\dev\ness.know`
 | D1 | `ness-know` | Migrações 0001 a 0004 aplicadas na época (as seguintes, até a 0011, estão em `migrations/` e se aplicam com o comando de migrações); SCF 2026.3 carregado (catálogo e STRM, 03/11/2026) |
 | R2 | `ness-know-arquivos` | Criado |
 | Vectorize | `ness-know-trechos` | Criado, com os índices de metadados `alvo` e `documento_id` |
-| Access | app `know.ness.com.br` (Allow, e-mails dos admins) e app `know.ness.com.br/mcp` (Bypass, Everyone) | Configurados. Para o OAuth faltam os Bypass e a aplicação de `/oauth/authorize` (seção abaixo) |
+| Access | app `know.ness.com.br` (Allow, e-mails dos admins) e app `know.ness.com.br/mcp` (Bypass, Everyone) | Configurados em 13/11/2026: Bypass para `mcp`, `health`, `.well-known/*`, `oauth/register`, `oauth/token`, `enviar`, `api/envio/*`, `docs`, `openapi.json` e `llms.txt`, e a aplicação `know oauth authorize` (política reutilizável `colaboradores ness`, só Entra ID) |
 
 ## Implantação inicial (já feita; fica como referência)
 
@@ -41,14 +41,14 @@ npx wrangler deploy
 
 O comando de migrações aplica só as que ainda não rodaram.
 
-## Ligar o OAuth do /mcp (Access)
+## OAuth do /mcp: configuração do Access (feita em 13/11/2026; fica como referência)
 
-O código já está pronto (`src/oauth.ts`, migração 0009). Falta configurar o Access, na ordem. Zero Trust › Access controls › Applications › Add an application › Self-hosted, destino `know.ness.com.br`.
+Para refazer ou conferir. Código em `src/oauth.ts`, migração 0009. Zero Trust › Access controls › Applications › Add an application › Self-hosted, destino `know.ness.com.br`.
 
 1. **Painel (já existe):** aplicação sem caminho, política Allow só para os administradores. Não muda.
 2. **Bypass (política Bypass, Include Everyone), uma aplicação por caminho** ou uma com vários destinos: `mcp` (já existe), `health`, `.well-known/*`, `oauth/register` e `oauth/token`. Esses endereços são chamados pelo cliente MCP sem navegador, e quem os protege é o código (PKCE, código de uso único, limite de registro).
 3. **`/oauth/authorize` (nova aplicação):** destino `know.ness.com.br`, caminho `oauth/authorize`, política Allow para os colaboradores da ness. (grupo ou domínio no Entra), **sem** exigir estar em `ADMIN_EMAILS`: quem autoriza é qualquer colaborador, e o que ele enxerga depois é decidido pelas regras da aba Acesso por pessoa. O Access escolhe a aplicação de caminho mais específico, então esta vale no lugar da do painel.
-4. **`ACCESS_AUD_OAUTH`:** cada aplicação tem o seu *Application Audience Tag*. Copie o da aplicação do passo 3 para `ACCESS_AUD_OAUTH` em `vars` no `wrangler.jsonc` (sem ela, o Worker usa o `ACCESS_AUD` do painel e recusa o login com 401).
+4. **`ACCESS_AUD_OAUTH`:** cada aplicação tem o seu *Application Audience Tag*. Copie o da aplicação do passo 3 para `ACCESS_AUD_OAUTH` em `vars` no `wrangler.jsonc` (sem ela, o Worker usa o `ACCESS_AUD` do painel e recusa o login com 401). Se a tela do Zero Trust não mostrar a tag, ela vai no parâmetro `kid` do redirecionamento de login: `curl -s -o /dev/null -w "%{redirect_url}" "https://know.ness.com.br/oauth/authorize?client_id=x"`, e copie o valor de `kid=`.
 5. Aplique a migração e publique: `npx wrangler d1 migrations apply ness-know --remote` e `npx wrangler deploy`. Os dois limites novos (`LIMITE_REGISTRO_IP` e `LIMITE_REGISTRO`) são criados no deploy.
 6. Na aba **Acesso por pessoa**, defina o padrão para todos (por exemplo, as leis públicas). Sem regra nenhuma, a pessoa autoriza e não vê nada.
 7. Confira: `curl https://know.ness.com.br/.well-known/oauth-authorization-server` devolve o JSON de descoberta, e conectar o ness.work pelo endereço `https://know.ness.com.br/mcp` abre o consentimento.

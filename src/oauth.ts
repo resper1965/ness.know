@@ -16,6 +16,8 @@ export interface EnvOauth {
 export const VALIDADE_DIAS = 30;
 const PRAZO_PEDIDO_MS = 10 * 60_000;
 const PRAZO_CODIGO_MS = 60_000;
+/** Cliente registrado que nunca virou chave e não tem pedido em andamento: some depois disto. Cliente com chave (mesmo vencida) fica. */
+const DIAS_CLIENTE_ABANDONADO = 30;
 
 /** UTC "AAAA-MM-DD HH:MM:SS", o formato de chaves.expira_em (comparado com datetime('now')). */
 const sqlData = (ms: number) => new Date(ms).toISOString().slice(0, 19).replace("T", " ");
@@ -59,6 +61,25 @@ export function redirectValido(u: unknown): u is string {
   }
 }
 
+/**
+ * O registro é público, então o que ninguém usa se acumula: códigos e pedidos vencidos, e clientes que nunca foram autorizados.
+ * Roda a cada registro válido, sem cron; falha aqui não impede o registro.
+ */
+async function limpar(db: D1Database): Promise<void> {
+  try {
+    await db.prepare("DELETE FROM oauth_codigos WHERE expira_em < datetime('now')").run();
+    await db
+      .prepare(
+        `DELETE FROM oauth_clientes WHERE criado_em < datetime('now', '-${DIAS_CLIENTE_ABANDONADO} days')
+         AND client_id NOT IN (SELECT cliente_oauth FROM chaves WHERE cliente_oauth IS NOT NULL)
+         AND client_id NOT IN (SELECT client_id FROM oauth_codigos)`,
+      )
+      .run();
+  } catch (e) {
+    console.warn("oauth: limpeza não feita", String(e));
+  }
+}
+
 export async function registrar(req: Request, env: EnvOauth): Promise<Response> {
   if (req.method !== "POST") return falha("invalid_request", "use POST", 405);
   // Cota por origem antes de tudo; a global só conta registro válido, para um curioso não esgotar a de todos.
@@ -70,6 +91,7 @@ export async function registrar(req: Request, env: EnvOauth): Promise<Response> 
   const uris = Array.isArray(redirect_uris) ? redirect_uris : [];
   if (!uris.length || uris.length > 5 || !uris.every(redirectValido)) return falha("invalid_redirect_uri", "de 1 a 5 redirect_uris https (http só em localhost)");
   if (env.LIMITE_REGISTRO && !(await env.LIMITE_REGISTRO.limit({ key: "global" })).success) return falha("temporarily_unavailable", "muitos registros agora; tente em instantes", 429);
+  await limpar(env.DB);
   const nome = (typeof client_name === "string" && client_name.trim() ? client_name.trim() : "Cliente MCP").slice(0, 80);
   const client_id = `oa-${aleatorio(12)}`;
   await env.DB.prepare("INSERT INTO oauth_clientes (client_id, nome, redirect_uris) VALUES (?, ?, ?)").bind(client_id, nome, JSON.stringify(uris)).run();

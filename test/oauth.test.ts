@@ -67,6 +67,25 @@ describe("registro", () => {
     expect((await registrar(post("/oauth/register", { redirect_uris: Array(6).fill(REDIRECT) }), env)).status).toBe(400);
     expect((await registrar(post("/oauth/register", { redirect_uris: ["http://evil.com/cb"] }), env)).status).toBe(400);
   });
+  it("a cada registro apaga códigos vencidos e clientes abandonados, e preserva o que está em uso", async () => {
+    const env = novoEnv();
+    const exec = (sql: string, ...b: unknown[]) => env.DB.prepare(sql).bind(...b).run();
+    await exec("INSERT INTO oauth_clientes (client_id, nome, redirect_uris, criado_em) VALUES ('oa-velho', 'v', '[]', datetime('now', '-40 days')), ('oa-comchave', 'c', '[]', datetime('now', '-40 days')), ('oa-compedido', 'p', '[]', datetime('now', '-40 days')), ('oa-recente', 'r', '[]', datetime('now', '-2 days'))");
+    await exec("INSERT INTO chaves (id, nome, token_hash, pessoa, cliente_oauth) VALUES ('11111111-1111-1111-1111-111111111111', 'k', 'h', 'ana@ness.com.br', 'oa-comchave')");
+    await exec("INSERT INTO oauth_codigos (id, client_id, pessoa, redirect_uri, desafio, expira_em) VALUES ('vencido', 'oa-velho', 'a', 'https://x', 'd', datetime('now', '-1 hour')), ('vigente', 'oa-compedido', 'a', 'https://x', 'd', datetime('now', '+5 minutes'))");
+    expect((await registrar(post("/oauth/register", { redirect_uris: [REDIRECT] }), env)).status).toBe(201);
+    const clientes = (await env.DB.prepare("SELECT client_id FROM oauth_clientes").all<{ client_id: string }>()).results.map((c) => c.client_id);
+    expect(clientes).toEqual(expect.arrayContaining(["oa-comchave", "oa-compedido", "oa-recente"])); // chave, pedido em andamento e registro recente ficam
+    expect(clientes).not.toContain("oa-velho");
+    expect(clientes).toHaveLength(4); // os 3 que ficam e o recém-registrado
+    expect((await env.DB.prepare("SELECT id FROM oauth_codigos").all<{ id: string }>()).results.map((c) => c.id)).toEqual(["vigente"]);
+  });
+  it("falha na limpeza não impede o registro", async () => {
+    const env = novoEnv();
+    const real = env.DB.prepare.bind(env.DB);
+    env.DB.prepare = ((sql: string) => (sql.startsWith("DELETE FROM oauth_") ? { run: async () => { throw new Error("banco indisponível"); } } : real(sql))) as never;
+    expect((await registrar(post("/oauth/register", { redirect_uris: [REDIRECT] }), env)).status).toBe(201);
+  });
   it("a cota por IP vem antes da global: um IP esgotado não gasta a cota global", async () => {
     const chamadas: string[] = [];
     const limite = (nome: string, ok: (k: string) => boolean) => ({ limit: async ({ key }: { key: string }) => (chamadas.push(`${nome}:${key}`), { success: ok(key) }) }) as unknown as RateLimit;

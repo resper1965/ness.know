@@ -23,24 +23,30 @@ export function novoTokenEnvio(): string {
  * É a mesma regra para o administrador e para a chave de envio da empresa.
  */
 export async function enviarDocumento(env: EnvConhecimento, slug: string, f: FormData | null, autor: string): Promise<Response> {
+  return (await processarEnvio(env, slug, f, autor)).resposta;
+}
+
+/** O mesmo envio, devolvendo também o título gravado (para a auditoria), sem reler a resposta. */
+async function processarEnvio(env: EnvConhecimento, slug: string, f: FormData | null, autor: string): Promise<{ resposta: Response; titulo?: string }> {
   const db = env.DB;
+  const falha = (e: string, status = 400) => ({ resposta: erro(e, status) });
   const arquivo = f?.get("arquivo");
-  if (!(arquivo instanceof File) || !arquivo.size) return erro("envie o campo 'arquivo'");
-  if (arquivo.size > LIMITE_ARQUIVO) return erro("arquivo maior que 15 MB");
+  if (!(arquivo instanceof File) || !arquivo.size) return falha("envie o campo 'arquivo'");
+  if (arquivo.size > LIMITE_ARQUIVO) return falha("arquivo maior que 15 MB");
   const m = (k: string) => (typeof f?.get(k) === "string" ? String(f.get(k)).trim().slice(0, 300) || undefined : undefined);
   const titulo = m("titulo") ?? arquivo.name;
   // Cota: recarregar o mesmo título substitui o anterior e não conta de novo.
   const cota = (await db.prepare("SELECT cota_documentos AS c FROM pacotes WHERE slug = ?").bind(slug).first<{ c: number | null }>())?.c;
   if (cota != null) {
     const usados = (await db.prepare("SELECT count(DISTINCT titulo) AS n FROM documentos WHERE escopo = 'pacote' AND dono = ? AND titulo != ?").bind(slug, titulo).first<{ n: number }>())?.n ?? 0;
-    if (usados >= cota) return erro(`cota de ${cota} documentos do pacote atingida`, 422);
+    if (usados >= cota) return falha(`cota de ${cota} documentos do pacote atingida`, 422);
   }
   const r = await ingerir(env, { escopo: "pacote", dono: slug }, { titulo, tipo: m("tipo"), fonte: m("fonte"), versao: m("versao"), vigencia: m("vigencia") }, arquivo, autor);
-  if (r.erro) return Response.json(r, { status: 422 });
+  if (r.erro) return { resposta: Response.json(r, { status: 422 }) };
   // Recarregar o mesmo título substitui a versão anterior: rodar o carregador de novo não duplica trechos.
   const antigos = await db.prepare("SELECT id FROM documentos WHERE escopo = 'pacote' AND dono = ? AND titulo = ? AND id != ?").bind(slug, titulo, r.id).all<{ id: string }>();
   for (const a of antigos.results) await apagarDocumento(env, a.id);
-  return Response.json({ ...r, substituidos: antigos.results.length });
+  return { resposta: Response.json({ ...r, substituidos: antigos.results.length }), titulo };
 }
 
 const auditar = (db: D1Database, ator: string, acao: string, detalhe: string) => db.prepare("INSERT INTO auditoria (ator, acao, detalhe) VALUES (?, ?, ?)").bind(ator, acao, detalhe).run();
@@ -71,13 +77,9 @@ export async function envio(req: Request, env: EnvEnvio, caminho: string): Promi
     return Response.json({ pacote: { nome: pacote.nome, cota_documentos: pacote.cota_documentos, usados }, documentos });
   }
   if (caminho === "/api/envio/documentos" && req.method === "POST") {
-    const r = await enviarDocumento(env, pacote.slug, await req.formData().catch(() => null), ator);
-    if (r.ok) {
-      const corpo = (await r.clone().json().catch(() => ({}))) as { id?: string };
-      const titulo = corpo.id ? (await db.prepare("SELECT titulo FROM documentos WHERE id = ?").bind(corpo.id).first<{ titulo: string }>())?.titulo : "";
-      await auditar(db, ator, "envio.enviar", `${pacote.slug}: ${titulo ?? ""}`.slice(0, 300));
-    }
-    return r;
+    const { resposta, titulo } = await processarEnvio(env, pacote.slug, await req.formData().catch(() => null), ator);
+    if (resposta.ok) await auditar(db, ator, "envio.enviar", `${pacote.slug}: ${titulo ?? ""}`.slice(0, 300));
+    return resposta;
   }
   const d = caminho.match(/^\/api\/envio\/documentos\/([0-9a-f-]{36})$/);
   if (d && req.method === "DELETE") {
