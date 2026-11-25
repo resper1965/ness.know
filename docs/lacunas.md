@@ -84,12 +84,10 @@ Levantamento de 25/11/2026, a partir do plano das fontes externas ([fontes.md](f
 | # | Lacuna | Efeito | Soluções possíveis | Prioridade |
 | --- | --- | --- | --- | --- |
 | 8.1 | **Google Workspace, documentação:** não há fonte oficial de busca no Admin Help. Os MCPs oficiais do Workspace (preview) operam sobre dados do usuário (Gmail, Drive…), não buscam documentação | `buscar_doc_oficial` não cobre o Workspace | (a) buscar sob demanda só páginas oficiais de uma lista fixa de URLs, depois de conferir termos e `robots.txt`; (b) esperar uma fonte oficial; (c) operar o tenant pelo MCP do Workspace, no ness.OS, com o acesso da pessoa. Não raspar sites | P2 |
-| 8.2 | **Google Workspace, status:** o painel oficial (`incidents.json`) abre sem chave (264 KB), ainda sem adaptador | `status_provedor` não cobre o Workspace | Adaptador do JSON do painel, com cache de poucos minutos (PR 4) | P2 |
 | 8.3 | **Microsoft 365, status:** o status público oficial exige tenant (Graph `serviceHealth`, permissão `ServiceHealth.Read.All`) ou responde 401. O RSS do Azure abre | `status_provedor` não cobre o M365 | (a) Azure pelo RSS aberto (PR 4); (b) M365 do tenant da ness. pelo Graph, somente leitura, no ness.OS: cobre a ness., não os clientes | P2 |
 | 8.4 | **Documentação de GLPI, Datto RMM, Atera, Action1 e Fortinet:** nenhuma tem fonte oficial pesquisável verificada; o site do Action1 devolve 403 a clientes automáticos; o `llms.txt` do Action1 só lista posts | Sem busca oficial dessas documentações | Mesmas soluções de 8.1, produto a produto; para o GLPI, conferir se a documentação é aberta e ingerível pela licença (não verificado). Fortinet: avisos de segurança já entram | P3 |
 | 8.5 | **Licenças por confirmar:** ransomware.live (uso comercial), MISP/CIRCL (licença dos feeds), Spamhaus DROP (redistribuição), VirusTotal (a chave gratuita proíbe uso comercial), AbuseIPDB e Shodan InternetDB (gratuito só para uso não comercial) | Essas fontes de inteligência de ameaças ficam fora | Ler os termos de cada uma e decidir: incluir, pagar (fora das regras, que pedem custo zero) ou descartar | P2 |
 | 8.7 | **Skills oficiais de fabricante (camada 6):** MicrosoftDocs/Agent-Skills tem 201 skills, todas de Azure; `microsoft-docs` e `microsoft-code-reference` não existem lá; `cloudflare/skills` não foi verificado | Sem `listar_skills_fabricante` | Decidir se vale importar 2 ou 3 skills de Azure revisadas linha a linha, com origem, commit e data de revisão | P3 |
-| 8.8 | **Status público dos fornecedores de RMM:** Atera (`status.atera.com`, Statuspage) e Datto RMM (`status.kaseya.com`, componente "Datto RMM") têm formato conhecido; o Action1 responde, mas a API não foi identificada | `status_provedor` ainda não existe | Decidido: só status, sem avisos nem documentação (PR 4). Identificar a API do Action1 antes | P2 |
 
 ### 8.2 Decisões já tomadas
 
@@ -99,6 +97,8 @@ Levantamento de 25/11/2026, a partir do plano das fontes externas ([fontes.md](f
 - MITRE ATT&CK entra por um arquivo enxuto (técnicas, grupos, softwares) gerado por script e revisado em PR; o STIX completo tem 55 MB e não cabe no Worker.
 - Wazuh: só regras e decoders por ID, a partir do repositório oficial; os outros produtos da stack operada ficam como lacuna (8.4).
 - `buscar_doc_oficial` (PR 2) consulta Microsoft Learn, Cloudflare Docs e Cloudflare Blog ao vivo; o Learn não tem `maxTokenBudget`, então o limite de tamanho é do ness.know (5 resultados de até 1.200 caracteres, cache de 10 minutos).
+- `status_provedor` (PR 4) cobre Cloudflare, Atera, Datto RMM, Google Workspace, Azure e Action1; `internet_estado` usa o Radar com token só de leitura. O status do Microsoft 365 segue como lacuna (8.3). O `/history` da Action1 não é documentado: se mudar, a ferramenta avisa que falhou.
+- `url_scan` não foi construído: o URL Scanner do Radar é por conta Cloudflare (precisa de `account_id` e de permissão de escrita na conta para criar a varredura), o que contradiz somente leitura e o escopo mínimo do token. Alternativa a estudar: só consultar relatórios já existentes, se o Radar oferecer busca pública sem conta.
 - Camada 6 e as fontes de 8.5 ficam adiadas até uma decisão.
 - Credenciais só como secret do Worker: `ABUSECH_AUTH_KEY` (ThreatFox, URLhaus e MalwareBazaar exigem Auth-Key gratuita desde 21/10/2026; o Feodo Tracker é aberto), token do Radar com escopo só de leitura do Radar, `NVD_API_KEY` (opcional, já em uso). Uma chave do abuse.ch foi colada no chat de trabalho em 25/11/2026: trocar por outra antes de ir para a produção.
 
@@ -123,4 +123,5 @@ Levantamento de 25/11/2026, a partir do plano das fontes externas ([fontes.md](f
 | M7 | Trocar o cache em D1 por KV, se a leitura pesar | Menos carga no D1 | Baixo; exige criar o namespace na conta |
 | M8 | Consolidar ferramentas parecidas (`kev_*` e `novidades`) se o portal pesar | Menos ferramentas no contexto do agente | Baixo; muda nomes que já podem estar em instruções |
 | M9 | Teste de contrato contra o portal real (hoje o teste cobre o contrato MCP, não o portal) | Detecta quebra de namespace antes do usuário | Médio: o portal exige login no Access |
-| M10 | Fonte de status por país e ASN (Cloudflare Radar) | Responde "é problema nosso, do cliente ou da internet" | Médio: exige token do Radar |
+| M10 | Anomalias de tráfego e vazamentos de rota do Radar em `internet_estado` | Cobre mais casos do "é a internet?" | Médio: formatos de resposta ainda não conferidos com o token real |
+| M11 | Conferir `internet_estado` com o token real (os formatos vêm da documentação; o filtro `involvedAsn` aparece com grafia diferente nos exemplos) | Remove a incerteza sobre os parâmetros | Baixo: só precisa do token |

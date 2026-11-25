@@ -1,5 +1,5 @@
 // Documentação oficial consultada ao vivo pelos MCP públicos de Microsoft Learn e Cloudflare (docs e blog). Sem cópia: trecho curto, link e data.
-import { limpar, limparTexto, selo, type Selo, viaCache } from "./base";
+import { hostOk, limpar, limparTexto, registrarConsulta, selo, type Selo, viaCache } from "./base";
 
 interface Produto {
   fonte: string;
@@ -48,15 +48,6 @@ async function chamarMcp(buscar: typeof fetch, url: string, ferramenta: string, 
   return texto;
 }
 
-const hostOk = (url: string, hosts: string[]) => {
-  try {
-    const u = new URL(url);
-    return u.protocol === "https:" && hosts.includes(u.hostname);
-  } catch {
-    return false;
-  }
-};
-
 export const AVISO_FALHA = "A fonte oficial não respondeu agora. Não responda de memória como se fosse a documentação: diga ao usuário que a consulta oficial falhou e tente de novo mais tarde.";
 
 export async function buscarDocOficial(
@@ -84,10 +75,10 @@ export async function buscarDocOficial(
           .map((r) => ({ titulo: limpar(r.titulo, 200), trecho: limparTexto(r.trecho, 1200), url: r.url }))
           .filter((r) => r.titulo && r.trecho)
           .slice(0, 5);
-        await db.prepare("UPDATE fontes SET ultima_tentativa = ?, ultimo_sucesso = ?, ultimo_erro = NULL, erro_msg = NULL, itens = ? WHERE id = ?").bind(t, t, ok.length, p.fonte).run().catch(() => {});
+        await registrarConsulta(db, p.fonte, t, undefined, ok.length);
         return ok;
       } catch (e) {
-        await db.prepare("UPDATE fontes SET ultima_tentativa = ?, ultimo_erro = ?, erro_msg = ? WHERE id = ?").bind(t, t, limpar(e instanceof Error ? e.message : e, 300), p.fonte).run().catch(() => {});
+        await registrarConsulta(db, p.fonte, t, e instanceof Error ? e.message : String(e));
         throw e;
       }
     });
