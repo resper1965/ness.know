@@ -2,12 +2,14 @@
 // Autenticação por chave de API (Bearer), guardada só em hash na tabela `chaves`; /mcp fica fora do Cloudflare Access.
 import { buscarEm, type EnvBusca } from "./busca";
 import { escopoDe, listaDe, restricoesDe } from "./escopo";
+import type { EnvFontes } from "./fontes/base";
+import { chamarFonte, FERRAMENTAS_FONTES } from "./fontes/ferramentas";
 import { visivel } from "./skills";
 import { cobertura, correlacionar, detalharControle, MAX_DESTINOS, MAX_IMPLEMENTADOS, PACOTE_STRM } from "./strm";
 
 export { restricoesDe };
 
-export interface EnvMcp extends EnvBusca {
+export interface EnvMcp extends EnvBusca, EnvFontes {
   /** Ajustes medidos com scripts/avaliar-busca.mjs: "1" liga o rerank; número troca a nota mínima da semântica. */
   BUSCA_RERANK?: string;
   BUSCA_MINIMO?: string;
@@ -41,9 +43,9 @@ export function novoToken(): string {
   return `nesskb_${btoa(String.fromCharCode(...b)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")}`;
 }
 
-const tokenDe = (req: Request) => req.headers.get("authorization")?.match(/^Bearer\s+(\S+)$/i)?.[1];
+export const tokenDe = (req: Request) => req.headers.get("authorization")?.match(/^Bearer\s+(\S+)$/i)?.[1];
 
-async function clienteDe(token: string, db: D1Database): Promise<Cliente | null> {
+export async function clienteDe(token: string, db: D1Database): Promise<Cliente | null> {
   const c = await db
     .prepare("SELECT id, nome, pacotes, documentos, pessoa FROM chaves WHERE token_hash = ? AND ativo = 1 AND (expira_em IS NULL OR expira_em > datetime('now'))")
     .bind(await hashToken(token))
@@ -54,7 +56,7 @@ async function clienteDe(token: string, db: D1Database): Promise<Cliente | null>
   return { id: c.id, nome: c.nome, pacotes: listaDe(c.pacotes), documentos: restricoesDe(c.documentos) };
 }
 
-const FERRAMENTAS = [
+const FERRAMENTAS_BASE = [
   {
     name: "listar_pacotes",
     description: "Lista os pacotes liberados (normas, leis, frameworks) em JSON: slug, nome, versão, instruções de uso e os documentos que esta chave enxerga, com versão. restrito: true indica que a chave vê só parte do pacote.",
@@ -120,6 +122,8 @@ const FERRAMENTAS = [
     annotations: { readOnlyHint: true },
   },
 ];
+
+const FERRAMENTAS = [...FERRAMENTAS_BASE, ...FERRAMENTAS_FONTES];
 
 type Resposta = { content: { type: "text"; text: string }[]; isError?: boolean };
 const texto = (t: string, isError = false): Resposta => ({ content: [{ type: "text", text: t }], ...(isError ? { isError } : {}) });
@@ -208,6 +212,9 @@ async function chamar(env: EnvMcp, cliente: Cliente, nome: string, args: Record<
     } catch {}
     return texto(JSON.stringify({ nome: s.nome, descricao: s.descricao, versao: s.versao, buscas, corpo: s.corpo, fonte: { sistema: "ness.KNOW", base: "skills", consulta: s.nome, coletado_em: new Date().toISOString() } }, null, 1));
   }
+  // Fontes externas e públicas (KEV, EPSS, avisos): sem escopo por pacote, qualquer chave válida chega.
+  const externa = await chamarFonte(env, nome, args);
+  if (externa) return externa;
   return texto(`ferramenta desconhecida: ${nome}`, true);
 }
 
@@ -239,7 +246,7 @@ const limiteExcedido = () =>
  * shortcut: o token errado já custou uma leitura no D1 quando chega aqui (só o token ausente a evita); suficiente contra laço e
  * tentativa em série, não contra um volume que o Rate Limiting da Cloudflare deixaria passar. Subir para uma regra de WAF se precisar.
  */
-async function recusar(req: Request, env: EnvMcp): Promise<Response> {
+export async function recusar(req: Request, env: EnvMcp): Promise<Response> {
   if (env.LIMITE_AUTH && !(await env.LIMITE_AUTH.limit({ key: req.headers.get("cf-connecting-ip") ?? "sem-ip" })).success) return limiteExcedido();
   // resource_metadata leva o cliente OAuth à descoberta (oauth.ts); cliente com chave nesskb_ ignora.
   const r = rpcErro(null, -32001, "token inválido", 401);

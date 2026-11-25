@@ -54,7 +54,7 @@ describe("mcp", () => {
     const futura = (await (await chamar(env, { jsonrpc: "2.0", id: 9, method: "initialize", params: { protocolVersion: "2099-01-01" } })).json()) as { result: { protocolVersion: string } };
     expect(futura.result.protocolVersion).toBe("2025-06-18");
     const l = (await (await chamar(env, { jsonrpc: "2.0", id: 2, method: "tools/list" })).json()) as { result: { tools: { name: string }[] } };
-    expect(l.result.tools.map((t) => t.name)).toEqual(["listar_pacotes", "buscar_conhecimento", "correlacionar", "cobertura", "detalhar_controle", "obter_skill"]);
+    expect(l.result.tools.map((t) => t.name)).toEqual(["listar_pacotes", "buscar_conhecimento", "correlacionar", "cobertura", "detalhar_controle", "obter_skill", "cve_consultar", "kev_buscar", "kev_novidades", "avisos_fabricante", "novidades", "saude_fontes"]);
   });
 
   it("busca só nos pacotes liberados, mesmo se pedir outro", async () => {

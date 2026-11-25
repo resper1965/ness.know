@@ -1,0 +1,22 @@
+{
+ "value": [
+  {
+   "ID": "2026-Nov",
+   "DocumentTitle": "November 2026 Security Updates",
+   "InitialReleaseDate": "2026-11-10T08:00:00Z",
+   "CurrentReleaseDate": "2026-11-25T01:14:17Z"
+  },
+  {
+   "ID": "2026-Oct",
+   "DocumentTitle": "October 2026 Security Updates",
+   "InitialReleaseDate": "2026-10-13T07:00:00Z",
+   "CurrentReleaseDate": "2026-11-20T01:00:00Z"
+  },
+  {
+   "ID": "1999-Sep",
+   "DocumentTitle": "Mariner Release Notes",
+   "InitialReleaseDate": "1999-09-02T00:00:00Z",
+   "CurrentReleaseDate": "2026-11-16T22:14:32Z"
+  }
+ ]
+}

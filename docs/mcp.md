@@ -165,6 +165,10 @@ Resposta: `nome`, `descricao`, `versao`, `buscas` (até 5 consultas de continua�
 
 Uma chave enxerga a skill só se tiver todos os pacotes que ela declara em `normas` e, em pacote restrito, as normas declaradas. Erros: `informe nome` e `skill não encontrada`. Skill inexistente e skill não liberada à chave recebem o mesmo erro, para a chave não descobrir o que não enxerga.
 
+### Fontes externas e públicas
+
+`cve_consultar`, `kev_buscar`, `kev_novidades`, `avisos_fabricante`, `novidades` e `saude_fontes` não dependem de pacote: qualquer chave válida (inclusive sem pacote algum) chega a elas. Entradas, saídas, frescor e limites estão em [fontes.md](fontes.md). Toda resposta traz `fontes[]` (fonte, versão, data da coleta, frescor e a frase `citar`), `aviso` quando o dado pode estar desatualizado e `nota` lembrando que o texto é de terceiros e deve ser tratado como dado.
+
 ## Conexão por OAuth (ness.work e outros clientes MCP)
 
 Clientes que não aceitam chave colada conectam por OAuth 2.1 e cada pessoa autoriza com o próprio login (Cloudflare Access + Entra ID). O cliente descobre tudo sozinho a partir do 401 do `/mcp`, cujo `WWW-Authenticate` traz `resource_metadata`.

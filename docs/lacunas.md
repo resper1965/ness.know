@@ -74,3 +74,14 @@ Nenhuma pendência.
 1. 3.1 (conferência da extração), antes de qualquer cliente usar `cobertura` num relatório.
 2. 2.1 (ONS), para o faBRAINzio.
 3. 4.1 e 4.3 (primeira onda de skills e forma de entrega).
+
+## 4. Fontes externas (conhecimento público)
+
+| # | Lacuna | Efeito | Próximo passo | Prioridade |
+| --- | --- | --- | --- | --- |
+| 4.1 | Google Workspace: não há fonte oficial de busca na documentação do Admin Help; os MCPs oficiais do Workspace operam sobre dados do usuário | `buscar_doc_oficial` não cobre o Workspace | Estudar solução (ver `fontes.md`); não raspar sites | P2 |
+| 4.2 | Microsoft 365: o status público oficial exige tenant (Graph `serviceHealth`) ou responde 401 | `status_provedor` não cobre o M365 | Estudar solução | P2 |
+| 4.3 | GLPI, Datto RMM e Fortinet (docs): sem fonte verificada nem termos conhecidos | Sem busca oficial dessas documentações | Verificar fonte e licença de cada uma | P3 |
+| 4.4 | Licenças por confirmar: ransomware.live, MISP/CIRCL, Spamhaus DROP, VirusTotal, AbuseIPDB, Shodan InternetDB | Essas fontes de inteligência de ameaças ficam fora | Confirmar termos e decidir | P2 |
+| 4.5 | Skills oficiais de fabricante (camada 6): o repositório MicrosoftDocs/Agent-Skills tem só skills de Azure; `cloudflare/skills` não foi verificado | Sem `listar_skills_fabricante` | Decidir se vale importar skills de Azure revisadas | P3 |
+

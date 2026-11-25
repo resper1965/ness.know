@@ -3,8 +3,10 @@ import { adminDe, type EnvAcesso, emailDoAcesso } from "./acesso";
 import { admin } from "./admin";
 import type { EnvConhecimento } from "./busca";
 import { envio, type EnvEnvio } from "./envio";
+import { executarFontes } from "./fontes/motor";
 import { type EnvMcp, mcp } from "./mcp";
 import { autorizar, type EnvOauth, metadados, registrar, token } from "./oauth";
+import { v1 } from "./v1";
 
 export interface Env extends EnvAcesso, EnvConhecimento, EnvMcp, EnvOauth, EnvEnvio {
   ASSETS: Fetcher;
@@ -23,6 +25,7 @@ export default {
     }
     // Fora do Access: a autenticação é a chave de API.
     if (pathname === "/mcp") return mcp(req, env);
+    if (pathname.startsWith("/v1/")) return v1(req, env, pathname);
     // OAuth do /mcp (oauth.ts). Descoberta, registro e token ficam fora do Access (Bypass); /oauth/authorize fica protegido.
     const meta = req.method === "GET" ? metadados(pathname, new URL(req.url).origin) : null;
     if (meta) return meta;
@@ -40,5 +43,9 @@ export default {
       return admin(req, env, email, pathname);
     }
     return env.ASSETS.fetch(req);
+  },
+  // Cron a cada 15 minutos: cada fonte externa roda quando vence a própria frequência (src/fontes/motor.ts).
+  async scheduled(_evento: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+    ctx.waitUntil(executarFontes(env));
   },
 };
