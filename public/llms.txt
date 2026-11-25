@@ -6,7 +6,7 @@
 
 - Endereço: https://know.ness.com.br/mcp (MCP Streamable HTTP, sem sessão; cada requisição é um JSON-RPC 2.0 por POST).
 - Autenticação: cabeçalho `Authorization: Bearer nesskb_…` (chave de leitura, entregue pela NESS). A chave vê só os pacotes liberados para ela.
-- Ferramentas: `listar_pacotes`, `buscar_conhecimento`, `obter_skill`, e, quando o pacote scf-strm estiver liberado, `correlacionar`, `cobertura` e `detalhar_controle`. Fontes externas e públicas, para qualquer chave válida: `cve_consultar`, `kev_buscar`, `kev_novidades`, `avisos_fabricante`, `novidades` e `saude_fontes` (CISA KEV, EPSS, NVD, Microsoft, Fortinet); cite o campo `citar` e respeite o aviso de frescor. Use `tools/list` para ver os argumentos.
+- Ferramentas: `listar_pacotes`, `buscar_conhecimento`, `obter_skill`, e, quando o pacote scf-strm estiver liberado, `correlacionar`, `cobertura` e `detalhar_controle`. Fontes externas e públicas, para qualquer chave válida: `cve_consultar`, `kev_buscar`, `kev_novidades`, `avisos_fabricante`, `novidades` e `saude_fontes` (CISA KEV, EPSS, NVD, Microsoft, Fortinet), e `buscar_doc_oficial` (documentação oficial da Microsoft e da Cloudflare, ao vivo, com link); cite o campo `citar` e respeite o aviso de frescor. Use `tools/list` para ver os argumentos.
 
 ### Como um agente deve usar
 
