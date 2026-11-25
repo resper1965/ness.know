@@ -56,4 +56,4 @@ Para sistemas (ness.OS): `POST /v1/cve` com `{"cves": [...]}` (até 500) e `Auth
 
 ## Lacunas e adiamentos
 
-Estão em [lacunas.md](lacunas.md), seção 4.
+Estão em [lacunas.md](lacunas.md), seção 8.
