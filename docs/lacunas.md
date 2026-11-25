@@ -77,11 +77,50 @@ Nenhuma pendência.
 
 ## 8. Fontes externas (conhecimento público)
 
-| # | Lacuna | Efeito | Próximo passo | Prioridade |
-| --- | --- | --- | --- | --- |
-| 8.1 | Google Workspace: não há fonte oficial de busca na documentação do Admin Help; os MCPs oficiais do Workspace operam sobre dados do usuário | `buscar_doc_oficial` não cobre o Workspace | Estudar solução (ver `fontes.md`); não raspar sites | P2 |
-| 8.2 | Microsoft 365: o status público oficial exige tenant (Graph `serviceHealth`) ou responde 401 | `status_provedor` não cobre o M365 | Estudar solução | P2 |
-| 8.3 | GLPI, Datto RMM e Fortinet (docs): sem fonte verificada nem termos conhecidos | Sem busca oficial dessas documentações | Verificar fonte e licença de cada uma | P3 |
-| 8.4 | Licenças por confirmar: ransomware.live, MISP/CIRCL, Spamhaus DROP, VirusTotal, AbuseIPDB, Shodan InternetDB | Essas fontes de inteligência de ameaças ficam fora | Confirmar termos e decidir | P2 |
-| 8.5 | Skills oficiais de fabricante (camada 6): o repositório MicrosoftDocs/Agent-Skills tem só skills de Azure; `cloudflare/skills` não foi verificado | Sem `listar_skills_fabricante` | Decidir se vale importar skills de Azure revisadas | P3 |
+Levantamento de 25/11/2026, a partir do plano das fontes externas ([fontes.md](fontes.md)). O ness.know só serve conhecimento **externo e público**; dado interno da ness. e dado de cliente ficam no ness.OS.
 
+### 8.1 Lacunas, com as soluções possíveis
+
+| # | Lacuna | Efeito | Soluções possíveis | Prioridade |
+| --- | --- | --- | --- | --- |
+| 8.1 | **Google Workspace, documentação:** não há fonte oficial de busca no Admin Help. Os MCPs oficiais do Workspace (preview) operam sobre dados do usuário (Gmail, Drive…), não buscam documentação | `buscar_doc_oficial` não cobre o Workspace | (a) buscar sob demanda só páginas oficiais de uma lista fixa de URLs, depois de conferir termos e `robots.txt`; (b) esperar uma fonte oficial; (c) operar o tenant pelo MCP do Workspace, no ness.OS, com o acesso da pessoa. Não raspar sites | P2 |
+| 8.2 | **Google Workspace, status:** o painel oficial (`incidents.json`) abre sem chave (264 KB), ainda sem adaptador | `status_provedor` não cobre o Workspace | Adaptador do JSON do painel, com cache de poucos minutos (PR 4) | P2 |
+| 8.3 | **Microsoft 365, status:** o status público oficial exige tenant (Graph `serviceHealth`, permissão `ServiceHealth.Read.All`) ou responde 401. O RSS do Azure abre | `status_provedor` não cobre o M365 | (a) Azure pelo RSS aberto (PR 4); (b) M365 do tenant da ness. pelo Graph, somente leitura, no ness.OS: cobre a ness., não os clientes | P2 |
+| 8.4 | **Documentação de GLPI, Datto RMM, Atera, Action1 e Fortinet:** nenhuma tem fonte oficial pesquisável verificada; o site do Action1 devolve 403 a clientes automáticos; o `llms.txt` do Action1 só lista posts | Sem busca oficial dessas documentações | Mesmas soluções de 8.1, produto a produto; para o GLPI, conferir se a documentação é aberta e ingerível pela licença (não verificado). Fortinet: avisos de segurança já entram | P3 |
+| 8.5 | **Licenças por confirmar:** ransomware.live (uso comercial), MISP/CIRCL (licença dos feeds), Spamhaus DROP (redistribuição), VirusTotal (a chave gratuita proíbe uso comercial), AbuseIPDB e Shodan InternetDB (gratuito só para uso não comercial) | Essas fontes de inteligência de ameaças ficam fora | Ler os termos de cada uma e decidir: incluir, pagar (fora das regras, que pedem custo zero) ou descartar | P2 |
+| 8.7 | **Skills oficiais de fabricante (camada 6):** MicrosoftDocs/Agent-Skills tem 201 skills, todas de Azure; `microsoft-docs` e `microsoft-code-reference` não existem lá; `cloudflare/skills` não foi verificado | Sem `listar_skills_fabricante` | Decidir se vale importar 2 ou 3 skills de Azure revisadas linha a linha, com origem, commit e data de revisão | P3 |
+| 8.8 | **Status público dos fornecedores de RMM:** Atera (`status.atera.com`, Statuspage) e Datto RMM (`status.kaseya.com`, componente "Datto RMM") têm formato conhecido; o Action1 responde, mas a API não foi identificada | `status_provedor` ainda não existe | Decidido: só status, sem avisos nem documentação (PR 4). Identificar a API do Action1 antes | P2 |
+
+### 8.2 Decisões já tomadas
+
+- Playbooks e runbooks da ness. **não** moram no ness.know: são do ness.OS.
+- As ferramentas externas são abertas a qualquer chave válida, sem papéis nem recorte por cliente. Os pacotes de normas e os documentos enviados pelas empresas seguem com o RBAC de sempre.
+- `url_scan` só consulta resultados já existentes no Radar. Enviar uma URL cria registro na conta e a expõe a um terceiro, o que contradiz somente leitura e privacidade.
+- MITRE ATT&CK entra por um arquivo enxuto (técnicas, grupos, softwares) gerado por script e revisado em PR; o STIX completo tem 55 MB e não cabe no Worker.
+- Wazuh: só regras e decoders por ID, a partir do repositório oficial; os outros produtos da stack operada ficam como lacuna (8.4).
+- `buscar_doc_oficial` (PR 2) consulta Microsoft Learn, Cloudflare Docs e Cloudflare Blog ao vivo; o Learn não tem `maxTokenBudget`, então o limite de tamanho é do ness.know (5 resultados de até 1.200 caracteres, cache de 10 minutos).
+- Camada 6 e as fontes de 8.5 ficam adiadas até uma decisão.
+- Credenciais só como secret do Worker: `ABUSECH_AUTH_KEY` (ThreatFox, URLhaus e MalwareBazaar exigem Auth-Key gratuita desde 21/10/2026; o Feodo Tracker é aberto), token do Radar com escopo só de leitura do Radar, `NVD_API_KEY` (opcional, já em uso). Uma chave do abuse.ch foi colada no chat de trabalho em 25/11/2026: trocar por outra antes de ir para a produção.
+
+### 8.3 Limites atuais
+
+- **EPSS** guarda só os CVEs do KEV; os demais vêm da API da FIRST ao vivo, com cache de 12 h (o arquivo diário tem ~400 mil linhas).
+- **CVSS e CWEs do NVD** só em consultas pequenas: 5 CVEs por chamada sem chave, 20 com `NVD_API_KEY`. O lote `POST /v1/cve` não consulta o NVD.
+- **Avisos de fabricante** cobrem Microsoft (atualizações mensais, sem CVE por linha) e Fortinet (com CVEs). Cisco, Palo Alto e outros não.
+- **Coleta** a cada 15 minutos no mínimo; a atualização da lista de ferramentas no portal da Cloudflare leva até ~2 h.
+- **Alerta automático** ("CVE novo em produto do cliente X") está fora do escopo: envolve inventário do cliente e escrita, e fica com o Worker do ness.brain ou o n.secops.
+
+### 8.4 Melhorias possíveis
+
+| # | Melhoria | Ganho | Custo e risco |
+| --- | --- | --- | --- |
+| M1 | Alarme quando uma fonte passa do TTL (hoje só a resposta avisa) | Quem opera descobre a fonte parada sem consultar | Médio: precisa de canal de aviso; sem escrita em sistema externo |
+| M2 | Cruzar CVE com produto por CPE (NVD) | `kev_buscar` acha o produto sem depender do nome escrito pela CISA | Médio: NVD limita a taxa; CPE vem sujo |
+| M3 | Mais fabricantes em `avisos_fabricante` (Cisco, Palo Alto, VMware, Fortinet por CSAF) | Cobre o que a ness. e os clientes operam | Baixo por fonte; precisa conferir termos de cada feed |
+| M4 | EPSS completo (400 mil linhas) em D1 | `cve_consultar` sem chamada ao vivo | Alto: ~12 milhões de linhas gravadas por mês e mais armazenamento; só se a FIRST limitar a API |
+| M5 | Endpoints em lote além do CVE (`/v1/listas/{tipo}`, CDB do Wazuh) | O ness.OS aplica listas com o próprio processo de aprovação | Médio; depende da camada de inteligência de ameaças |
+| M6 | Tendências do KEV (inclusões por fornecedor e por mês, uso em ransomware) | Resposta a "o que mais está sendo explorado" | Baixo; só consulta no banco |
+| M7 | Trocar o cache em D1 por KV, se a leitura pesar | Menos carga no D1 | Baixo; exige criar o namespace na conta |
+| M8 | Consolidar ferramentas parecidas (`kev_*` e `novidades`) se o portal pesar | Menos ferramentas no contexto do agente | Baixo; muda nomes que já podem estar em instruções |
+| M9 | Teste de contrato contra o portal real (hoje o teste cobre o contrato MCP, não o portal) | Detecta quebra de namespace antes do usuário | Médio: o portal exige login no Access |
+| M10 | Fonte de status por país e ASN (Cloudflare Radar) | Responde "é problema nosso, do cliente ou da internet" | Médio: exige token do Radar |

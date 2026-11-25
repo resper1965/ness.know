@@ -22,6 +22,9 @@ Nada interno da ness. entra aqui (playbooks, runbooks, clientes, chamados, logs,
 | Microsoft MSRC | lote | diária | 72 h | API pública | não |
 | Fortinet PSIRT | lote | 6 h | 48 h | Feed RSS público | não |
 | NVD (NIST) | ao vivo, cache de 24 h | sob demanda | n/a | Domínio público | opcional (`NVD_API_KEY`) |
+| Microsoft Learn (MCP público) | ao vivo, cache de 10 min | sob demanda | n/a | Documentação pública; só trecho curto com link | não |
+| Documentação da Cloudflare (MCP público) | ao vivo, cache de 10 min | sob demanda | n/a | Documentação pública; só trecho curto com link | não |
+| Blog da Cloudflare (MCP público) | ao vivo, cache de 10 min | sob demanda | n/a | Blog público; só trecho curto com link | não |
 
 O **prazo** do KEV é o da diretiva BOD da CISA para agências federais dos EUA. Para clientes da ness., é referência de urgência, não obrigação; a resposta repete isso.
 
@@ -34,9 +37,20 @@ O **prazo** do KEV é o da diretiva BOD da CISA para agências federais dos EUA.
 | `kev_novidades` | `dias?` (1 a 90, padrão 7) | O que entrou no período |
 | `avisos_fabricante` | `fornecedor` (`microsoft` ou `fortinet`), `desde?` | Avisos com título, data, CVEs e link |
 | `novidades` | `fonte?`, `desde?` | O que há de novo nas fontes |
+| `buscar_doc_oficial` | `produto` (`microsoft`, `cloudflare`, `cloudflare-blog`), `consulta`, `limite?` (1 a 5) | Até 5 trechos de até 1.200 caracteres, cada um com título, link oficial e a data da consulta |
 | `saude_fontes` | nenhuma | Estado, frescor, erro, frequência, TTL e licença de cada fonte |
 
 Para sistemas (ness.OS): `POST /v1/cve` com `{"cves": [...]}` (até 500) e `Authorization: Bearer nesskb_…`. Devolve o mesmo formato, sem NVD. Limite por chave: o mesmo `LIMITE_MCP`.
+
+### Documentação oficial (`buscar_doc_oficial`)
+
+O ness.know chama os MCP públicos da Microsoft (`learn.microsoft.com/api/mcp`) e da Cloudflare (`docs.mcp.cloudflare.com/mcp` e `blog.mcp.cloudflare.com/mcp`) com `tools/call`, só com o texto da consulta (nenhum dado do usuário nem da empresa vai junto). O Learn não tem `maxTokenBudget`: o limite de tamanho é nosso (5 resultados, 1.200 caracteres cada).
+
+- Só vira citação o link `https` do host esperado de cada fonte; qualquer outro resultado é descartado.
+- O texto é limpo (sem caracteres de controle) e segue como dado. A resposta traz a `nota` e o link.
+- Cache de 10 minutos na tabela `cache`. Falha da fonte não é cacheada: a resposta traz `indisponivel` e o `aviso` para o agente não responder de memória.
+- `saude_fontes` mostra a última consulta bem-sucedida e o último erro de cada uma.
+- Google Workspace, GLPI, Datto RMM, Atera, Action1 e Fortinet não têm fonte oficial pesquisável (lacunas 8.1 e 8.4): o produto é recusado com a lista dos aceitos.
 
 ## Operação
 
@@ -56,4 +70,4 @@ Para sistemas (ness.OS): `POST /v1/cve` com `{"cves": [...]}` (até 500) e `Auth
 
 ## Lacunas e adiamentos
 
-Estão em [lacunas.md](lacunas.md), seção 8.
+Estão em [lacunas.md](lacunas.md), seção 8: lacunas com as soluções possíveis, decisões já tomadas, limites atuais e melhorias possíveis.

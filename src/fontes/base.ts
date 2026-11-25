@@ -19,6 +19,8 @@ export interface Fonte {
   detalhe: string | null;
   etag: string | null;
   itens: number;
+  modo: string;
+  ultimo_erro: string | null;
 }
 
 export interface Resultado {
@@ -44,6 +46,16 @@ export function limpar(s: unknown, max = 500): string {
     .replace(/<[^>]*>/g, " ")
     .replace(/[\u0000-\u001f\u007f-\u009f‪-‮⁦-⁩]/g, " ")
     .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, max);
+}
+
+/** Texto longo de terceiros (trecho de documentação): sem controle, com quebras de linha preservadas e tamanho limitado. */
+export function limparTexto(s: unknown, max = 1200): string {
+  return String(s ?? "")
+    .replace(/[\u0000-\u0008\u000b-\u001f\u007f-\u009f\u202a-\u202e\u2066-\u2069]/g, " ")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
     .trim()
     .slice(0, max);
 }
@@ -85,6 +97,16 @@ export async function selo(db: D1Database, id: string, agora = new Date()): Prom
   const f = await db.prepare("SELECT * FROM fontes WHERE id = ?").bind(id).first<Fonte>();
   if (!f) return null;
   const idade = f.ultimo_sucesso ? agora.getTime() - Date.parse(f.ultimo_sucesso) : null;
+  if (f.modo === "ao_vivo") {
+    // Consulta ao vivo: o dado é de agora; só avisa se a última tentativa falhou.
+    const falhou = !!f.ultimo_erro && (!f.ultimo_sucesso || f.ultimo_erro >= f.ultimo_sucesso);
+    const quando = agora.toISOString();
+    return {
+      sistema: "ness.know", fonte: f.nome, versao: null, coletado_em: quando, atribuicao: f.atribuicao, url: f.url,
+      frescor: "consulta ao vivo", citar: `Fonte: ${f.nome}, consulta ao vivo em ${quando}`,
+      ...(falhou ? { aviso: `A última consulta a esta fonte falhou${f.erro_msg ? `: ${f.erro_msg}` : ""}.` } : {}),
+    };
+  }
   const base = { sistema: "ness.know", fonte: f.nome, versao: f.versao, coletado_em: f.ultimo_sucesso, atribuicao: f.atribuicao, url: f.url };
   if (idade === null) return { ...base, frescor: "nunca coletada", citar: `Fonte: ${f.nome}, ainda não coletada`, aviso: "Fonte ainda não coletada: não há dado para responder." };
   const frescor = `coletado há ${ha(idade)}`;
