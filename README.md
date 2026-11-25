@@ -46,9 +46,9 @@ A relação exata de documentos e versões fica na aba **Pacotes** da interface,
 | --- | --- |
 | Endereço | `https://know.ness.com.br/mcp` (MCP Streamable HTTP, sem sessão) |
 | Autenticação | `Authorization: Bearer nesskb_…` |
-| Ferramentas | `listar_pacotes`, `buscar_conhecimento(consulta, pacotes?, limite?)`, `correlacionar(item, de, para)`, `cobertura(de, implementados, alvo)`, `detalhar_controle(scf)`, só leitura |
+| Ferramentas | `listar_pacotes`, `buscar_conhecimento(consulta, pacotes?, limite?)`, `correlacionar(item, de, para)`, `cobertura(de, implementados, alvo)`, `detalhar_controle(scf)`; fontes externas e públicas (para qualquer chave válida): `cve_consultar(cves)`, `kev_buscar(...)`, `kev_novidades(dias?)`, `avisos_fabricante(fornecedor)`, `novidades(fonte?, desde?)`, `saude_fontes()`; só leitura |
 
-Para conectar Claude Code, Codex, Cursor, VS Code ou Claude Desktop, use as receitas em [docs/conectar.md](docs/conectar.md) ou a aba **Conectar um agente** da interface; logo depois de gerar uma chave, a aba já mostra as receitas com ela. A referência completa das ferramentas está em [docs/mcp.md](docs/mcp.md).
+Para conectar Claude Code, Codex, Cursor, VS Code ou Claude Desktop, use as receitas em [docs/conectar.md](docs/conectar.md) ou a aba **Conectar um agente** da interface; logo depois de gerar uma chave, a aba já mostra as receitas com ela. A referência completa das ferramentas está em [docs/mcp.md](docs/mcp.md); as fontes externas (CISA KEV, EPSS, NVD, avisos de fabricante), o cron e como adicionar uma fonte nova estão em [docs/fontes.md](docs/fontes.md). Para sistemas, `POST /v1/cve` consulta até 500 CVEs de uma vez.
 
 ## Para quem administra
 

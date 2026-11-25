@@ -5,7 +5,7 @@
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat"],
   // Interface de admin (chaves, pacotes, teste de busca). /mcp, /health e o OAuth passam pelo Worker antes dos arquivos.
-  "assets": { "directory": "public", "binding": "ASSETS", "run_worker_first": ["/api/*", "/mcp", "/health", "/oauth/*", "/.well-known/*"] },
+  "assets": { "directory": "public", "binding": "ASSETS", "run_worker_first": ["/api/*", "/v1/*", "/mcp", "/health", "/oauth/*", "/.well-known/*"] },
   // Domínio próprio. A zona ness.com.br precisa estar nesta conta Cloudflare.
   "routes": [{ "pattern": "know.ness.com.br", "custom_domain": true }],
   "d1_databases": [{ "binding": "DB", "database_name": "ness-know", "database_id": "f5472779-9e83-48ba-b778-b1fd7e491d56", "migrations_dir": "migrations" }],
@@ -13,6 +13,8 @@
   // bge-m3: 1024 dimensões, cosseno; índice de metadados em "alvo" criado antes do primeiro vetor (docs/operacao.md).
   "vectorize": [{ "binding": "VETORES", "index_name": "ness-know-trechos" }],
   "ai": { "binding": "AI" },
+  // Coleta das fontes externas (KEV, EPSS, avisos): o despacho roda a cada 15 minutos e cada fonte segue a própria frequência (tabela `fontes`).
+  "triggers": { "crons": ["*/15 * * * *"] },
   "vars": {
     // Quem administra (chaves e pacotes). O login é o Cloudflare Access.
     "ADMIN_EMAILS": "resper@bekaa.eu,resper@ness.com.br",

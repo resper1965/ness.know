@@ -99,6 +99,10 @@ As ferramentas `correlacionar`, `cobertura` e `detalhar_controle` (`src/strm.ts`
 - **Conversor:** lê só a primeira aba de cada planilha. O ExcelJS não abriu 20 planilhas por causa dos relacionamentos de comentários; o conversor remove esses relacionamentos com JSZip (devDependency) antes da leitura.
 - **Acesso:** pacote `scf-strm`, tudo ou nada por chave; sem restrição por framework.
 
+## Fontes externas
+
+Tabelas `fontes`, `coletas`, `kev`, `epss`, `avisos` e `cache` (migração 0012). O cron `*/15 * * * *` (`scheduled` em `src/worker.ts`) roda `executarFontes` (`src/fontes/motor.ts`), que despacha cada fonte pelo adaptador (`kev.ts`, `epss.ts`, `avisos.ts`) quando vence a frequência dela. As ferramentas ficam em `src/fontes/ferramentas.ts`, e `src/v1.ts` serve o lote para o ness.OS. Detalhes e o roteiro para adicionar fonte: [fontes.md](fontes.md).
+
 ## Decisões
 
 | Decisão | Motivo |
