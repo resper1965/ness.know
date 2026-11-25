@@ -3,6 +3,8 @@ export interface EnvFontes {
   DB: D1Database;
   /** Opcional: chave gratuita do NVD (secret). Sem ela, a API limita a 5 consultas por 30 s. */
   NVD_API_KEY?: string;
+  /** Opcional: token do Cloudflare Radar (secret; permissão Account > Radar > Read, mais nada). Sem ele, internet_estado avisa que não está configurado. */
+  RADAR_API_TOKEN?: string;
 }
 
 export interface Fonte {
@@ -125,4 +127,22 @@ export async function viaCache<T>(db: D1Database, chave: string, ttlMin: number,
     .bind(chave, JSON.stringify(v), new Date(agora.getTime() + ttlMin * 60_000).toISOString())
     .run();
   return v;
+}
+
+/** Só link https de um destes hosts vira citação: o conteúdo é de terceiros. */
+export function hostOk(url: unknown, hosts: string[]): boolean {
+  try {
+    const u = new URL(String(url));
+    return u.protocol === "https:" && hosts.includes(u.hostname);
+  } catch {
+    return false;
+  }
+}
+
+/** Anota na fonte ao vivo o resultado da última consulta (aparece em saude_fontes). Falha ao anotar não derruba a consulta. */
+export async function registrarConsulta(db: D1Database, fonte: string, quando: string, erroMsg?: string, itens = 0): Promise<void> {
+  const stmt = erroMsg === undefined
+    ? db.prepare("UPDATE fontes SET ultima_tentativa = ?, ultimo_sucesso = ?, ultimo_erro = NULL, erro_msg = NULL, itens = ? WHERE id = ?").bind(quando, quando, itens, fonte)
+    : db.prepare("UPDATE fontes SET ultima_tentativa = ?, ultimo_erro = ?, erro_msg = ? WHERE id = ?").bind(quando, quando, limpar(erroMsg, 300), fonte);
+  await stmt.run().catch(() => {});
 }

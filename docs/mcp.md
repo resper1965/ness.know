@@ -167,7 +167,7 @@ Uma chave enxerga a skill só se tiver todos os pacotes que ela declara em `norm
 
 ### Fontes externas e públicas
 
-`cve_consultar`, `kev_buscar`, `kev_novidades`, `avisos_fabricante`, `novidades`, `saude_fontes` e `buscar_doc_oficial` não dependem de pacote: qualquer chave válida (inclusive sem pacote algum) chega a elas. Entradas, saídas, frescor e limites estão em [fontes.md](fontes.md). Toda resposta traz `fontes[]` (fonte, versão, data da coleta, frescor e a frase `citar`), `aviso` quando o dado pode estar desatualizado e `nota` lembrando que o texto é de terceiros e deve ser tratado como dado.
+`cve_consultar`, `kev_buscar`, `kev_novidades`, `avisos_fabricante`, `novidades`, `saude_fontes`, `buscar_doc_oficial`, `status_provedor` e `internet_estado` não dependem de pacote: qualquer chave válida (inclusive sem pacote algum) chega a elas. Entradas, saídas, frescor e limites estão em [fontes.md](fontes.md). Toda resposta traz `fontes[]` (fonte, versão, data da coleta, frescor e a frase `citar`), `aviso` quando o dado pode estar desatualizado e `nota` lembrando que o texto é de terceiros e deve ser tratado como dado.
 
 ## Conexão por OAuth (ness.work e outros clientes MCP)
 

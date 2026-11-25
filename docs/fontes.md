@@ -25,6 +25,8 @@ Nada interno da ness. entra aqui (playbooks, runbooks, clientes, chamados, logs,
 | Microsoft Learn (MCP público) | ao vivo, cache de 10 min | sob demanda | n/a | Documentação pública; só trecho curto com link | não |
 | Documentação da Cloudflare (MCP público) | ao vivo, cache de 10 min | sob demanda | n/a | Documentação pública; só trecho curto com link | não |
 | Blog da Cloudflare (MCP público) | ao vivo, cache de 10 min | sob demanda | n/a | Blog público; só trecho curto com link | não |
+| Páginas de status: Cloudflare, Atera, Kaseya (Datto RMM), Google Workspace, Azure, Action1 | ao vivo, cache de 2 min | sob demanda | n/a | Páginas públicas | não |
+| Cloudflare Radar (API REST) | ao vivo, cache de 5 min | sob demanda | n/a | Token gratuito, permissão Account > Radar > Read | sim (`RADAR_API_TOKEN`) |
 
 O **prazo** do KEV é o da diretiva BOD da CISA para agências federais dos EUA. Para clientes da ness., é referência de urgência, não obrigação; a resposta repete isso.
 
@@ -38,6 +40,8 @@ O **prazo** do KEV é o da diretiva BOD da CISA para agências federais dos EUA.
 | `avisos_fabricante` | `fornecedor` (`microsoft` ou `fortinet`), `desde?` | Avisos com título, data, CVEs e link |
 | `novidades` | `fonte?`, `desde?` | O que há de novo nas fontes |
 | `buscar_doc_oficial` | `produto` (`microsoft`, `cloudflare`, `cloudflare-blog`), `consulta`, `limite?` (1 a 5) | Até 5 trechos de até 1.200 caracteres, cada um com título, link oficial e a data da consulta |
+| `status_provedor` | `provedor` (`cloudflare`, `atera`, `datto-rmm`, `google-workspace`, `azure`, `action1`) | `estado` (`incidentes_abertos`, `manutencao_programada` ou `sem_incidentes_abertos`), incidentes e manutenções com link oficial |
+| `internet_estado` | `pais?` (2 letras), `asn?`, `desde?` (AAAA-MM-DD; padrão 7 dias) | Quedas por país e ASN; com `asn`, sequestros de BGP que envolvem esse ASN |
 | `saude_fontes` | nenhuma | Estado, frescor, erro, frequência, TTL e licença de cada fonte |
 
 Para sistemas (ness.OS): `POST /v1/cve` com `{"cves": [...]}` (até 500) e `Authorization: Bearer nesskb_…`. Devolve o mesmo formato, sem NVD. Limite por chave: o mesmo `LIMITE_MCP`.
@@ -51,6 +55,14 @@ O ness.know chama os MCP públicos da Microsoft (`learn.microsoft.com/api/mcp`) 
 - Cache de 10 minutos na tabela `cache`. Falha da fonte não é cacheada: a resposta traz `indisponivel` e o `aviso` para o agente não responder de memória.
 - `saude_fontes` mostra a última consulta bem-sucedida e o último erro de cada uma.
 - Google Workspace, GLPI, Datto RMM, Atera, Action1 e Fortinet não têm fonte oficial pesquisável (lacunas 8.1 e 8.4): o produto é recusado com a lista dos aceitos.
+
+### Estado dos provedores e da internet
+
+- **`status_provedor`** lê a página oficial de cada provedor: Statuspage (Cloudflare, Atera; a Kaseya é filtrada pelo componente "Datto RMM"), o painel do Google Workspace (incidentes sem data de término), o RSS do Azure (sem item, sem incidente) e a página da Action1 no Uptime.com. O `/history` da Action1 não tem documentação oficial, então a leitura é defensiva e um formato novo vira falha, não "tudo bem". Cache de 2 minutos.
+- **Microsoft 365 não tem página pública de status:** o estado do tenant exige o Graph (`serviceHealth`), fora do escopo do ness.know. A ferramenta explica isso e aponta o Azure.
+- **`internet_estado`** usa o Cloudflare Radar. Precisa do secret `RADAR_API_TOKEN`: token de API com **Account > Radar > Read** e nada mais (`npx wrangler secret put RADAR_API_TOKEN`). Sem ele, a resposta diz que não está configurado e não chama nada. Quedas por país e ASN; sequestros de BGP só com `asn`, e o resultado é conferido aqui (só ficam os eventos que envolvem o ASN). Cache de 5 minutos.
+- Falha de qualquer página ou do Radar não é cacheada e vem com `indisponivel` e um aviso para o agente **não concluir que está tudo bem**.
+- Fora desta etapa: `url_scan` (o URL Scanner do Radar é por conta e criaria registro na conta da ness., ver lacunas), anomalias de tráfego e vazamentos de rota do Radar.
 
 ## Operação
 
