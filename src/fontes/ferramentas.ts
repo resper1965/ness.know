@@ -2,6 +2,7 @@
 import { type EnvFontes, limpar, selo, type Selo, viaCache } from "./base";
 import { buscarDocOficial } from "./docs";
 import { exportarLista, filtroLista, iocConsultar, iocNovidades, MAX_VALORES, NOTA_IOC } from "./ioc";
+import { carregarAttack, mitreTecnica, seloMitre } from "./mitre";
 import { internetEstado } from "./radar";
 import { statusProvedor } from "./status";
 
@@ -286,6 +287,13 @@ export const FERRAMENTAS_FONTES = [
     },
     annotations: { readOnlyHint: true },
   },
+  {
+    name: "mitre_tecnica",
+    description:
+      "MITRE ATT&CK (Enterprise, base embutida): por id (T1059.001, G0016, S0367, M1042, TA0006) ou por termo (PowerShell, APT29, Emotet, Credential Access). Devolve descrição, táticas, plataformas, detecção, mitigações, subtécnicas, grupos e software associados, com URL oficial e a versão da base. Com um termo ambíguo devolve candidatos; consulte pelo id para o detalhe. Relato público de grupo ou software não prova que o ambiente do cliente foi afetado.",
+    inputSchema: { type: "object", properties: { consulta: { type: "string", description: "id ou termo, em inglês de preferência (ex.: T1059.001, PowerShell, APT29)" } }, required: ["consulta"] },
+    annotations: { readOnlyHint: true },
+  },
 ];
 
 const dataOu = (v: unknown, padraoDias: number, agora: Date): string | null => {
@@ -392,13 +400,18 @@ export async function chamarFonte(env: EnvFontes, nome: string, args: Record<str
     const r = await exportarLista(db, f, limite, agora);
     return json({ formato: f.formato, tipo: f.tipo, total: r.total, retornadas: r.retornadas, ...(r.omitidos ? { omitidos: r.omitidos, aviso_omitidos: "Itens com ':' (IPv6) não cabem na chave da lista CDB e foram omitidos." } : {}), ...(r.total > r.retornadas + r.omitidos ? { aviso_truncada: "Lista cortada no limite; use GET /v1/listas/{tipo} para a lista inteira." } : {}), conteudo: r.linhas.join("\n"), aviso_aplicacao: "O ness.know não bloqueia nada. Aplique pelo processo de aprovação do ness.OS.", fontes: r.fontes, nota: NOTA_IOC });
   }
+  if (nome === "mitre_tecnica") {
+    const r = mitreTecnica(await carregarAttack(), args, agora);
+    return "erro" in r ? erro(String(r.erro)) : json(r);
+  }
   if (nome === "saude_fontes") {
     const linhas = await aberto<{ id: string; modo: string; frequencia_min: number; ttl_horas: number; itens: number; ultimo_erro: string | null; erro_msg: string | null; licenca: string; exige_chave: number; ativa: number }>(
       db,
       "SELECT id, modo, frequencia_min, ttl_horas, itens, ultimo_erro, erro_msg, licenca, exige_chave, ativa FROM fontes ORDER BY ordem, id",
     );
     const fontes = await Promise.all(linhas.map(async (f) => ({ id: f.id, ...(await selo(db, f.id, agora)), modo: f.modo, frequencia_min: f.frequencia_min, ttl_horas: f.ttl_horas, itens: f.itens, licenca: f.licenca, exige_chave: !!f.exige_chave, ativa: !!f.ativa, ultimo_erro: f.ultimo_erro, erro: f.erro_msg })));
-    return json({ fontes, nota: NOTA_CONTEUDO });
+    const mitre = seloMitre(await carregarAttack(), agora);
+    return json({ fontes: [...fontes, { id: "mitre", ...mitre, modo: "embutido", licenca: "Uso livre com atribuição à MITRE (termos de uso do ATT&CK)", exige_chave: false, ativa: true }], nota: NOTA_CONTEUDO });
   }
   return null;
 }

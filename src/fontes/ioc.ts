@@ -1,6 +1,7 @@
 // Consulta e exportação dos indicadores de ameaça (somente leitura). Mostra o que cada fonte lista, sem veredito: não listado não é seguro, e listado não é comprometido.
 import { limpar, selo, type Selo } from "./base";
 import { normalizar, type TipoIndicador } from "./indicadores";
+import { carregarAttack, programaPorNome } from "./mitre";
 
 export const FONTES_IOC = ["feodo", "threatfox", "urlhaus", "malwarebazaar"];
 export const TIPOS_IOC: TipoIndicador[] = ["ip", "dominio", "url", "hash"];
@@ -79,6 +80,15 @@ export async function iocConsultar(db: D1Database, valores: unknown[], agora: Da
       ...(div ? { divergencia: div } : {}),
       ...(!regs.length && !doHost.length ? { aviso: "Não consta nas fontes locais. Isso não significa que seja seguro." } : {}),
     });
+  }
+  // Família que o ATT&CK também descreve: liga ao software do ATT&CK (técnicas, grupos), sem afirmar nada além do nome.
+  const familias = new Set(resultados.flatMap((r: any) => (r.registros ?? []).map((x: any) => x.familia).filter(Boolean)));
+  if (familias.size) {
+    const attack = await carregarAttack();
+    for (const r of resultados as any[]) {
+      const ligacoes = [...new Set((r.registros ?? []).map((x: any) => x.familia).filter(Boolean))].map((f) => ({ familia: f as string, mitre: programaPorNome(attack, f as string) })).filter((x) => x.mitre);
+      if (ligacoes.length) r.mitre = ligacoes.map((x) => ({ familia: x.familia, ...x.mitre }));
+    }
   }
   // Frescor de todas as fontes: "não listado" só vale se a coleta está em dia.
   const fontes = (await Promise.all(FONTES_IOC.map((f) => selo(db, f, agora)))).filter((s): s is Selo => !!s);

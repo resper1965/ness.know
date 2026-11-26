@@ -26,6 +26,7 @@ Nada interno da ness. entra aqui (playbooks, runbooks, clientes, chamados, logs,
 | Documentação da Cloudflare (MCP público) | ao vivo, cache de 10 min | sob demanda | n/a | Documentação pública; só trecho curto com link | não |
 | Blog da Cloudflare (MCP público) | ao vivo, cache de 10 min | sob demanda | n/a | Blog público; só trecho curto com link | não |
 | Páginas de status: Cloudflare, Atera, Kaseya (Datto RMM), Google Workspace, Azure, Action1 | ao vivo, cache de 2 min | sob demanda | n/a | Páginas públicas | não |
+| MITRE ATT&CK Enterprise | base embutida (sem coleta) | a cada release do ATT&CK, por PR | aviso após 200 dias | Uso livre com atribuição à MITRE (termos de uso do ATT&CK) | não |
 | Feodo Tracker (abuse.ch) | lote | a cada 1 h | 6 h; indicador vale 3 dias | Dados abertos do abuse.ch (CC0 segundo o projeto; termos a conferir) | não |
 | ThreatFox (abuse.ch) | lote | a cada 1 h | 6 h; indicador vale 7 dias | idem | sim (`ABUSECH_AUTH_KEY`, gratuita) |
 | URLhaus (abuse.ch) | lote | a cada 1 h | 6 h; indicador vale 7 dias | idem | sim (`ABUSECH_AUTH_KEY`) |
@@ -49,6 +50,7 @@ O **prazo** do KEV é o da diretiva BOD da CISA para agências federais dos EUA.
 | `ioc_consultar` | `valores[]` (até 50 IPs, domínios, URLs ou hashes) | Por valor: o que cada fonte lista (família, ameaça, confiança, primeira e última vez visto, validade), URLs do host e a divergência entre fontes. **Sem veredito** |
 | `ioc_novidades` | `tipo?`, `familia?`, `desde?`, `pagina?` | Indicadores que entraram (50 por página), com total |
 | `exportar_lista` | `tipo`, `fonte?`, `confianca_min?`, `formato?` (`texto`, `csv`, `cdb`), `limite?` | Lista vigente para aplicar (até 2.000 linhas); a inteira sai em `GET /v1/listas/{tipo}` |
+| `mitre_tecnica` | `consulta` (id ou termo) | Técnica, grupo, software, tática ou mitigação do ATT&CK: descrição, táticas, plataformas, detecção, mitigações, subtécnicas, grupos e software, com URL oficial e versão da base |
 | `saude_fontes` | nenhuma | Estado, frescor, erro, frequência, TTL e licença de cada fonte |
 
 Para sistemas (ness.OS): `POST /v1/cve` com `{"cves": [...]}` (até 500) e `Authorization: Bearer nesskb_…`. Devolve o mesmo formato, sem NVD. Limite por chave: o mesmo `LIMITE_MCP`.
@@ -80,6 +82,18 @@ O ness.know chama os MCP públicos da Microsoft (`learn.microsoft.com/api/mcp`) 
 - **`exportar_lista`:** o ness.know não bloqueia nada. A lista é entrada para o processo de aprovação do ness.OS. Com `confianca_min`, quem não informa confiança fica de fora. A lista CDB do Wazuh (`chave:valor`) não aceita URL nem IPv6 (a chave não pode ter `:`); o IPv6 é omitido e contado.
 - **Chave:** ThreatFox, URLhaus e MalwareBazaar exigem Auth-Key gratuita (auth.abuse.ch) no secret `ABUSECH_AUTH_KEY` (`npx wrangler secret put ABUSECH_AUTH_KEY --name ness-know`). Sem ela, essas três registram o erro em `saude_fontes` e o Feodo segue.
 - **Fora desta etapa** (licença por confirmar, ver lacunas 8.5): Spamhaus DROP, ransomware.live, MISP/CIRCL, VirusTotal, AbuseIPDB e Shodan InternetDB.
+
+### MITRE ATT&CK
+
+- **Base embutida:** o STIX oficial tem ~55 MB e não cabe no Worker. `scripts/gerar-attack.mjs` extrai o que serve (técnicas, subtécnicas, grupos, software, mitigações e as estratégias de detecção, com texto curto e sem citações) para `src/fontes/dados/attack-enterprise.json` (~2 MB). O arquivo vai no repositório e é revisado em PR; o Worker o carrega só quando alguém pergunta de ATT&CK.
+- **Atualizar a cada release do ATT&CK** (duas vezes por ano; a resposta avisa quando a base passa de 200 dias):
+  ```bash
+  ATTACK_COMMIT=$(git ls-remote https://github.com/mitre-attack/attack-stix-data HEAD | cut -c1-12) node scripts/gerar-attack.mjs
+  npm test && npm run check
+  ```
+  Revise o diff, abra o PR e faça o deploy.
+- **Atribuição:** toda resposta traz a atribuição à MITRE. Só o domínio Enterprise está na base (ICS e Mobile ficam de fora; um id desses responde que não consta).
+- **Ligação com as ameaças:** `ioc_consultar` liga a família de malware ao software do ATT&CK quando o nome ou apelido coincide (ex.: Emotet = S0367), sem afirmar mais que o nome.
 
 ## Operação
 
