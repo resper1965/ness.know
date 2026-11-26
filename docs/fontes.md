@@ -54,6 +54,7 @@ O **prazo** do KEV é o da diretiva BOD da CISA para agências federais dos EUA.
 | `exportar_lista` | `tipo`, `fonte?`, `confianca_min?`, `formato?` (`texto`, `csv`, `cdb`), `limite?` | Lista vigente para aplicar (até 2.000 linhas); a inteira sai em `GET /v1/listas/{tipo}` |
 | `mitre_tecnica` | `consulta` (id ou termo) | Técnica, grupo, software, tática ou mitigação do ATT&CK: descrição, táticas, plataformas, detecção, mitigações, subtécnicas, grupos e software, com URL oficial e versão da base |
 | `ransomware_atividade` | `grupo?`, `setor?`, `pais?`, `desde?` (padrão 30 dias), `pagina?` | Total, resumo por grupo, país e setor (top 10) e as 20 vítimas mais recentes da página, com link da Ransomware.live. **Alegações, não incidentes confirmados** |
+| `rfc_consultar` | `numero`, `termo?` | RFC do IETF ao vivo (rfc-editor.org): título, status, resumo, obsoletos e atualizações, erratas e, com `termo`, até 3 trechos literais do texto. Cache de 24 h |
 | `wazuh_regra` | `consulta` (id ou termo) | Regra do ruleset oficial do Wazuh: nível, descrição, arquivo, grupos, decoder, dependências, regras filhas, técnicas ATT&CK com nome e CVEs. Por termo: descrição, grupo, id MITRE ou CVE |
 | `wazuh_decoder` | `consulta` (nome ou termo) | Decoder do ruleset oficial: pai, filhos, programa, campos extraídos, arquivo e regras que o usam |
 | `saude_fontes` | nenhuma | Estado, frescor, erro, frequência, TTL e licença de cada fonte |
@@ -133,6 +134,10 @@ Skill é instrução que o agente executa com o acesso da pessoa. Por isso entra
   Revise o diff, abra o PR e faça o deploy.
 - **Atribuição:** toda resposta traz a atribuição à MITRE. Só o domínio Enterprise está na base (ICS e Mobile ficam de fora; um id desses responde que não consta).
 - **Ligação com as ameaças:** `ioc_consultar` liga a família de malware ao software do ATT&CK quando o nome ou apelido coincide (ex.: Emotet = S0367), sem afirmar mais que o nome.
+
+### RFCs do IETF (roteamento e VPN)
+
+Consulta ao vivo ao `www.rfc-editor.org` (`/rfc/rfcN.json` para metadados e `/rfc/rfcN.txt` para os trechos). **Licença:** IETF Trust Legal Provisions (TLP 5), seção 3.c, permite copiar e distribuir documentos do IETF integralmente e sem modificação, com atribuição ao IETF e ao RFC; acima de um quinto do texto exige os avisos legais originais. Por isso a ferramenta devolve metadados e **trechos literais curtos** (até 3, 900 caracteres), nunca o RFC inteiro, e nunca resume o texto dentro do campo do trecho. Derivados (resumos, traduções) não são licença concedida: o resumo vem do campo `abstract` do próprio RFC Editor. Verificado em 26/11/2026 para os RFCs 4271, 2328 e 4301. O `status` do JSON é o nível atual; o cabeçalho do `.txt` mostra o da publicação. Confira `obsoleta_por` e `atualizada_por` antes de afirmar o comportamento atual.
 
 ### Wazuh (regras e decoders por id)
 
