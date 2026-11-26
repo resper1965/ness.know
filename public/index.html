@@ -267,6 +267,7 @@
         <button role="tab" id="tab-chaves" aria-controls="chaves" aria-selected="true"><svg class="i"><use href="#i-chave"/></svg>Chaves<span class="cont" id="n-chaves"></span></button>
         <button role="tab" id="tab-acesso" aria-controls="acesso" aria-selected="false" tabindex="-1"><svg class="i"><use href="#i-chave"/></svg>Acesso por pessoa</button>
         <button role="tab" id="tab-pacotes" aria-controls="pacotes" aria-selected="false" tabindex="-1"><svg class="i"><use href="#i-pacotes"/></svg>Pacotes<span class="cont" id="n-pacotes"></span></button>
+        <button role="tab" id="tab-fontes" aria-controls="fontes" aria-selected="false" tabindex="-1"><svg class="i"><use href="#i-busca"/></svg>Fontes<span class="cont" id="n-fontes"></span></button>
         <button role="tab" id="tab-envio" aria-controls="envio" aria-selected="false" tabindex="-1"><svg class="i"><use href="#i-envio"/></svg>Envio por empresa</button>
         <button role="tab" id="tab-conectar" aria-controls="conectar" aria-selected="false" tabindex="-1"><svg class="i"><use href="#i-plug"/></svg>Conectar um agente</button>
         <button role="tab" id="tab-testar" aria-controls="testar" aria-selected="false" tabindex="-1"><svg class="i"><use href="#i-busca"/></svg>Testar a busca</button>
@@ -412,6 +413,22 @@
                 <p class="apoio">Rode no repositório <code>ness.know</code>. Recarregar um documento com o mesmo título substitui a versão anterior.</p>
                 <div class="codigo"><pre id="cmd-carga">node scripts/carregar-pacote.mjs &lt;pasta-do-pacote&gt; https://know.ness.com.br</pre><button type="button" class="secundario copiar" data-copiar="cmd-carga">Copiar</button></div>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="painel" id="fontes" role="tabpanel" aria-labelledby="tab-fontes" hidden>
+        <header class="banda"><h1>Fontes</h1></header>
+        <div class="conteudo">
+          <div class="alerta" role="alert"></div>
+          <p class="lead">Fontes externas que o agente consulta por ferramenta: vulnerabilidades, ameaças, documentação oficial, status e referências técnicas. Só leitura: mostra o estado de cada uma e a licença de uso.</p>
+          <div class="pilha">
+            <div class="folha">
+              <table>
+                <thead><tr><th>Fonte</th><th class="esconde-estreito">Tipo</th><th class="esconde-estreito">Última coleta</th><th class="num">Itens</th><th>Estado</th></tr></thead>
+                <tbody id="lista-fontes"></tbody>
+              </table>
             </div>
           </div>
         </div>

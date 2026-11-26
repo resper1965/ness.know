@@ -2,6 +2,7 @@
 import { apagarDocumento, buscarEm, type EnvConhecimento, revetorizar } from "./busca";
 import { enviarDocumento, novoTokenEnvio } from "./envio";
 import { listaDe } from "./escopo";
+import { estadoFontes } from "./fontes/ferramentas";
 import { hashToken, novoToken, restricoesDe } from "./mcp";
 import { normasExistem, validarSkill } from "./skills";
 
@@ -85,6 +86,8 @@ export async function admin(req: Request, env: EnvConhecimento, email: string, c
   const rota = `${req.method} ${caminho}`;
 
   if (rota === "GET /api/eu") return Response.json({ email });
+  // Fontes externas (somente leitura): o mesmo estado da ferramenta saude_fontes.
+  if (rota === "GET /api/fontes") return Response.json(await estadoFontes(db, new Date()));
 
   // Chaves de API: o token aparece uma vez, na criação; no banco fica só o hash.
   if (rota === "GET /api/chaves") return Response.json((await db.prepare("SELECT id, nome, pacotes, documentos, ativo, criado_por, criado_em, usado_em, expira_em, pessoa, cliente_oauth, CASE WHEN pessoa IS NULL THEN 'agente' ELSE 'oauth' END AS origem, (SELECT coalesce(sum(chamadas), 0) FROM uso_chaves u WHERE u.chave_id = chaves.id AND u.dia >= date('now', '-30 days')) AS chamadas_30d FROM chaves ORDER BY ativo DESC, nome").all()).results);
