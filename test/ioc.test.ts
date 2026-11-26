@@ -14,7 +14,9 @@ const CHAVE = "chave-abusech-de-teste";
 type Resp = unknown | ((url: string, init?: RequestInit) => Response);
 function rede(rotas: Record<string, Resp>) {
   const chamadas: { url: string; auth: string | null; corpo: string }[] = [];
-  const buscar = (async (url: string, init?: RequestInit) => {
+  // Como o fetch do Workers: se for chamado como método de outro objeto (this definido), dá "Illegal invocation".
+  const buscar = (async function (this: unknown, url: string, init?: RequestInit) {
+    if (this !== undefined) throw new TypeError("Illegal invocation: function called with incorrect `this` reference");
     chamadas.push({ url, auth: new Headers(init?.headers).get("auth-key"), corpo: String(init?.body ?? "") });
     const k = Object.keys(rotas).find((x) => url.startsWith(x));
     if (!k) return new Response("sem rota", { status: 404 });

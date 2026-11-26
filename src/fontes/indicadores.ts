@@ -77,7 +77,9 @@ function chave(c: Contexto): string {
 }
 
 async function api(c: Contexto, url: string, corpo?: string, tipo = "application/json"): Promise<any> {
-  const r = await c.buscar(url, {
+  // Chamado solto, não como método de `c`: o fetch do Workers dá "Illegal invocation" se o `this` não for o global.
+  const buscar = c.buscar;
+  const r = await buscar(url, {
     method: corpo === undefined ? "GET" : "POST",
     headers: { "Auth-Key": chave(c), "user-agent": "ness.know (+https://know.ness.com.br)", ...(corpo === undefined ? {} : { "content-type": tipo }) },
     ...(corpo === undefined ? {} : { body: corpo }),
