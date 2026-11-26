@@ -5,6 +5,8 @@ export interface EnvFontes {
   NVD_API_KEY?: string;
   /** Opcional: token do Cloudflare Radar (secret; permissão Account > Radar > Read, mais nada). Sem ele, internet_estado avisa que não está configurado. */
   RADAR_API_TOKEN?: string;
+  /** Opcional: Auth-Key gratuita do abuse.ch (secret), para ThreatFox, URLhaus e MalwareBazaar. Sem ela, essas fontes registram o erro e o Feodo segue. */
+  ABUSECH_AUTH_KEY?: string;
 }
 
 export interface Fonte {
@@ -34,6 +36,7 @@ export interface Resultado {
 }
 
 export interface Contexto {
+  env: EnvFontes;
   db: D1Database;
   fonte: Fonte;
   buscar: typeof fetch;
