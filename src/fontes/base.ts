@@ -7,6 +7,8 @@ export interface EnvFontes {
   RADAR_API_TOKEN?: string;
   /** Opcional: Auth-Key gratuita do abuse.ch (secret), para ThreatFox, URLhaus e MalwareBazaar. Sem ela, essas fontes registram o erro e o Feodo segue. */
   ABUSECH_AUTH_KEY?: string;
+  /** Opcional: chave da API PRO da Ransomware.live (secret, cabeçalho X-API-KEY). Sem ela, a fonte registra o erro e as outras seguem. */
+  RANSOMWARE_LIVE_API_KEY?: string;
 }
 
 export interface Fonte {

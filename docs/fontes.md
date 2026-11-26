@@ -32,6 +32,7 @@ Nada interno da ness. entra aqui (playbooks, runbooks, clientes, chamados, logs,
 | URLhaus (abuse.ch) | lote | a cada 1 h | 6 h; indicador vale 7 dias | Uso interno da NESS **autorizado pelo abuse.ch** | sim (`ABUSECH_AUTH_KEY`) |
 | MalwareBazaar (abuse.ch) | lote | a cada 30 min | 3 h; indicador vale 7 dias | Uso interno da NESS **autorizado pelo abuse.ch** | sim (`ABUSECH_AUTH_KEY`) |
 | DROP (Spamhaus) | lote | a cada 6 h | 24 h; o que sai da lista expira na hora | Gratuito (termos do DROP, 2.1); conteúdo protegido, **uso interno da ness.** (3.1) | não |
+| Ransomware.live (API PRO) | lote | a cada 1 h | 6 h; histórico de 180 dias | Uso comercial **aprovado pelo dono da Ransomware.live** (informado em 26/11/2026); atribuição obrigatória | sim (`RANSOMWARE_LIVE_API_KEY`, gratuita em my.ransomware.live) |
 | Cloudflare Radar (API REST) | ao vivo, cache de 5 min | sob demanda | n/a | Token gratuito, permissão Account > Radar > Read | sim (`RADAR_API_TOKEN`) |
 
 O **prazo** do KEV é o da diretiva BOD da CISA para agências federais dos EUA. Para clientes da ness., é referência de urgência, não obrigação; a resposta repete isso.
@@ -52,6 +53,7 @@ O **prazo** do KEV é o da diretiva BOD da CISA para agências federais dos EUA.
 | `ioc_novidades` | `tipo?`, `familia?`, `desde?`, `pagina?` | Indicadores que entraram (50 por página), com total |
 | `exportar_lista` | `tipo`, `fonte?`, `confianca_min?`, `formato?` (`texto`, `csv`, `cdb`), `limite?` | Lista vigente para aplicar (até 2.000 linhas); a inteira sai em `GET /v1/listas/{tipo}` |
 | `mitre_tecnica` | `consulta` (id ou termo) | Técnica, grupo, software, tática ou mitigação do ATT&CK: descrição, táticas, plataformas, detecção, mitigações, subtécnicas, grupos e software, com URL oficial e versão da base |
+| `ransomware_atividade` | `grupo?`, `setor?`, `pais?`, `desde?` (padrão 30 dias), `pagina?` | Total, resumo por grupo, país e setor (top 10) e as 20 vítimas mais recentes da página, com link da Ransomware.live. **Alegações, não incidentes confirmados** |
 | `saude_fontes` | nenhuma | Estado, frescor, erro, frequência, TTL e licença de cada fonte |
 
 Para sistemas (ness.OS): `POST /v1/cve` com `{"cves": [...]}` (até 500) e `Authorization: Bearer nesskb_…`. Devolve o mesmo formato, sem NVD. Limite por chave: o mesmo `LIMITE_MCP`.
@@ -85,6 +87,14 @@ O ness.know chama os MCP públicos da Microsoft (`learn.microsoft.com/api/mcp`) 
 - **`exportar_lista`:** o ness.know não bloqueia nada. A lista é entrada para o processo de aprovação do ness.OS. Com `confianca_min`, quem não informa confiança fica de fora. A lista CDB do Wazuh (`chave:valor`) não aceita URL nem IPv6 (a chave não pode ter `:`); o IPv6 é omitido e contado.
 - **Chave:** ThreatFox, URLhaus e MalwareBazaar exigem Auth-Key gratuita (auth.abuse.ch) no secret `ABUSECH_AUTH_KEY` (`npx wrangler secret put ABUSECH_AUTH_KEY --name ness-know`). Sem ela, essas três registram o erro em `saude_fontes` e o Feodo segue.
 - **Fora desta etapa** (licença por confirmar, ver lacunas 8.5): Spamhaus DROP, ransomware.live, MISP/CIRCL, VirusTotal, AbuseIPDB e Shodan InternetDB.
+
+### Atividade de ransomware (Ransomware.live)
+
+- **O que é:** vítimas anunciadas por grupos de ransomware em sites de vazamento. A coleta lê `/victims/recent` da **API PRO** (as 100 mais novas) de hora em hora. O limite deles é de 60 chamadas por minuto e o dado é cacheado por 30 minutos, então uma por hora é uso justo.
+- **Termos** (https://www.ransomware.live/t&c): o uso comercial exige aprovação prévia por escrito do dono (5.2), que o dono da NESS obteve (informado em 26/11/2026). Seguem valendo a **atribuição** à Ransomware.live, o uso justo (4) e a proibição de **redistribuição comercial** dos dados: a ferramenta é de uso interno e não há exportação de lista.
+- **O que se guarda:** quem (grupo e vítima), onde (país e setor), quando (descoberta e data do ataque), o domínio e o link da página da vítima na Ransomware.live. **Não se guarda** a descrição escrita pelo grupo (pode trazer dados do vazamento) nem o endereço onion do post. País e setor desconhecidos ficam vazios (a fonte escreve "Not Found" e o ness.know não repete). O histórico é de 180 dias.
+- **Alegação, não fato:** o anúncio é do criminoso. Nome de vítima não prova que o ambiente de um cliente foi afetado, e cruzar com os clientes é papel do ness.OS. A resposta repete isso.
+- **Chave:** secret `RANSOMWARE_LIVE_API_KEY` no Worker (`npx wrangler secret put RANSOMWARE_LIVE_API_KEY --name ness-know`). Sem ela, a fonte registra o erro em `saude_fontes` e as demais seguem. Com a chave gratuita da PRO, os endpoints `/stats` e `/victims/search` devolvem 403; só o `/victims/recent` é usado.
 
 ### Spamhaus DROP (redes sequestradas)
 
