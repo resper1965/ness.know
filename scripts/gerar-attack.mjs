@@ -28,6 +28,7 @@ const vivo = (o) => o && !o.revoked && !o.x_mitre_deprecated;
 const ext = (o) => (o.external_references ?? []).find((r) => r.source_name === "mitre-attack");
 const ordenar = (xs, chave) => [...xs].sort((a, b) => String(chave(a)).localeCompare(String(chave(b)), "en", { numeric: true }));
 
+/** @param {any} stix @param {{ commit?: string | null, geradoEm?: string }} [opcoes] */
 export function extrair(stix, { commit = null, geradoEm = new Date().toISOString() } = {}) {
   const objs = stix.objects ?? [];
   const porId = new Map(objs.map((o) => [o.id, o]));
