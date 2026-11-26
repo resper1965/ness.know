@@ -1,0 +1,19 @@
+{
+  "_leia": "Skills de fabricante servidas pelo ness.know (listar_skills_fabricante, ler_skill_fabricante). Só entra o item com `revisao` preenchida e `sha256` igual ao do arquivo: a revisão vale para aquele texto, e texto mudado exige nova revisão. Skill é instrução que o agente executa com o acesso da pessoa. Para atualizar: copie o SKILL.md novo, leia linha a linha, ajuste commit e sha256, preencha a revisão e rode `node scripts/gerar-skills-fabricante.mjs`.",
+  "skills": [
+    {
+      "nome": "cloudflare-one",
+      "arquivo": "cloudflare-one/SKILL.md",
+      "repositorio": "https://github.com/cloudflare/skills",
+      "caminho": "skills/cloudflare-one/SKILL.md",
+      "commit": "ff191de7d903788eceaf516a514ae7d3b56b924a",
+      "commit_data": "2026-11-24",
+      "licenca": "Apache-2.0",
+      "licenca_arquivo": "cloudflare-one/LICENSE",
+      "atribuicao": "Cloudflare, Inc. (github.com/cloudflare/skills), Apache License 2.0",
+      "sha256": "5e9b81bfe4ebd1737346123679eaca0004b9d3ab9a0239729103b442e0f89614",
+      "remover_secoes": ["Skill feedback"],
+      "revisao": null
+    }
+  ]
+}

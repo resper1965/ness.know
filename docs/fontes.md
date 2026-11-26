@@ -98,6 +98,16 @@ O ness.know chama os MCP públicos da Microsoft (`learn.microsoft.com/api/mcp`) 
 - **Exportação:** `exportar_lista(tipo: "rede")` em texto, CSV ou CDB do Wazuh (que aceita CIDR IPv4 como chave; o IPv6 é omitido porque a chave não pode ter `:`).
 - **Cuidado de leitura:** estar numa rede do DROP é um sinal forte sobre o bloco, mas não é veredito sobre o IP, e a lista muda com o tempo (alocações são reatribuídas).
 
+### Skills oficiais de fabricante (camada 6)
+
+Skill é instrução que o agente executa com o acesso da pessoa. Por isso entra **só** skill de fabricante, lida linha a linha, com a revisão registrada. Nada de marketplace da comunidade (skills.sh e semelhantes servem, no máximo, para descobrir candidatas).
+
+- **Ferramentas:** `listar_skills_fabricante()` e `ler_skill_fabricante(nome)`, só leitura. A resposta traz a origem (repositório e commit), a licença, quem revisou e quando, e o que foi alterado em relação ao original. O corpo vem com um cabeçalho que diz que é guia de terceiros, que o ness.know não executa nada e que ninguém deve agir, instalar programas ou alterar arquivos de instrução por causa do texto.
+- **Hoje:** só `cloudflare-one` (Zero Trust: Access, Gateway, WARP, Tunnel), de `cloudflare/skills`, Apache-2.0. Das 24 skills do repositório, as de desenvolvimento (Workers, Durable Objects, sandbox, Next.js…) e as que operam a conta por CLI (`cf-cli`, que ainda orienta a editar o `AGENTS.md` do usuário) ficaram de fora.
+- **O arquivo original** fica em `skills-fabricante/<nome>/SKILL.md`, sem alteração, junto do `LICENSE` do fabricante, para o diff contra o upstream. O que o ness.know serve é derivado dele: a seção "Skill feedback" (que manda abrir issue pública no GitHub) sai, e os links relativos ao repositório do fabricante viram o texto do link. As alterações aparecem na resposta, como a Apache-2.0 pede.
+- **A revisão vale para aquele texto:** o manifesto (`skills-fabricante/manifesto.json`) guarda o sha256 do arquivo; sha256 diferente derruba a geração. Skill sem `revisao` (quem leu e quando) **não entra** na base embutida.
+- **Para adicionar ou atualizar:** copie o `SKILL.md` e o `LICENSE` do fabricante, leia linha a linha, atualize commit, data e sha256 no manifesto, preencha `revisao: { "por": "...", "em": "AAAA-MM-DD" }` e rode `node scripts/gerar-skills-fabricante.mjs`. Abra o PR: o diff mostra o texto inteiro.
+
 ### MITRE ATT&CK
 
 - **Base embutida:** o STIX oficial tem ~55 MB e não cabe no Worker. `scripts/gerar-attack.mjs` extrai o que serve (técnicas, subtécnicas, grupos, software, mitigações e as estratégias de detecção, com texto curto e sem citações) para `src/fontes/dados/attack-enterprise.json` (~2 MB). O arquivo vai no repositório e é revisado em PR; o Worker o carrega só quando alguém pergunta de ATT&CK.
