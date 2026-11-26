@@ -28,14 +28,18 @@ O ness.OS já consome `POST /v1/cve` e `GET /v1/listas/{tipo}` com a chave `ness
 
 Objetivo: uma segunda e terceira opinião além do abuse.ch, e contexto de quem é o IP.
 
-| Fonte | O que traz | Observação a tratar |
+Situação em 26/11/2026, depois da leitura dos termos (o que não foi possível ler está marcado):
+
+| Fonte | O que traz | Situação |
 |---|---|---|
-| VirusTotal | Reputação de hash, domínio, IP e URL | Cota gratuita muito baixa: só consulta pontual, com cache longo |
-| AbuseIPDB | Denúncias por IP | Cota diária; uso comercial a conferir |
-| GreyNoise | "É ruído de varredura da internet?" | Nível gratuito limitado |
-| CIRCL (hashlookup, DNS passivo) | Hash conhecido como legítimo; histórico de resolução | Conferir termos |
-| RDAP/WHOIS e ASN (RIR, RIPEstat) | Dono, país e rede do IP ou domínio | Dados públicos; RDAP é o caminho oficial |
-| Shodan ou Censys | Portas e serviços expostos | Gratuito muito limitado; decidir se vale |
+| CIRCL hashlookup | Hash conhecido (NSRL e outras bases) | **Feito.** Dados CC-BY, uso comercial permitido com referência ao CIRCL; sem chave. Ao vivo, cache de 24 h, até 50 hashes por chamada |
+| CIRCL DNS passivo | Histórico de resolução | **Fora.** Restrito a parceiros; exige pedir acesso ao CIRCL |
+| RIPEstat (ASN, prefixo, país) | Dono, país e rede do IP | **Em espera.** Os termos proíbem uso comercial e redistribuição sem autorização escrita da RIPE NCC (stat@ripe.net) e a finalidade declarada é análise e monitoramento de rede e pesquisa. Só entra com confirmação por escrito |
+| RDAP/WHOIS | Dono de IP e domínio | **Fora por ora.** O banco do RIPE proíbe redistribuir e usar para marketing; Registro.br e LACNIC não puderam ser lidos |
+| VirusTotal | Reputação de hash, domínio, IP e URL | **Barrada.** A API gratuita não pode ser usada em produto ou serviço comercial nem em fluxo que não envie arquivos novos. Cota 500 por dia e 4 por minuto. Termos de uso não lidos (403) |
+| AbuseIPDB | Denúncias por IP | **Não confirmada.** Cota de 1.000 por dia no plano Standard; página de termos não lida (404) |
+| GreyNoise | "É ruído de varredura da internet?" | **Inviável gratuita.** 50 consultas por semana e o EULA proíbe produtos derivados e repasse a terceiros |
+| Shodan, Censys | Portas e serviços expostos | **Não confirmadas.** Plano gratuito, cota e termos não lidos |
 
 **Como:** consulta **ao vivo** com cache (como `buscar_doc_oficial`), chave em `wrangler secret`, uma linha por fonte no catálogo (modo `ao_vivo`). `ioc_consultar` e `/v1/ioc` passam a mostrar cada fonte lado a lado, com a **contagem de fontes que concordam** (sem veredito). Cada consulta falha sozinha sem derrubar as outras.
 

@@ -152,6 +152,10 @@ Skill é instrução que o agente executa com o acesso da pessoa. Por isso entra
 
 Consulta ao vivo ao `www.rfc-editor.org` (`/rfc/rfcN.json` para metadados e `/rfc/rfcN.txt` para os trechos). **Licença:** IETF Trust Legal Provisions (TLP 5), seção 3.c, permite copiar e distribuir documentos do IETF integralmente e sem modificação, com atribuição ao IETF e ao RFC; acima de um quinto do texto exige os avisos legais originais. Por isso a ferramenta devolve metadados e **trechos literais curtos** (até 3, 900 caracteres), nunca o RFC inteiro, e nunca resume o texto dentro do campo do trecho. Derivados (resumos, traduções) não são licença concedida: o resumo vem do campo `abstract` do próprio RFC Editor. Verificado em 26/11/2026 para os RFCs 4271, 2328 e 4301. O `status` do JSON é o nível atual; o cabeçalho do `.txt` mostra o da publicação. Confira `obsoleta_por` e `atualizada_por` antes de afirmar o comportamento atual.
 
+### CIRCL hashlookup (hash de arquivo conhecido)
+
+Ao vivo em `hashlookup.circl.lu/lookup/{md5|sha1|sha256}/{hash}`, sem chave. `ioc_consultar` e `POST /v1/ioc` acrescentam o campo `hashlookup` a cada hash: `conhecido`, arquivo, tamanho, origem (NSRL e outras), base, confiança do CIRCL (50 é "sem opinião") e produto. Até 50 hashes distintos por chamada, cache de 24 h; falha de um hash não derruba os outros (`indisponivel`). **Estar na lista não prova que o arquivo é seguro, e não estar não prova que é malicioso.** Licença: dados CC-BY, uso comercial permitido com referência a `circl.lu/services/hashlookup/` (a resposta cita a fonte).
+
 ### Wazuh (regras e decoders por id)
 
 Base embutida, como o ATT&CK: `scripts/gerar-wazuh.mjs <pasta-ruleset> <tag> <commit>` lê `ruleset/rules` e `ruleset/decoders` do repositório oficial (github.com/wazuh/wazuh, tag de release) e grava `src/fontes/dados/wazuh.json` (~1 MB, carregado só quando alguém pergunta de Wazuh). Não há coleta: atualizar é regenerar, abrir o PR e fazer o deploy; a resposta avisa quando a base passa de 120 dias.

@@ -2,6 +2,7 @@
 import { type EnvFontes, limpar, selo, type Selo, viaCache } from "./base";
 import { buscarDocOficial } from "./docs";
 import { exportarLista, filtroLista, iocConsultar, iocNovidades, MAX_VALORES, NOTA_IOC } from "./ioc";
+import { enriquecerHashes } from "./circl";
 import { carregarAttack, mitreTecnica, seloMitre } from "./mitre";
 import { carregarSkills, lerSkill, listarSkills } from "./skills-fabricante";
 import { internetEstado } from "./radar";
@@ -273,7 +274,7 @@ export const FERRAMENTAS_FONTES = [
   {
     name: "ioc_consultar",
     description:
-      `Consulta indicadores (IP, domínio, URL ou hash MD5/SHA-1/SHA-256) nas fontes abertas de ameaças coletadas pelo ness.know (Feodo Tracker do abuse.ch e redes do DROP; ThreatFox, URLhaus e MalwareBazaar estão pausados por licença). Para cada valor mostra o que cada fonte lista (família, tipo de ameaça, confiança, primeira e última vez visto, validade), as URLs listadas num IP ou domínio e, para IP ou rede (CIDR), as redes listadas no DROP que o contêm ou se sobrepõem. NÃO dá veredito: se as fontes divergem, mostra a divergência; não listado não significa seguro. Aceita valor ofuscado (hxxp, [.]) e ip:porta. Até ${MAX_VALORES} valores. Consulte o indicador, nunca o nome do cliente.`,
+      `Para hashes, acrescenta o CIRCL hashlookup (arquivo conhecido, ao vivo; não é veredito). Consulta indicadores (IP, domínio, URL ou hash MD5/SHA-1/SHA-256) nas fontes abertas de ameaças coletadas pelo ness.know (Feodo Tracker do abuse.ch e redes do DROP; ThreatFox, URLhaus e MalwareBazaar estão pausados por licença). Para cada valor mostra o que cada fonte lista (família, tipo de ameaça, confiança, primeira e última vez visto, validade), as URLs listadas num IP ou domínio e, para IP ou rede (CIDR), as redes listadas no DROP que o contêm ou se sobrepõem. NÃO dá veredito: se as fontes divergem, mostra a divergência; não listado não significa seguro. Aceita valor ofuscado (hxxp, [.]) e ip:porta. Até ${MAX_VALORES} valores. Consulte o indicador, nunca o nome do cliente.`,
     inputSchema: { type: "object", properties: { valores: { type: "array", items: { type: "string" }, description: `IPs, domínios, URLs ou hashes, até ${MAX_VALORES}` } }, required: ["valores"] },
     annotations: { readOnlyHint: true },
   },
@@ -462,7 +463,9 @@ export async function chamarFonte(env: EnvFontes, nome: string, args: Record<str
   if (nome === "ioc_consultar") {
     const valores = Array.isArray(args.valores) ? args.valores : [];
     if (!valores.length) return erro("informe valores (IPs, domínios, URLs ou hashes)");
-    return json(await iocConsultar(db, valores, agora));
+    const r = await iocConsultar(db, valores, agora);
+    const circl = await enriquecerHashes(db, r.resultados, agora, fetch);
+    return json({ ...r, fontes: [...r.fontes, ...circl.fontes], ...(circl.aviso ? { nota_hashlookup: circl.aviso } : {}) });
   }
   if (nome === "ioc_novidades") {
     const r = await iocNovidades(db, args, agora);

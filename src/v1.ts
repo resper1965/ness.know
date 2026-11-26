@@ -1,6 +1,7 @@
 // API em lote para o ness.OS (somente leitura): mesma credencial nesskb_ do /mcp, outro formato. Conhecimento público: sem escopo por pacote.
 import { clienteDe, type EnvMcp, recusar, tokenDe } from "./mcp";
 import { consultarCves, estadoFontes, MAX_CVES_LOTE } from "./fontes/ferramentas";
+import { enriquecerHashes } from "./fontes/circl";
 import { exportarLista, filtroLista, iocConsultar } from "./fontes/ioc";
 
 /** Até 300 por chamada: cada indicador faz até 3 consultas ao D1, que limita 1.000 por requisição. */
@@ -41,7 +42,10 @@ export async function v1(req: Request, env: EnvMcp, caminho: string): Promise<Re
     const corpo = (await req.json().catch(() => null)) as { valores?: unknown } | null;
     if (!Array.isArray(corpo?.valores) || !corpo.valores.length) return erro("informe valores: lista de IPs, domínios, URLs ou hashes", 400);
     if (corpo.valores.length > MAX_IOC_LOTE) return erro(`até ${MAX_IOC_LOTE} valores por chamada`, 400);
-    return Response.json(await iocConsultar(env.DB, corpo.valores, new Date(), MAX_IOC_LOTE));
+    const agora = new Date();
+    const r = await iocConsultar(env.DB, corpo.valores, agora, MAX_IOC_LOTE);
+    const circl = await enriquecerHashes(env.DB, r.resultados, agora, fetch);
+    return Response.json({ ...r, fontes: [...r.fontes, ...circl.fontes], ...(circl.aviso ? { nota_hashlookup: circl.aviso } : {}) });
   }
   // O que entrou desde o cursor: o ness.OS guarda `cursor` e o manda de volta em `desde`.
   if (caminho === "/v1/novidades" && req.method === "GET") {
