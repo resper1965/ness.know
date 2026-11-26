@@ -228,7 +228,7 @@ export const FERRAMENTAS_FONTES = [
   {
     name: "buscar_doc_oficial",
     description:
-      "Busca na documentação OFICIAL do fabricante, ao vivo, e devolve trecho curto + link + data da consulta (não é cópia). Produtos: microsoft (Microsoft Learn: Microsoft 365, Entra, Exchange, Azure, Defender), cloudflare (DNS, Access, Zero Trust, WAF, Workers, D1, KV, R2, portal MCP) e cloudflare-blog (anúncios e mudanças de produto). Use antes de responder de memória sobre esses produtos e cite o link. Google Workspace, GLPI, Datto RMM, Atera, Action1 e Fortinet não têm fonte oficial pesquisável aqui.",
+      "Busca na documentação OFICIAL do fabricante, ao vivo, e devolve trecho curto + link + data da consulta (não é cópia). Produtos: microsoft (Microsoft Learn: Active Directory, Windows Server e cliente, PowerShell e cmdlets, Group Policy, IDs de evento, Microsoft 365, Entra, Exchange, Azure, Defender), cloudflare (DNS, Access, Zero Trust, WAF, Workers, D1, KV, R2, portal MCP) e cloudflare-blog (anúncios e mudanças de produto). Use antes de responder de memória sobre esses produtos e cite o link. Google Workspace, GLPI, Datto RMM, Atera, Action1 e Fortinet não têm fonte oficial pesquisável aqui.",
     inputSchema: {
       type: "object",
       properties: {
