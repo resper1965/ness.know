@@ -26,6 +26,10 @@ Nada interno da ness. entra aqui (playbooks, runbooks, clientes, chamados, logs,
 | Documentação da Cloudflare (MCP público) | ao vivo, cache de 10 min | sob demanda | n/a | Documentação pública; só trecho curto com link | não |
 | Blog da Cloudflare (MCP público) | ao vivo, cache de 10 min | sob demanda | n/a | Blog público; só trecho curto com link | não |
 | Páginas de status: Cloudflare, Atera, Kaseya (Datto RMM), Google Workspace, Azure, Action1 | ao vivo, cache de 2 min | sob demanda | n/a | Páginas públicas | não |
+| Feodo Tracker (abuse.ch) | lote | a cada 1 h | 6 h; indicador vale 3 dias | Dados abertos do abuse.ch (CC0 segundo o projeto; termos a conferir) | não |
+| ThreatFox (abuse.ch) | lote | a cada 1 h | 6 h; indicador vale 7 dias | idem | sim (`ABUSECH_AUTH_KEY`, gratuita) |
+| URLhaus (abuse.ch) | lote | a cada 1 h | 6 h; indicador vale 7 dias | idem | sim (`ABUSECH_AUTH_KEY`) |
+| MalwareBazaar (abuse.ch) | lote | a cada 30 min | 3 h; indicador vale 7 dias | idem | sim (`ABUSECH_AUTH_KEY`) |
 | Cloudflare Radar (API REST) | ao vivo, cache de 5 min | sob demanda | n/a | Token gratuito, permissão Account > Radar > Read | sim (`RADAR_API_TOKEN`) |
 
 O **prazo** do KEV é o da diretiva BOD da CISA para agências federais dos EUA. Para clientes da ness., é referência de urgência, não obrigação; a resposta repete isso.
@@ -42,6 +46,9 @@ O **prazo** do KEV é o da diretiva BOD da CISA para agências federais dos EUA.
 | `buscar_doc_oficial` | `produto` (`microsoft`, `cloudflare`, `cloudflare-blog`), `consulta`, `limite?` (1 a 5) | Até 5 trechos de até 1.200 caracteres, cada um com título, link oficial e a data da consulta |
 | `status_provedor` | `provedor` (`cloudflare`, `atera`, `datto-rmm`, `google-workspace`, `azure`, `action1`) | `estado` (`incidentes_abertos`, `manutencao_programada` ou `sem_incidentes_abertos`), incidentes e manutenções com link oficial |
 | `internet_estado` | `pais?` (2 letras), `asn?`, `desde?` (AAAA-MM-DD; padrão 7 dias) | Quedas por país e ASN; com `asn`, sequestros de BGP que envolvem esse ASN |
+| `ioc_consultar` | `valores[]` (até 50 IPs, domínios, URLs ou hashes) | Por valor: o que cada fonte lista (família, ameaça, confiança, primeira e última vez visto, validade), URLs do host e a divergência entre fontes. **Sem veredito** |
+| `ioc_novidades` | `tipo?`, `familia?`, `desde?`, `pagina?` | Indicadores que entraram (50 por página), com total |
+| `exportar_lista` | `tipo`, `fonte?`, `confianca_min?`, `formato?` (`texto`, `csv`, `cdb`), `limite?` | Lista vigente para aplicar (até 2.000 linhas); a inteira sai em `GET /v1/listas/{tipo}` |
 | `saude_fontes` | nenhuma | Estado, frescor, erro, frequência, TTL e licença de cada fonte |
 
 Para sistemas (ness.OS): `POST /v1/cve` com `{"cves": [...]}` (até 500) e `Authorization: Bearer nesskb_…`. Devolve o mesmo formato, sem NVD. Limite por chave: o mesmo `LIMITE_MCP`.
@@ -63,6 +70,16 @@ O ness.know chama os MCP públicos da Microsoft (`learn.microsoft.com/api/mcp`) 
 - **`internet_estado`** usa o Cloudflare Radar. Precisa do secret `RADAR_API_TOKEN`: token de API com **Account > Radar > Read** e nada mais (`npx wrangler secret put RADAR_API_TOKEN`). Sem ele, a resposta diz que não está configurado e não chama nada. Quedas por país e ASN; sequestros de BGP só com `asn`, e o resultado é conferido aqui (só ficam os eventos que envolvem o ASN). Cache de 5 minutos.
 - Falha de qualquer página ou do Radar não é cacheada e vem com `indisponivel` e um aviso para o agente **não concluir que está tudo bem**.
 - Fora desta etapa: `url_scan` (o URL Scanner do Radar é por conta e criaria registro na conta da ness., ver lacunas), anomalias de tráfego e vazamentos de rota do Radar.
+
+### Inteligência de ameaças (abuse.ch)
+
+- **Coleta em lote, sem consulta por indicador:** nenhuma pergunta gasta cota de terceiros, e a consulta fala do indicador, nunca do cliente. O ness.know só registra o nome da ferramenta no uso, não o valor consultado.
+- **Normalização** (`indicadores`): tipo (`ip`, `dominio`, `url`, `hash`), valor em forma canônica, fonte, família, tipo de ameaça, confiança (só se a fonte informa; desconhecido fica vazio, nunca zero), tags, primeiro e último visto, validade. Valor com quebra de linha, espaço ou formato inválido é descartado.
+- **Validade:** o indicador vale 3 dias (Feodo) ou 7 dias (os demais) sem reaparecer na fonte. Passado o prazo, vira `expirado`, continua visível como expirado e é apagado 90 dias depois. As consultas já respeitam o prazo sem esperar o cron.
+- **Sem veredito:** não listado não significa seguro; listado não significa comprometido. Se as fontes divergem (família ou confiança), a resposta mostra a divergência e não escolhe. A resposta traz o frescor de todas as fontes, porque "não listado" só vale com a coleta em dia.
+- **`exportar_lista`:** o ness.know não bloqueia nada. A lista é entrada para o processo de aprovação do ness.OS. Com `confianca_min`, quem não informa confiança fica de fora. A lista CDB do Wazuh (`chave:valor`) não aceita URL nem IPv6 (a chave não pode ter `:`); o IPv6 é omitido e contado.
+- **Chave:** ThreatFox, URLhaus e MalwareBazaar exigem Auth-Key gratuita (auth.abuse.ch) no secret `ABUSECH_AUTH_KEY` (`npx wrangler secret put ABUSECH_AUTH_KEY --name ness-know`). Sem ela, essas três registram o erro em `saude_fontes` e o Feodo segue.
+- **Fora desta etapa** (licença por confirmar, ver lacunas 8.5): Spamhaus DROP, ransomware.live, MISP/CIRCL, VirusTotal, AbuseIPDB e Shodan InternetDB.
 
 ## Operação
 
