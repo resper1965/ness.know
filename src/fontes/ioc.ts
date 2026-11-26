@@ -66,9 +66,9 @@ export async function iocConsultar(db: D1Database, valores: unknown[], agora: Da
       resultados.push({ valor, tipo, aviso: "É um CVE: use cve_consultar." });
       continue;
     }
-    const linhas = (await db.prepare("SELECT * FROM indicadores WHERE tipo = ? AND valor = ? ORDER BY expirado, ultimo_visto DESC LIMIT 10").bind(tipo, valor).all<Linha>()).results;
+    const linhas = (await db.prepare("SELECT * FROM indicadores WHERE tipo = ? AND valor = ? AND fonte IN (SELECT id FROM fontes WHERE ativa = 1) ORDER BY expirado, ultimo_visto DESC LIMIT 10").bind(tipo, valor).all<Linha>()).results;
     const regs = linhas.map((l) => registro(l, agora));
-    const doHost = tipo === "ip" || tipo === "dominio" ? (await db.prepare("SELECT * FROM indicadores WHERE tipo = 'url' AND host = ? AND expirado = 0 AND expira_em >= ? ORDER BY ultimo_visto DESC LIMIT 5").bind(valor, agora.toISOString()).all<Linha>()).results : [];
+    const doHost = tipo === "ip" || tipo === "dominio" ? (await db.prepare("SELECT * FROM indicadores WHERE tipo = 'url' AND host = ? AND expirado = 0 AND expira_em >= ? AND fonte IN (SELECT id FROM fontes WHERE ativa = 1) ORDER BY ultimo_visto DESC LIMIT 5").bind(valor, agora.toISOString()).all<Linha>()).results : [];
     for (const r of [...regs, ...doHost]) usadas.add(r.fonte);
     const div = divergencia(regs);
     resultados.push({
@@ -105,7 +105,7 @@ export async function iocNovidades(db: D1Database, args: Record<string, unknown>
     if (!Number.isFinite(t)) return { erro: "desde deve ser uma data (AAAA-MM-DD ou AAAA-MM-DDThh:mm:ssZ)" };
     desde = new Date(t).toISOString();
   }
-  const onde = ["expirado = 0", "expira_em >= ?", "primeiro_visto >= ?"];
+  const onde = ["expirado = 0", "expira_em >= ?", "primeiro_visto >= ?", "fonte IN (SELECT id FROM fontes WHERE ativa = 1)"];
   const binds: unknown[] = [agora.toISOString(), desde];
   if (tipo) (onde.push("tipo = ?"), binds.push(tipo));
   if (fam) (onde.push("familia LIKE ? ESCAPE '\\'"), binds.push(`%${fam.replace(/[\\%_]/g, "\\$&")}%`));
@@ -150,7 +150,7 @@ const csv = (v: unknown) => {
 };
 
 export async function exportarLista(db: D1Database, f: FiltroLista, limite: number, agora: Date) {
-  const onde = ["tipo = ?", "expirado = 0", "expira_em >= ?"];
+  const onde = ["tipo = ?", "expirado = 0", "expira_em >= ?", "fonte IN (SELECT id FROM fontes WHERE ativa = 1)"];
   const binds: unknown[] = [f.tipo, agora.toISOString()];
   if (f.fonte) (onde.push("fonte = ?"), binds.push(f.fonte));
   // Confiança desconhecida fica vazia, nunca zero: com mínimo pedido, quem não informa confiança fica de fora.

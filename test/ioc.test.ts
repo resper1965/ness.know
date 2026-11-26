@@ -48,8 +48,14 @@ const todas = { [FEODO]: feodoJson, [TF]: threatfoxJson, [UH]: urlhausJson, [MB]
 
 const um = async <U>(DB: D1Database, sql: string, ...b: unknown[]) => (await DB.prepare(sql).bind(...b).first<U>())!;
 const linhas = async <U>(DB: D1Database, sql: string, ...b: unknown[]) => (await DB.prepare(sql).bind(...b).all<U>()).results;
-async function carregado() {
+/** Banco com as três fontes do abuse.ch ativas, como se a assinatura comercial existisse: a migração 0016 as deixa pausadas. */
+async function comAbuseCh() {
   const DB = bancoTeste(...migracoes());
+  await DB.prepare("UPDATE fontes SET ativa = 1 WHERE id IN ('threatfox', 'urlhaus', 'malwarebazaar')").run();
+  return DB;
+}
+async function carregado() {
+  const DB = await comAbuseCh();
   await executarFontes({ DB, ABUSECH_AUTH_KEY: CHAVE }, { agora: T, buscar: rede(todas).buscar });
   return DB;
 }
@@ -78,7 +84,7 @@ describe("coleta dos indicadores", () => {
   });
 
   it("manda a Auth-Key só no cabeçalho; sem a chave, o abuse.ch registra o erro e o Feodo segue", async () => {
-    const DB = bancoTeste(...migracoes());
+    const DB = await comAbuseCh();
     const r = rede(todas);
     await executarFontes({ DB }, { agora: T, buscar: r.buscar });
     expect((await um<{ n: number }>(DB, "SELECT count(*) AS n FROM indicadores WHERE fonte = 'feodo'")).n).toBe(1);
@@ -123,6 +129,39 @@ describe("coleta dos indicadores", () => {
     expect((await um<{ expirado: number }>(DB, "SELECT expirado FROM indicadores WHERE valor = 'midtownbrewing.net'")).expirado).toBe(1);
     await executarFontes({ DB, ABUSECH_AUTH_KEY: CHAVE }, { agora: dias(8), buscar: rede(todas).buscar, so: "threatfox" });
     expect(await um(DB, "SELECT expirado, primeiro_visto, ultimo_visto FROM indicadores WHERE valor = 'midtownbrewing.net'")).toEqual({ expirado: 0, primeiro_visto: T.toISOString(), ultimo_visto: dias(8).toISOString() });
+  });
+});
+
+describe("fonte pausada (licença)", () => {
+  it("a coleta pula a fonte, o selo diz que está pausada e os dados dela somem de consulta, novidades e exportação (voltam ao retomar)", async () => {
+    const DB = await carregado();
+    await DB.prepare("UPDATE fontes SET ativa = 0 WHERE id IN ('threatfox', 'urlhaus', 'malwarebazaar')").run();
+    const r = rede(todas);
+    await executarFontes({ DB, ABUSECH_AUTH_KEY: CHAVE }, { agora: dias(1), buscar: r.buscar });
+    expect(r.chamadas.filter((c) => /threatfox|urlhaus|mb-api/.test(c.url))).toHaveLength(0); // nem chamou
+    const j = (await ferr(DB, "ioc_consultar", { valores: ["203.0.113.7", "midtownbrewing.net"] }, dias(1))).j;
+    expect(j.resultados[0]).toMatchObject({ valor: "203.0.113.7", registros: [], listado: false });
+    expect(j.resultados[0].urls_no_host).toBeUndefined();
+    expect(j.resultados[1].registros).toEqual([]);
+    const pausada = j.fontes.find((f: { fonte: string }) => f.fonte === "ThreatFox (abuse.ch)");
+    expect(pausada).toMatchObject({ frescor: "pausada" });
+    expect(pausada.aviso).toContain("pausada");
+    expect(j.fontes.find((f: { fonte: string }) => f.fonte === "Feodo Tracker (abuse.ch)").aviso).toBeUndefined();
+    expect((await ferr(DB, "ioc_novidades", {}, dias(1))).j.total).toBe(1); // só o Feodo
+    expect((await ferr(DB, "exportar_lista", { tipo: "url" }, dias(1))).j.total).toBe(0);
+    expect((await ferr(DB, "exportar_lista", { tipo: "ip" }, dias(1))).j.conteudo).toBe("162.243.103.246");
+    // retomar traz de volta o que ainda está na validade
+    await DB.prepare("UPDATE fontes SET ativa = 1 WHERE id = 'threatfox'").run();
+    expect((await ferr(DB, "ioc_consultar", { valores: ["midtownbrewing.net"] }, horas(2))).j.resultados[0].registros).toHaveLength(1);
+  });
+
+  it("a migração 0016 deixa as três pausadas, com a licença certa, e o Feodo ativo como CC0", async () => {
+    const DB = bancoTeste(...migracoes());
+    const f = (id: string) => DB.prepare("SELECT ativa, licenca, termos_url FROM fontes WHERE id = ?").bind(id).first<{ ativa: number; licenca: string; termos_url: string }>();
+    for (const id of ["threatfox", "urlhaus", "malwarebazaar"]) expect(await f(id)).toMatchObject({ ativa: 0, termos_url: "https://abuse.ch/terms-of-use/" });
+    expect((await f("threatfox"))!.licenca).toContain("assinatura paga");
+    expect(await f("feodo")).toMatchObject({ ativa: 1 });
+    expect((await f("feodo"))!.licenca).toContain("CC0");
   });
 });
 

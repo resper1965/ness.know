@@ -24,6 +24,8 @@ export interface Fonte {
   etag: string | null;
   itens: number;
   modo: string;
+  ativa: number;
+  licenca: string | null;
   ultimo_erro: string | null;
 }
 
@@ -102,6 +104,10 @@ export async function selo(db: D1Database, id: string, agora = new Date()): Prom
   const f = await db.prepare("SELECT * FROM fontes WHERE id = ?").bind(id).first<Fonte>();
   if (!f) return null;
   const idade = f.ultimo_sucesso ? agora.getTime() - Date.parse(f.ultimo_sucesso) : null;
+  if (!f.ativa) {
+    // Fonte pausada (por exemplo, por licença): não é coletada e seus dados não entram nas respostas.
+    return { sistema: "ness.know", fonte: f.nome, versao: f.versao, coletado_em: f.ultimo_sucesso, atribuicao: f.atribuicao, url: f.url, frescor: "pausada", citar: `Fonte: ${f.nome} (pausada)`, aviso: `Fonte pausada: não está sendo coletada e não entra nesta resposta.${f.licenca ? ` Motivo: ${f.licenca}` : ""}` };
+  }
   if (f.modo === "ao_vivo") {
     // Consulta ao vivo: o dado é de agora; só avisa se a última tentativa falhou.
     const falhou = !!f.ultimo_erro && (!f.ultimo_sucesso || f.ultimo_erro >= f.ultimo_sucesso);
