@@ -39,6 +39,8 @@ O **prazo** do KEV é o da diretiva BOD da CISA para agências federais dos EUA.
 
 ## Ferramentas
 
+Na interface de administração, a aba **Fontes** lista cada fonte (coleta periódica, consulta ao vivo ou base embutida) com versão, última coleta, itens, estado e licença (resumo com "ver mais"). É somente leitura e usa `GET /api/fontes`, o mesmo dado da ferramenta `saude_fontes`.
+
 | Ferramenta | Entrada | Saída |
 | --- | --- | --- |
 | `cve_consultar` | `cves[]` (até 20) | Por CVE: KEV, EPSS e percentil, CVSS e CWEs do NVD, avisos de fabricante |

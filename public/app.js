@@ -200,6 +200,41 @@ $("#copiar-mensagem").addEventListener("click", async (e) => {
 $("#url-mcp").textContent = URL_MCP;
 mostrarReceita();
 
+/* ---------- Fontes (somente leitura) ---------- */
+const quandoIso = (s) => quando(s ? s.replace(/Z$/, "") : s); // as fontes devolvem ISO com Z; quando() espera o formato do banco
+const TIPO_FONTE = { lote: "Coleta periódica", ao_vivo: "Consulta ao vivo", embutido: "Base embutida" };
+function estadoFonte(f) {
+  if (!f.ativa) return ["Pausada", "vencendo"];
+  if (f.ultimo_erro) return ["Com erro", "vencendo"];
+  if (f.aviso) return ["Desatualizada", "vencendo"];
+  return [{ lote: "Em dia", ao_vivo: "Ao vivo", embutido: "Embutida" }[f.modo] ?? "Em dia", null];
+}
+function licencaFonte(texto) {
+  const t = texto || "—";
+  if (t.length <= 110) return el("span", t, "sub");
+  const d = el("details", null, "sub");
+  d.append(el("summary", `${t.slice(0, 100).trimEnd()}… ver mais`), el("p", t));
+  return d;
+}
+async function carregarFontes() {
+  $("#lista-fontes").replaceChildren(...esqueleto(5));
+  const fontes = await api("/api/fontes");
+  $("#n-fontes").textContent = fontes.length || "";
+  $("#lista-fontes").replaceChildren(
+    ...(fontes.length
+      ? fontes.map((f) => {
+          const [estado, cls] = estadoFonte(f);
+          const nome = [el("strong", f.fonte || f.id), el("code", f.id, "sub"), licencaFonte(f.licenca)];
+          if (f.ultimo_erro && f.erro) nome.push(el("span", `Erro: ${f.erro}`, "sub vencendo"));
+          const coleta = f.modo === "embutido" ? [`Gerada em ${f.coletado_em ? fmtData.format(new Date(f.coletado_em)) : "—"}`] : f.modo === "ao_vivo" ? ["Sob consulta", el("span", f.coletado_em ? `última ${quandoIso(f.coletado_em)}` : "ainda não consultada", "sub")] : [quandoIso(f.coletado_em), el("span", f.frescor || "", "sub")];
+          const tr = el("tr");
+          tr.append(celula(nome), celula([TIPO_FONTE[f.modo] ?? f.modo, f.versao ? el("span", `versão ${f.versao}`, "sub") : null], "esconde-estreito"), celula(coleta, "esconde-estreito"), celula(f.modo === "ao_vivo" ? "—" : String(f.itens ?? "—"), "num"), celula(el("span", estado, cls ? `sub ${cls}` : null)));
+          return tr;
+        })
+      : [vazio(5, "Nenhuma fonte cadastrada", "As fontes entram pelo catálogo do ness.know.")]),
+  );
+}
+
 /* ---------- Pacotes ---------- */
 async function carregarPacotes() {
   $("#lista-pacotes").replaceChildren(...esqueleto(4));
@@ -796,6 +831,7 @@ async function comRetentativa(carregar, tbody, colunas, titulo) {
     if (err instanceof SemAcesso) return falhou(err);
   }
   await comRetentativa(carregarPacotes, $("#lista-pacotes"), 4, "Não foi possível carregar os pacotes. ");
+  await comRetentativa(carregarFontes, $("#lista-fontes"), 5, "Não foi possível carregar as fontes. ");
   await comRetentativa(carregarChaves, $("#lista-chaves"), 4, "Não foi possível carregar as chaves. ");
   await comRetentativa(carregarAcesso, $("#lista-pessoas"), 3, "Não foi possível carregar as regras de acesso. ");
   await comRetentativa(carregarEnvio, $("#lista-envio"), 3, "Não foi possível carregar as chaves de envio. ");

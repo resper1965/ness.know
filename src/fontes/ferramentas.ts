@@ -61,6 +61,18 @@ function itemKev(k: LinhaKev) {
 
 const aberto = async <T>(db: D1Database, sql: string, ...binds: unknown[]) => (await db.prepare(sql).bind(...binds).all<T>()).results;
 
+/** Estado de cada fonte (catálogo, bases embutidas incluídas). Usado pela ferramenta saude_fontes e pela página Fontes do admin. */
+export async function estadoFontes(db: D1Database, agora: Date) {
+  const linhas = await aberto<{ id: string; modo: string; frequencia_min: number; ttl_horas: number; itens: number; ultimo_erro: string | null; erro_msg: string | null; licenca: string; exige_chave: number; ativa: number }>(
+    db,
+    "SELECT id, modo, frequencia_min, ttl_horas, itens, ultimo_erro, erro_msg, licenca, exige_chave, ativa FROM fontes ORDER BY ordem, id",
+  );
+  const fontes = await Promise.all(linhas.map(async (f) => ({ id: f.id, ...(await selo(db, f.id, agora)), modo: f.modo, frequencia_min: f.frequencia_min, ttl_horas: f.ttl_horas, itens: f.itens, licenca: f.licenca, exige_chave: !!f.exige_chave, ativa: !!f.ativa, ultimo_erro: f.ultimo_erro, erro: f.erro_msg })));
+  const mitre = seloMitre(await carregarAttack(), agora);
+  const wazuh = seloWazuh(await carregarWazuh(), agora);
+  return [...fontes, { id: "mitre", ...mitre, modo: "embutido", licenca: "Uso livre com atribuição à MITRE (termos de uso do ATT&CK)", exige_chave: false, ativa: true }, { id: "wazuh", ...wazuh, modo: "embutido", licenca: "GPLv2 (© Wazuh, Inc.); só metadados, com atribuição", exige_chave: false, ativa: true }];
+}
+
 interface Epss {
   score: number;
   percentil: number;
@@ -485,15 +497,6 @@ export async function chamarFonte(env: EnvFontes, nome: string, args: Record<str
     const r = await ransomwareAtividade(db, args, agora);
     return "erro" in r ? erro(String(r.erro)) : json(r);
   }
-  if (nome === "saude_fontes") {
-    const linhas = await aberto<{ id: string; modo: string; frequencia_min: number; ttl_horas: number; itens: number; ultimo_erro: string | null; erro_msg: string | null; licenca: string; exige_chave: number; ativa: number }>(
-      db,
-      "SELECT id, modo, frequencia_min, ttl_horas, itens, ultimo_erro, erro_msg, licenca, exige_chave, ativa FROM fontes ORDER BY ordem, id",
-    );
-    const fontes = await Promise.all(linhas.map(async (f) => ({ id: f.id, ...(await selo(db, f.id, agora)), modo: f.modo, frequencia_min: f.frequencia_min, ttl_horas: f.ttl_horas, itens: f.itens, licenca: f.licenca, exige_chave: !!f.exige_chave, ativa: !!f.ativa, ultimo_erro: f.ultimo_erro, erro: f.erro_msg })));
-    const mitre = seloMitre(await carregarAttack(), agora);
-    const wazuh = seloWazuh(await carregarWazuh(), agora);
-    return json({ fontes: [...fontes, { id: "mitre", ...mitre, modo: "embutido", licenca: "Uso livre com atribuição à MITRE (termos de uso do ATT&CK)", exige_chave: false, ativa: true }, { id: "wazuh", ...wazuh, modo: "embutido", licenca: "GPLv2 (© Wazuh, Inc.); só metadados, com atribuição", exige_chave: false, ativa: true }], nota: NOTA_CONTEUDO });
-  }
+  if (nome === "saude_fontes") return json({ fontes: await estadoFontes(db, agora), nota: NOTA_CONTEUDO });
   return null;
 }
