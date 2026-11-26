@@ -3,12 +3,13 @@
 import { avisosFortinet, avisosMsrc } from "./avisos";
 import { type Adaptador, type EnvFontes, type Fonte, limpar } from "./base";
 import { epss } from "./epss";
+import { metasploit, nuclei } from "./exploits";
 import { feodo, malwarebazaar, spamhausDrop, threatfox, urlhaus } from "./indicadores";
 import { kev } from "./kev";
 import { purgarVitimas, ransomwareLive } from "./ransomware";
 
 /** Uma linha em `fontes` + um adaptador aqui = fonte nova (docs/fontes.md). */
-export const ADAPTADORES: Record<string, Adaptador> = { kev, epss, msrc: avisosMsrc, fortinet: avisosFortinet, feodo, threatfox, urlhaus, malwarebazaar, "spamhaus-drop": spamhausDrop, "ransomware-live": ransomwareLive };
+export const ADAPTADORES: Record<string, Adaptador> = { kev, epss, msrc: avisosMsrc, fortinet: avisosFortinet, feodo, threatfox, urlhaus, malwarebazaar, "spamhaus-drop": spamhausDrop, "ransomware-live": ransomwareLive, metasploit, nuclei };
 
 const RETENCAO_DIAS = 90;
 const TOLERANCIA_MS = 5 * 60_000; // o cron não cai no segundo exato
@@ -54,6 +55,8 @@ export async function purgar(db: D1Database, agora: Date): Promise<void> {
     db.prepare("DELETE FROM kev WHERE removido_em IS NOT NULL AND removido_em < ?").bind(corte),
     db.prepare("DELETE FROM cache WHERE expira_em < ?").bind(agora.toISOString()),
     purgarVitimas(db, agora),
+    // Exploit que saiu da origem fica marcado e só some 90 dias depois.
+    db.prepare("DELETE FROM exploits WHERE removido_em IS NOT NULL AND removido_em < ?").bind(corte),
     // Indicador que passou do prazo ou saiu da fonte fica marcado como expirado; só some 90 dias depois.
     db.prepare("UPDATE indicadores SET expirado = 1 WHERE expirado = 0 AND expira_em < ?").bind(agora.toISOString()),
     db.prepare("DELETE FROM indicadores WHERE expirado = 1 AND expira_em < ?").bind(corte),

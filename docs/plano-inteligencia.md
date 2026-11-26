@@ -47,14 +47,18 @@ Situação em 26/11/2026, depois da leitura dos termos (o que não foi possível
 
 ## Fase 2: vulnerabilidade com contexto de exploração
 
-| Entrega | Descrição |
-|---|---|
-| Disponibilidade de exploit por CVE | Exploit-DB, módulos do Metasploit, templates do Nuclei e PoCs públicos. Coleta periódica em tabela `exploits`, ligada ao `cve_consultar` ("existe exploit pronto?") |
-| Mais avisos de fabricante | Cisco, Palo Alto, Ivanti, VMware, Citrix e SonicWall, no molde de `avisos_fabricante` |
-| OSV e GitHub Advisories | Bibliotecas e pacotes (SCA), com o CVE e a versão corrigida |
-| CPE via NVD (M2) | `kev_buscar` por produto sem depender do nome que a CISA escreveu |
+Situação em 26/11/2026, depois da leitura de licenças:
 
-**Pronto quando:** `cve_consultar` mostra, para um CVE do KEV, o aviso do fabricante, o EPSS e se há exploit público, tudo com data.
+| Entrega | Situação |
+|---|---|
+| Metasploit (módulos) | **Feito.** BSD de 3 cláusulas. Índice (CVE, nome, tipo, data, link) em tabela `exploits`, ligado ao `cve_consultar` |
+| Nuclei (templates de CVE) | **Feito.** MIT. Mesmo molde; o template só verifica a falha, não explora |
+| Exploit-DB | **Fora.** Termos do site proíbem copiar o serviço; só entra com autorização da OffSec |
+| PoC-in-GitHub | **Fora.** Sem índice único (um JSON por CVE) e o repositório avisa que há malware |
+| Avisos de fabricante: Palo Alto e Ivanti | **Possível.** Há RSS público sem login (verificado); os termos de uso não foram lidos |
+| Avisos de fabricante: Cisco, Broadcom/VMware, Citrix, SonicWall | **Sem feed verificado.** Cisco só mostra CVRF e API openVuln (não lidos); Broadcom exige login; Citrix e SonicWall são páginas em JavaScript |
+| OSV e GitHub Advisories | **Adiado.** GitHub Advisory DB é CC-BY 4.0, mas a licença do OSV varia por fonte (há CC-BY-NC-ND) e o dump completo não cabe no Worker. Interessa mais a bibliotecas que a infraestrutura |
+| CPE via NVD (M2) | **Pendente.** O NVD limita a taxa |
 
 ## Fase 3: detecção
 
