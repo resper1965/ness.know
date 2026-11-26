@@ -62,6 +62,8 @@ Para sistemas (ness.OS): `POST /v1/cve` com `{"cves": [...]}` (até 500) e `Auth
 
 ### Documentação oficial (`buscar_doc_oficial`)
 
+Cobertura do produto `microsoft` (testada em 26/11/2026): o Learn já traz Active Directory (replicação com `repadmin`, Kerberos), Windows Server, Group Policy, IDs de evento de auditoria (4768, 4771) e a referência de cmdlets do PowerShell (`Get-ADUser`). O que faltava era o roteamento: a descrição da ferramenta só citava M365, Entra, Exchange, Azure e Defender, então o agente não a escolhia para essas perguntas. Fora do Learn: status do M365 (sem página pública) e Fortinet (lacuna).
+
 O ness.know chama os MCP públicos da Microsoft (`learn.microsoft.com/api/mcp`) e da Cloudflare (`docs.mcp.cloudflare.com/mcp` e `blog.mcp.cloudflare.com/mcp`) com `tools/call`, só com o texto da consulta (nenhum dado do usuário nem da empresa vai junto). O Learn não tem `maxTokenBudget`: o limite de tamanho é nosso (5 resultados, 1.200 caracteres cada).
 
 - Só vira citação o link `https` do host esperado de cada fonte; qualquer outro resultado é descartado.
