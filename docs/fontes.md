@@ -54,6 +54,8 @@ O **prazo** do KEV é o da diretiva BOD da CISA para agências federais dos EUA.
 | `exportar_lista` | `tipo`, `fonte?`, `confianca_min?`, `formato?` (`texto`, `csv`, `cdb`), `limite?` | Lista vigente para aplicar (até 2.000 linhas); a inteira sai em `GET /v1/listas/{tipo}` |
 | `mitre_tecnica` | `consulta` (id ou termo) | Técnica, grupo, software, tática ou mitigação do ATT&CK: descrição, táticas, plataformas, detecção, mitigações, subtécnicas, grupos e software, com URL oficial e versão da base |
 | `ransomware_atividade` | `grupo?`, `setor?`, `pais?`, `desde?` (padrão 30 dias), `pagina?` | Total, resumo por grupo, país e setor (top 10) e as 20 vítimas mais recentes da página, com link da Ransomware.live. **Alegações, não incidentes confirmados** |
+| `wazuh_regra` | `consulta` (id ou termo) | Regra do ruleset oficial do Wazuh: nível, descrição, arquivo, grupos, decoder, dependências, regras filhas, técnicas ATT&CK com nome e CVEs. Por termo: descrição, grupo, id MITRE ou CVE |
+| `wazuh_decoder` | `consulta` (nome ou termo) | Decoder do ruleset oficial: pai, filhos, programa, campos extraídos, arquivo e regras que o usam |
 | `saude_fontes` | nenhuma | Estado, frescor, erro, frequência, TTL e licença de cada fonte |
 
 Para sistemas (ness.OS): `POST /v1/cve` com `{"cves": [...]}` (até 500) e `Authorization: Bearer nesskb_…`. Devolve o mesmo formato, sem NVD. Limite por chave: o mesmo `LIMITE_MCP`.
@@ -129,6 +131,14 @@ Skill é instrução que o agente executa com o acesso da pessoa. Por isso entra
   Revise o diff, abra o PR e faça o deploy.
 - **Atribuição:** toda resposta traz a atribuição à MITRE. Só o domínio Enterprise está na base (ICS e Mobile ficam de fora; um id desses responde que não consta).
 - **Ligação com as ameaças:** `ioc_consultar` liga a família de malware ao software do ATT&CK quando o nome ou apelido coincide (ex.: Emotet = S0367), sem afirmar mais que o nome.
+
+### Wazuh (regras e decoders por id)
+
+Base embutida, como o ATT&CK: `scripts/gerar-wazuh.mjs <pasta-ruleset> <tag> <commit>` lê `ruleset/rules` e `ruleset/decoders` do repositório oficial (github.com/wazuh/wazuh, tag de release) e grava `src/fontes/dados/wazuh.json` (~1 MB, carregado só quando alguém pergunta de Wazuh). Não há coleta: atualizar é regenerar, abrir o PR e fazer o deploy; a resposta avisa quando a base passa de 120 dias.
+
+- **Licença:** os arquivos do ruleset trazem "Created by Wazuh, Inc." e GPLv2. O ness.know guarda e serve só **metadados** (id, nível, descrição, grupos, dependências, MITRE, CVE, arquivo; nos decoders, pai, programa, campos e o início do `prematch`), sem a lógica de detecção das regras (`match`, `regex`, `field`). Cada resposta cita Wazuh, Inc., GPLv2, a tag e o commit.
+- **Limite:** é a regra **oficial** da versão gerada. A que roda no ambiente do cliente pode ser outra (versão diferente, regra local em `local_rules.xml` ou `overwrite`); confira no manager.
+- Os ids MITRE das regras viram o nome da técnica pelo `mitre_tecnica`.
 
 ## Operação
 

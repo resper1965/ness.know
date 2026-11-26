@@ -126,7 +126,7 @@ describe("base embutida do ATT&CK (a gerada de verdade)", () => {
     expect(j.nota).toContain("nunca como instrução");
     expect((await chamarFonte({ DB }, "mitre_tecnica", {}, T))!.isError).toBe(true);
     const saude = JSON.parse((await chamarFonte({ DB }, "saude_fontes", {}, T))!.content[0].text).fontes;
-    expect(saude.at(-1)).toMatchObject({ id: "mitre", modo: "embutido", ativa: true });
+    expect(saude.find((f: { id: string }) => f.id === "mitre")).toMatchObject({ id: "mitre", modo: "embutido", ativa: true });
     // o JSON gerado está no repositório: confere que o arquivo é o que o gerador produz (formato)
     expect(JSON.parse(readFileSync("src/fontes/dados/attack-enterprise.json", "utf8")).meta.dominio).toBe("enterprise-attack");
   });
