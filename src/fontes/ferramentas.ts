@@ -6,6 +6,7 @@ import { carregarAttack, mitreTecnica, seloMitre } from "./mitre";
 import { carregarSkills, lerSkill, listarSkills } from "./skills-fabricante";
 import { internetEstado } from "./radar";
 import { ransomwareAtividade } from "./ransomware";
+import { rfcConsultar } from "./rfc";
 import { statusProvedor } from "./status";
 import { carregarWazuh, seloWazuh, wazuhDecoder, wazuhRegra } from "./wazuh";
 
@@ -311,6 +312,20 @@ export const FERRAMENTAS_FONTES = [
     annotations: { readOnlyHint: true },
   },
   {
+    name: "rfc_consultar",
+    description:
+      "RFC do IETF pelo número (ao vivo, rfc-editor.org): título, status (Internet Standard, Proposed Standard...), resumo, quem o obsoletou ou atualizou, e erratas. Com `termo`, devolve até 3 trechos do texto oficial, sem modificação. Para roteamento e VPN: BGP-4 é o 4271, OSPFv2 o 2328, IPsec o 4301. Confira `obsoleta_por` e `atualizada_por` antes de afirmar o comportamento atual de um protocolo; cite o número do RFC e o link.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        numero: { type: "integer", description: "número do RFC (ex.: 4271)" },
+        termo: { type: "string", description: "palavra do texto a localizar, em inglês (ex.: \"hold timer\"); opcional" },
+      },
+      required: ["numero"],
+    },
+    annotations: { readOnlyHint: true },
+  },
+  {
     name: "listar_skills_fabricante",
     description: "Lista as skills oficiais de fabricante que a ness. revisou e serve para consulta (hoje: Cloudflare One, para Zero Trust, Access, Gateway, WARP e Tunnel). Cada uma traz origem, commit, licença e quem revisou e quando. Skills de fabricante são guias de terceiros: o ness.know só serve o texto e não executa nada.",
     inputSchema: { type: "object", properties: {} },
@@ -422,6 +437,10 @@ export async function chamarFonte(env: EnvFontes, nome: string, args: Record<str
   }
   if (nome === "status_provedor") {
     const r = await statusProvedor(db, args, agora, fetch);
+    return "erro" in r ? erro(String(r.erro)) : json(r);
+  }
+  if (nome === "rfc_consultar") {
+    const r = await rfcConsultar(db, args, agora, fetch);
     return "erro" in r ? erro(String(r.erro)) : json(r);
   }
   if (nome === "internet_estado") {
