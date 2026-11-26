@@ -1,8 +1,9 @@
 // Indicadores de ameaça das fontes abertas do abuse.ch (Feodo Tracker, ThreatFox, URLhaus, MalwareBazaar), normalizados em `indicadores`.
 // Coleta em lote por cron; não há consulta ao vivo por indicador, então nenhuma cota de terceiros é gasta por pergunta.
 import { type Adaptador, baixar, type Contexto, gravarEmLotes, limpar, type Resultado } from "./base";
+import { chave as chaveIp, parseCidr } from "./rede";
 
-export type TipoIndicador = "ip" | "dominio" | "url" | "hash";
+export type TipoIndicador = "ip" | "dominio" | "url" | "hash" | "rede";
 export interface Indicador {
   tipo: TipoIndicador;
   valor: string;
@@ -29,6 +30,7 @@ export function normalizar(tipo: TipoIndicador, bruto: unknown): string | null {
   if (tipo === "ip") return IPV4.test(v) || (v.includes(":") && IPV6.test(v)) ? v.toLowerCase() : null;
   if (tipo === "dominio") return DOMINIO.test(v) && !IPV4.test(v) ? v.toLowerCase().replace(/\.$/, "") : null;
   if (tipo === "hash") return HASH.test(v) ? v.toLowerCase() : null;
+  if (tipo === "rede") return parseCidr(v)?.canon ?? null;
   return /^https?:\/\/[^\s/]+/i.test(v) && v.length <= MAX_URL ? v : null;
 }
 
@@ -57,16 +59,17 @@ export async function gravarIndicadores(db: D1Database, fonte: string, itens: In
   }
   await gravarEmLotes(
     db,
-    [...unicos].map(([id, i]) =>
-      db
+    [...unicos].map(([id, i]) => {
+      const faixa = i.tipo === "rede" ? parseCidr(i.valor) : null;
+      return db
         .prepare(
-          `INSERT INTO indicadores (id, tipo, valor, fonte, familia, ameaca, confianca, tags, host, referencia, data_fonte, primeiro_visto, ultimo_visto, expira_em, expirado)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+          `INSERT INTO indicadores (id, tipo, valor, fonte, familia, ameaca, confianca, tags, host, referencia, data_fonte, primeiro_visto, ultimo_visto, expira_em, expirado, ini, fim)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
            ON CONFLICT (id) DO UPDATE SET familia = excluded.familia, ameaca = excluded.ameaca, confianca = excluded.confianca, tags = excluded.tags, host = excluded.host,
-             referencia = excluded.referencia, data_fonte = excluded.data_fonte, ultimo_visto = excluded.ultimo_visto, expira_em = excluded.expira_em, expirado = 0`,
+             referencia = excluded.referencia, data_fonte = excluded.data_fonte, ultimo_visto = excluded.ultimo_visto, expira_em = excluded.expira_em, expirado = 0, ini = excluded.ini, fim = excluded.fim`,
         )
-        .bind(id, i.tipo, i.valor, fonte, i.familia ?? null, i.ameaca ?? null, i.confianca ?? null, JSON.stringify(i.tags ?? []), i.host ?? null, i.referencia ?? null, i.data_fonte ?? null, t, t, expira),
-    ),
+        .bind(id, i.tipo, i.valor, fonte, i.familia ?? null, i.ameaca ?? null, i.confianca ?? null, JSON.stringify(i.tags ?? []), i.host ?? null, i.referencia ?? null, i.data_fonte ?? null, t, t, expira, faixa ? chaveIp(faixa.fam, faixa.ini) : null, faixa ? chaveIp(faixa.fam, faixa.fim) : null);
+    }),
   );
   return unicos.size;
 }
@@ -190,4 +193,49 @@ export const malwarebazaar: Adaptador = async (c) => {
     itens.push({ ...comum, valor: x?.sha256_hash }, { ...comum, valor: x?.md5_hash });
   }
   return { alterado: true, itens: await gravarIndicadores(c.db, "malwarebazaar", itens, c.agora, 7) };
+};
+
+const URL_DROP_V6 = "https://www.spamhaus.org/drop/drop_v6.json";
+const MIN_REDES_V4 = 100; // o DROP v4 tem mais de mil redes; uma resposta pequena é arquivo cortado ou página de erro, não lista
+
+/** Lê o formato do DROP: uma linha JSON por rede ({cidr, sblid, rir}) e, no fim, uma linha de metadados com a contagem. */
+function lerDrop(texto: string, nome: string): { cidr: string; sblid: string; rir: string }[] {
+  const redes: { cidr: string; sblid: string; rir: string }[] = [];
+  let esperado: number | null = null;
+  for (const linha of texto.split("\n")) {
+    if (!linha.trim()) continue;
+    let o: any;
+    try {
+      o = JSON.parse(linha);
+    } catch {
+      throw new Error(`${nome}: linha fora do formato`);
+    }
+    if (o?.type === "metadata") esperado = Number(o.records);
+    else if (typeof o?.cidr === "string") redes.push({ cidr: o.cidr, sblid: limpar(o.sblid, 20), rir: limpar(o.rir, 20) });
+    else throw new Error(`${nome}: linha fora do formato`);
+  }
+  if (esperado === null || esperado !== redes.length) throw new Error(`${nome}: arquivo incompleto (metadados dizem ${esperado}, vieram ${redes.length})`);
+  return redes;
+}
+
+/** Spamhaus DROP (v4 e v6): lista completa. O que sai da lista expira na hora, porque os termos (4.2) pedem a lista em dia. */
+export const spamhausDrop: Adaptador = async (c) => {
+  const [r4, r6] = await Promise.all([baixar(c.buscar, c.fonte.url), baixar(c.buscar, URL_DROP_V6)]);
+  if (!r4 || !r6) throw new Error("DROP: resposta sem conteúdo");
+  const v4 = lerDrop(await r4.text(), "DROP v4");
+  const v6 = lerDrop(await r6.text(), "DROP v6");
+  if (v4.length < MIN_REDES_V4) throw new Error(`DROP v4 com só ${v4.length} redes: arquivo suspeito`);
+  const itens: Indicador[] = [...v4, ...v6]
+    .filter((x) => parseCidr(x.cidr))
+    .map((x) => ({
+      tipo: "rede" as const,
+      valor: x.cidr,
+      ameaca: "drop",
+      tags: [...(x.sblid ? [`sbl:${x.sblid}`] : []), ...(x.rir ? [`rir:${x.rir}`] : [])],
+      referencia: "https://www.spamhaus.org/blocklists/do-not-route-or-peer/",
+    }));
+  const n = await gravarIndicadores(c.db, "spamhaus-drop", itens, c.agora, 3);
+  const t = c.agora.toISOString();
+  await c.db.prepare("UPDATE indicadores SET expirado = 1, expira_em = ? WHERE fonte = 'spamhaus-drop' AND expirado = 0 AND ultimo_visto < ?").bind(t, t).run();
+  return { alterado: true, itens: n };
 };

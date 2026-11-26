@@ -194,7 +194,7 @@ describe("ioc_consultar", () => {
     // a família Emotet também está no ATT&CK: liga ao software, sem afirmar mais que o nome
     expect(ip.mitre).toEqual([expect.objectContaining({ familia: "Emotet", id: "S0367", nome: "Emotet" })]);
     expect(url.mitre).toBeUndefined(); // "Unknown malware" não é software do ATT&CK
-    expect(j.fontes.map((f: { fonte: string }) => f.fonte)).toEqual(["Feodo Tracker (abuse.ch)", "ThreatFox (abuse.ch)", "URLhaus (abuse.ch)", "MalwareBazaar (abuse.ch)"]);
+    expect(j.fontes.map((f: { fonte: string }) => f.fonte)).toEqual(["Feodo Tracker (abuse.ch)", "ThreatFox (abuse.ch)", "URLhaus (abuse.ch)", "MalwareBazaar (abuse.ch)", "DROP (Spamhaus)"]);
     expect(j.nota).toContain("não traz veredito");
   });
 
@@ -274,5 +274,94 @@ describe("exportar_lista", () => {
     expect((await pedir("ip")).headers.get("content-type")).toContain("text/plain");
     expect((await pedir("cve")).status).toBe(400);
     expect((await pedir("ip", "?fonte=outra")).status).toBe(400);
+  });
+});
+
+const DROP4 = "https://www.spamhaus.org/drop/drop_v4.json";
+const DROP6 = "https://www.spamhaus.org/drop/drop_v6.json";
+const redes4 = Array.from({ length: 120 }, (_, i) => ({ cidr: `${100 + (i % 100)}.${Math.floor(i / 100)}.0.0/16`, sblid: `SBL${1000 + i}`, rir: "ripencc" }));
+redes4.push({ cidr: "203.0.113.0/24", sblid: "SBL999", rir: "apnic" }, { cidr: "198.51.0.0/16", sblid: "SBL998", rir: "arin" });
+const redes6 = [{ cidr: "2001:db8:abcd::/48", sblid: "SBL777", rir: "ripencc" }];
+const ndjson = (xs: object[], records = xs.length) => [...xs.map((x) => JSON.stringify(x)), JSON.stringify({ type: "metadata", timestamp: 1, size: 1, records, copyright: "(c) Spamhaus", terms: "https://www.spamhaus.org/drop/terms/" })].join("\n");
+const dropRota = (v4 = redes4, v6 = redes6) => ({ [DROP4]: ndjson(v4), [DROP6]: ndjson(v6) });
+
+describe("Spamhaus DROP (redes)", () => {
+  it("coleta v4 e v6, guarda a faixa de cada rede e tira da lista o que saiu dela na hora (termos 4.2)", async () => {
+    const DB = bancoTeste(...migracoes());
+    await executarFontes({ DB }, { agora: T, buscar: rede(dropRota()).buscar, so: "spamhaus-drop" });
+    expect((await um<{ n: number }>(DB, "SELECT count(*) AS n FROM indicadores WHERE fonte = 'spamhaus-drop' AND tipo = 'rede'")).n).toBe(123);
+    expect(await um(DB, "SELECT valor, ameaca, tags, ini, fim, expira_em FROM indicadores WHERE valor = '203.0.113.0/24'")).toMatchObject({ ameaca: "drop", tags: '["sbl:SBL999","rir:apnic"]', ini: "4:cb007100", fim: "4:cb0071ff", expira_em: dias(3).toISOString() });
+    expect((await um<{ ini: string }>(DB, "SELECT ini FROM indicadores WHERE valor = '2001:db8:abcd::/48'")).ini).toBe("6:20010db8abcd00000000000000000000");
+    expect((await um<{ itens: number; erro_msg: string | null }>(DB, "SELECT itens, erro_msg FROM fontes WHERE id = 'spamhaus-drop'"))).toEqual({ itens: 123, erro_msg: null });
+    // 6 h depois a rede 198.51.0.0/16 saiu da lista: expira na hora, não em 3 dias
+    await executarFontes({ DB }, { agora: horas(7), buscar: rede(dropRota(redes4.slice(0, -1))).buscar, so: "spamhaus-drop" });
+    expect(await um(DB, "SELECT expirado, expira_em FROM indicadores WHERE valor = '198.51.0.0/16'")).toEqual({ expirado: 1, expira_em: horas(7).toISOString() });
+    expect((await um<{ expirado: number }>(DB, "SELECT expirado FROM indicadores WHERE valor = '203.0.113.0/24'")).expirado).toBe(0);
+  });
+
+  it("arquivo cortado, linha estranha ou lista pequena demais não tocam no que já estava gravado", async () => {
+    const DB = bancoTeste(...migracoes());
+    await executarFontes({ DB }, { agora: T, buscar: rede(dropRota()).buscar, so: "spamhaus-drop" });
+    const falha = async (rotas: Record<string, unknown>, agora: Date) => {
+      await executarFontes({ DB }, { agora, buscar: rede(rotas).buscar, so: "spamhaus-drop" });
+      return (await um<{ erro_msg: string }>(DB, "SELECT erro_msg FROM fontes WHERE id = 'spamhaus-drop'")).erro_msg;
+    };
+    expect(await falha({ [DROP4]: ndjson(redes4, 9999), [DROP6]: ndjson(redes6) }, horas(7))).toContain("incompleto");
+    expect(await falha({ [DROP4]: "<html>erro</html>", [DROP6]: ndjson(redes6) }, horas(14))).toContain("fora do formato");
+    expect(await falha({ [DROP4]: ndjson(redes4.slice(0, 5)), [DROP6]: ndjson(redes6) }, horas(21))).toContain("suspeito");
+    expect((await um<{ n: number }>(DB, "SELECT count(*) AS n FROM indicadores WHERE fonte = 'spamhaus-drop' AND expirado = 0")).n).toBe(123);
+  });
+
+  it("ioc_consultar: IP dentro de rede listada (v4 e v6), IP fora, CIDR que se sobrepõe; sem veredito", async () => {
+    const DB = bancoTeste(...migracoes());
+    await executarFontes({ DB }, { agora: T, buscar: rede(dropRota()).buscar, so: "spamhaus-drop" });
+    const { j } = await ferr(DB, "ioc_consultar", { valores: ["203.0.113.77", "203.0.114.1", "2001:db8:abcd:1::5", "2001:db9::1", "203.0.0.0/16", "198.51.100.0/24"] });
+    const [dentro, fora, v6, v6fora, sobrepoe, contida] = j.resultados;
+    expect(dentro).toMatchObject({ tipo: "ip", listado: true, redes: [{ rede: "203.0.113.0/24", fonte: "spamhaus-drop", ameaca: "drop", tags: ["sbl:SBL999", "rir:apnic"], expirado: false }] });
+    expect(fora).toMatchObject({ listado: false });
+    expect(fora.redes).toBeUndefined();
+    expect(fora.aviso).toContain("não significa que seja seguro");
+    expect(v6).toMatchObject({ listado: true, redes: [{ rede: "2001:db8:abcd::/48" }] });
+    expect(v6fora.listado).toBe(false);
+    expect(sobrepoe).toMatchObject({ tipo: "rede", listado: true });
+    expect(sobrepoe.redes.map((r: { rede: string }) => r.rede)).toEqual(["203.0.113.0/24"]); // a /24 está dentro da /16 consultada
+    expect(contida.redes.map((r: { rede: string }) => r.rede)).toEqual(["198.51.0.0/16"]); // a /24 consultada está dentro da /16 listada
+    expect(j.resultados.every((r: Record<string, unknown>) => !("veredito" in r))).toBe(true);
+    const selo = j.fontes.find((f: { fonte: string }) => f.fonte === "DROP (Spamhaus)");
+    expect(selo.atribuicao).toContain("proíbem usar o nome Spamhaus em material comercial");
+  });
+
+  it("rede expirada ou de fonte pausada não aparece como listada", async () => {
+    const DB = bancoTeste(...migracoes());
+    await executarFontes({ DB }, { agora: T, buscar: rede(dropRota()).buscar, so: "spamhaus-drop" });
+    expect((await ferr(DB, "ioc_consultar", { valores: ["203.0.113.5"] }, dias(5))).j.resultados[0].redes[0].expirado).toBe(true);
+    await DB.prepare("UPDATE fontes SET ativa = 0 WHERE id = 'spamhaus-drop'").run();
+    expect((await ferr(DB, "ioc_consultar", { valores: ["203.0.113.5"] })).j.resultados[0].listado).toBe(false);
+  });
+
+  it("exportar_lista tipo rede: texto, csv e cdb (IPv6 omitido), com o aviso de licença; /v1/listas/rede leva o aviso no cabeçalho", async () => {
+    const DB = bancoTeste(...migracoes());
+    await executarFontes({ DB }, { agora: T, buscar: rede(dropRota()).buscar, so: "spamhaus-drop" });
+    const txt = (await ferr(DB, "exportar_lista", { tipo: "rede", limite: 2000 })).j;
+    expect(txt).toMatchObject({ total: 123, retornadas: 123 });
+    expect(txt.conteudo.split("\n")).toContain("203.0.113.0/24");
+    expect(txt.aviso_licenca).toContain("uso interno");
+    expect(txt.aviso_licenca).toContain("Não repasse a lista a terceiros");
+    expect(txt.fontes.map((f: { fonte: string }) => f.fonte)).toEqual(["DROP (Spamhaus)"]);
+    const cdb = (await ferr(DB, "exportar_lista", { tipo: "rede", formato: "cdb", limite: 2000 })).j;
+    expect(cdb).toMatchObject({ omitidos: 1, retornadas: 122 }); // o IPv6 tem ':'
+    expect(cdb.conteudo.split("\n")).toContain("203.0.113.0/24:spamhaus-drop");
+    expect((await ferr(DB, "exportar_lista", { tipo: "rede", formato: "csv", limite: 1 })).j.conteudo).toContain('"rede","spamhaus-drop"');
+    // /v1
+    await DB.prepare("INSERT INTO chaves (id, nome, token_hash, pacotes) VALUES ('c1', 'ness.OS', ?, '[]')").bind(await hashToken("nesskb_os")).run();
+    const r = await v1(new Request("https://x/v1/listas/rede", { headers: { authorization: "Bearer nesskb_os" } }), { DB, AI: {} as Ai }, "/v1/listas/rede");
+    expect(r.status).toBe(200);
+    expect(r.headers.get("x-aviso")).toContain("uso interno");
+    expect(r.headers.get("x-total")).toBe("123");
+  });
+
+  it("tipo ip e hash não carregam o aviso do DROP", async () => {
+    const DB = await carregado();
+    expect((await ferr(DB, "exportar_lista", { tipo: "ip" })).j.aviso_licenca).toBeUndefined();
   });
 });
