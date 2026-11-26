@@ -48,7 +48,7 @@ const todas = { [FEODO]: feodoJson, [TF]: threatfoxJson, [UH]: urlhausJson, [MB]
 
 const um = async <U>(DB: D1Database, sql: string, ...b: unknown[]) => (await DB.prepare(sql).bind(...b).first<U>())!;
 const linhas = async <U>(DB: D1Database, sql: string, ...b: unknown[]) => (await DB.prepare(sql).bind(...b).all<U>()).results;
-/** Banco com as migrações aplicadas. A 0018 deixa as três fontes do abuse.ch ativas (uso interno autorizado por escrito); o UPDATE garante o estado nos testes de coleta. */
+/** Banco com as migrações aplicadas. A 0018 deixa as três fontes do abuse.ch ativas (uso interno combinado com o abuse.ch); o UPDATE garante o estado nos testes de coleta. */
 async function comAbuseCh() {
   const DB = bancoTeste(...migracoes());
   await DB.prepare("UPDATE fontes SET ativa = 1 WHERE id IN ('threatfox', 'urlhaus', 'malwarebazaar')").run();
@@ -159,7 +159,7 @@ describe("fonte pausada (licença)", () => {
     const DB = bancoTeste(...migracoes());
     const f = (id: string) => DB.prepare("SELECT ativa, licenca, termos_url FROM fontes WHERE id = ?").bind(id).first<{ ativa: number; licenca: string; termos_url: string }>();
     for (const id of ["threatfox", "urlhaus", "malwarebazaar"]) expect(await f(id)).toMatchObject({ ativa: 1, termos_url: "https://abuse.ch/terms-of-use/" });
-    expect((await f("threatfox"))!.licenca).toContain("autorizado por escrito pelo abuse.ch");
+    expect((await f("threatfox"))!.licenca).toContain("autorizado pelo abuse.ch");
     expect((await f("threatfox"))!.licenca).toContain("sem treino de IA");
     expect(await f("feodo")).toMatchObject({ ativa: 1 });
     expect((await f("feodo"))!.licenca).toContain("CC0");

@@ -12,8 +12,13 @@
       "licenca_arquivo": "cloudflare-one/LICENSE",
       "atribuicao": "Cloudflare, Inc. (github.com/cloudflare/skills), Apache License 2.0",
       "sha256": "5e9b81bfe4ebd1737346123679eaca0004b9d3ab9a0239729103b442e0f89614",
-      "remover_secoes": ["Skill feedback"],
-      "revisao": null
+      "remover_secoes": [
+        "Skill feedback"
+      ],
+      "revisao": {
+        "por": "resper1965 (dono do ness.know; aprovação informada em conversa)",
+        "em": "2026-11-26"
+      }
     }
   ]
 }
