@@ -48,7 +48,7 @@ const todas = { [FEODO]: feodoJson, [TF]: threatfoxJson, [UH]: urlhausJson, [MB]
 
 const um = async <U>(DB: D1Database, sql: string, ...b: unknown[]) => (await DB.prepare(sql).bind(...b).first<U>())!;
 const linhas = async <U>(DB: D1Database, sql: string, ...b: unknown[]) => (await DB.prepare(sql).bind(...b).all<U>()).results;
-/** Banco com as três fontes do abuse.ch ativas, como se a assinatura comercial existisse: a migração 0016 as deixa pausadas. */
+/** Banco com as migrações aplicadas. A 0018 deixa as três fontes do abuse.ch ativas (uso interno autorizado por escrito); o UPDATE garante o estado nos testes de coleta. */
 async function comAbuseCh() {
   const DB = bancoTeste(...migracoes());
   await DB.prepare("UPDATE fontes SET ativa = 1 WHERE id IN ('threatfox', 'urlhaus', 'malwarebazaar')").run();
@@ -155,11 +155,12 @@ describe("fonte pausada (licença)", () => {
     expect((await ferr(DB, "ioc_consultar", { valores: ["midtownbrewing.net"] }, horas(2))).j.resultados[0].registros).toHaveLength(1);
   });
 
-  it("a migração 0016 deixa as três pausadas, com a licença certa, e o Feodo ativo como CC0", async () => {
+  it("as migrações levam as três do abuse.ch ao estado autorizado (ativas, com a licença citando a autorização) e o Feodo fica CC0", async () => {
     const DB = bancoTeste(...migracoes());
     const f = (id: string) => DB.prepare("SELECT ativa, licenca, termos_url FROM fontes WHERE id = ?").bind(id).first<{ ativa: number; licenca: string; termos_url: string }>();
-    for (const id of ["threatfox", "urlhaus", "malwarebazaar"]) expect(await f(id)).toMatchObject({ ativa: 0, termos_url: "https://abuse.ch/terms-of-use/" });
-    expect((await f("threatfox"))!.licenca).toContain("assinatura paga");
+    for (const id of ["threatfox", "urlhaus", "malwarebazaar"]) expect(await f(id)).toMatchObject({ ativa: 1, termos_url: "https://abuse.ch/terms-of-use/" });
+    expect((await f("threatfox"))!.licenca).toContain("autorizado por escrito pelo abuse.ch");
+    expect((await f("threatfox"))!.licenca).toContain("sem treino de IA");
     expect(await f("feodo")).toMatchObject({ ativa: 1 });
     expect((await f("feodo"))!.licenca).toContain("CC0");
   });
@@ -360,8 +361,17 @@ describe("Spamhaus DROP (redes)", () => {
     expect(r.headers.get("x-total")).toBe("123");
   });
 
-  it("tipo ip e hash não carregam o aviso do DROP", async () => {
+  it("o aviso de licença acompanha a origem: abuse.ch para ip, hash e url; DROP para rede; nenhum para o Feodo sozinho (CC0)", async () => {
     const DB = await carregado();
-    expect((await ferr(DB, "exportar_lista", { tipo: "ip" })).j.aviso_licenca).toBeUndefined();
+    const ip = (await ferr(DB, "exportar_lista", { tipo: "ip" })).j.aviso_licenca;
+    expect(ip).toContain("abuse.ch");
+    expect(ip).toContain("treinar ou melhorar modelo de IA");
+    expect(ip).not.toContain("Spamhaus");
+    expect((await ferr(DB, "exportar_lista", { tipo: "ip", fonte: "feodo" })).j.aviso_licenca).toBeUndefined();
+    expect((await ferr(DB, "exportar_lista", { tipo: "hash", fonte: "malwarebazaar" })).j.aviso_licenca).toContain("abuse.ch");
+    await executarFontes({ DB }, { agora: T, buscar: rede(dropRota()).buscar, so: "spamhaus-drop" });
+    const r = (await ferr(DB, "exportar_lista", { tipo: "rede" })).j.aviso_licenca;
+    expect(r).toContain("DROP");
+    expect(r).not.toContain("abuse.ch");
   });
 });

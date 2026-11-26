@@ -1,7 +1,7 @@
 // API em lote para o ness.OS (somente leitura): mesma credencial nesskb_ do /mcp, outro formato. Conhecimento público: sem escopo por pacote.
 import { clienteDe, type EnvMcp, recusar, tokenDe } from "./mcp";
 import { consultarCves, MAX_CVES_LOTE } from "./fontes/ferramentas";
-import { AVISO_LICENCA_DROP, exportarLista, filtroLista } from "./fontes/ioc";
+import { exportarLista, filtroLista } from "./fontes/ioc";
 
 const erro = (m: string, status: number, h: Record<string, string> = {}) => Response.json({ erro: m }, { status, headers: h });
 
@@ -32,7 +32,7 @@ export async function v1(req: Request, env: EnvMcp, caminho: string): Promise<Re
         "x-omitidos": String(r.omitidos),
         "x-gerado-em": new Date().toISOString(),
         "x-fontes": r.fontes.map((s) => `${s.fonte}: ${s.frescor}`).join("; ").replace(/[^\x20-\x7e]/g, "?"),
-        "x-aviso": `O ness.know nao bloqueia nada; aplique pelo processo de aprovacao do ness.OS.${r.aviso_licenca ? ` ${AVISO_LICENCA_DROP}` : ""}`.replace(/[^\x20-\x7e]/g, "?"),
+        "x-aviso": `O ness.know nao bloqueia nada; aplique pelo processo de aprovacao do ness.OS.${r.aviso_licenca ? ` ${r.aviso_licenca}` : ""}`.replace(/[^\x20-\x7e]/g, "?"),
       },
     });
   }

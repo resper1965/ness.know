@@ -28,9 +28,9 @@ Nada interno da ness. entra aqui (playbooks, runbooks, clientes, chamados, logs,
 | Páginas de status: Cloudflare, Atera, Kaseya (Datto RMM), Google Workspace, Azure, Action1 | ao vivo, cache de 2 min | sob demanda | n/a | Páginas públicas | não |
 | MITRE ATT&CK Enterprise | base embutida (sem coleta) | a cada release do ATT&CK, por PR | aviso após 200 dias | Uso livre com atribuição à MITRE (termos de uso do ATT&CK) | não |
 | Feodo Tracker (abuse.ch) | lote | a cada 1 h | 6 h; indicador vale 3 dias | **CC0, inclusive uso comercial** (abuse.ch, termos de uso, seção 3.4) | não |
-| ThreatFox (abuse.ch) | lote | **pausada** | n/a | Gratuito só para uso sem fins lucrativos; uso por empresa pode exigir assinatura paga (seção 4) | sim (`ABUSECH_AUTH_KEY`) |
-| URLhaus (abuse.ch) | lote | **pausada** | n/a | idem | sim (`ABUSECH_AUTH_KEY`) |
-| MalwareBazaar (abuse.ch) | lote | **pausada** | n/a | idem | sim (`ABUSECH_AUTH_KEY`) |
+| ThreatFox (abuse.ch) | lote | a cada 1 h | 6 h; indicador vale 7 dias | Uso interno da NESS **autorizado por escrito pelo abuse.ch** | sim (`ABUSECH_AUTH_KEY`) |
+| URLhaus (abuse.ch) | lote | a cada 1 h | 6 h; indicador vale 7 dias | Uso interno da NESS **autorizado por escrito pelo abuse.ch** | sim (`ABUSECH_AUTH_KEY`) |
+| MalwareBazaar (abuse.ch) | lote | a cada 30 min | 3 h; indicador vale 7 dias | Uso interno da NESS **autorizado por escrito pelo abuse.ch** | sim (`ABUSECH_AUTH_KEY`) |
 | DROP (Spamhaus) | lote | a cada 6 h | 24 h; o que sai da lista expira na hora | Gratuito (termos do DROP, 2.1); conteúdo protegido, **uso interno da ness.** (3.1) | não |
 | Cloudflare Radar (API REST) | ao vivo, cache de 5 min | sob demanda | n/a | Token gratuito, permissão Account > Radar > Read | sim (`RADAR_API_TOKEN`) |
 
@@ -76,7 +76,7 @@ O ness.know chama os MCP públicos da Microsoft (`learn.microsoft.com/api/mcp`) 
 
 ### Inteligência de ameaças (abuse.ch)
 
-> **Pausa por licença (26/11/2026).** Pelos [termos do abuse.ch](https://abuse.ch/terms-of-use/), só o **Feodo Tracker** é CC0, inclusive para uso comercial. **ThreatFox, URLhaus e MalwareBazaar** são gratuitos só para uso sem fins lucrativos; uso por empresa pode exigir uma assinatura paga da API comercial (gerenciada pela Spamhaus: spamhaus.com/data-access/abusech-api/). Como a ness. é empresa e a regra é custo zero, a migração 0016 deixa as três **pausadas** (`ativa = 0`): a coleta pula, o selo diz "pausada" e os dados já coletados somem das consultas, novidades e exportações. A Auth-Key gratuita **não muda isso**: ela só identifica o usuário, e o limite é a licença. Para retomar depois de assinar: `UPDATE fontes SET ativa = 1 WHERE id IN ('threatfox','urlhaus','malwarebazaar')`.
+> **Licença (26/11/2026).** Pelos [termos do abuse.ch](https://abuse.ch/terms-of-use/), só o **Feodo Tracker** é CC0, inclusive para uso comercial. **ThreatFox, URLhaus e MalwareBazaar** são gratuitos só para uso sem fins lucrativos, e uso por empresa pode exigir assinatura paga (seção 4). Por isso a coleta ficou pausada (migração 0016) até a NESS pedir confirmação por escrito. **O abuse.ch autorizou o uso descrito no pedido** (informado pelo dono em 26/11/2026; o e-mail fica com a NESS) e a migração 0018 retomou as três fontes. **A autorização cobre o que foi pedido:** base de conhecimento interna, consultada pela equipe de SOC e NOC; sem revenda, sem redistribuição e **sem treino ou melhoria de modelo de IA** (o dado só é recuperado como texto de referência quando uma pessoa pergunta). Se o uso mudar (por exemplo, repassar a lista a clientes), peça de novo. `exportar_lista` traz esse aviso. A chave (`ABUSECH_AUTH_KEY`) é só a identificação do usuário; a licença é a autorização.
 
 - **Coleta em lote, sem consulta por indicador:** nenhuma pergunta gasta cota de terceiros, e a consulta fala do indicador, nunca do cliente. O ness.know só registra o nome da ferramenta no uso, não o valor consultado.
 - **Normalização** (`indicadores`): tipo (`ip`, `dominio`, `url`, `hash`), valor em forma canônica, fonte, família, tipo de ameaça, confiança (só se a fonte informa; desconhecido fica vazio, nunca zero), tags, primeiro e último visto, validade. Valor com quebra de linha, espaço ou formato inválido é descartado.
