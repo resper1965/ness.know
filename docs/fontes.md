@@ -31,6 +31,7 @@ Nada interno da ness. entra aqui (playbooks, runbooks, clientes, chamados, logs,
 | ThreatFox (abuse.ch) | lote | **pausada** | n/a | Gratuito só para uso sem fins lucrativos; uso por empresa pode exigir assinatura paga (seção 4) | sim (`ABUSECH_AUTH_KEY`) |
 | URLhaus (abuse.ch) | lote | **pausada** | n/a | idem | sim (`ABUSECH_AUTH_KEY`) |
 | MalwareBazaar (abuse.ch) | lote | **pausada** | n/a | idem | sim (`ABUSECH_AUTH_KEY`) |
+| DROP (Spamhaus) | lote | a cada 6 h | 24 h; o que sai da lista expira na hora | Gratuito (termos do DROP, 2.1); conteúdo protegido, **uso interno da ness.** (3.1) | não |
 | Cloudflare Radar (API REST) | ao vivo, cache de 5 min | sob demanda | n/a | Token gratuito, permissão Account > Radar > Read | sim (`RADAR_API_TOKEN`) |
 
 O **prazo** do KEV é o da diretiva BOD da CISA para agências federais dos EUA. Para clientes da ness., é referência de urgência, não obrigação; a resposta repete isso.
@@ -47,7 +48,7 @@ O **prazo** do KEV é o da diretiva BOD da CISA para agências federais dos EUA.
 | `buscar_doc_oficial` | `produto` (`microsoft`, `cloudflare`, `cloudflare-blog`), `consulta`, `limite?` (1 a 5) | Até 5 trechos de até 1.200 caracteres, cada um com título, link oficial e a data da consulta |
 | `status_provedor` | `provedor` (`cloudflare`, `atera`, `datto-rmm`, `google-workspace`, `azure`, `action1`) | `estado` (`incidentes_abertos`, `manutencao_programada` ou `sem_incidentes_abertos`), incidentes e manutenções com link oficial |
 | `internet_estado` | `pais?` (2 letras), `asn?`, `desde?` (AAAA-MM-DD; padrão 7 dias) | Quedas por país e ASN; com `asn`, sequestros de BGP que envolvem esse ASN |
-| `ioc_consultar` | `valores[]` (até 50 IPs, domínios, URLs ou hashes) | Por valor: o que cada fonte lista (família, ameaça, confiança, primeira e última vez visto, validade), URLs do host e a divergência entre fontes. **Sem veredito** |
+| `ioc_consultar` | `valores[]` (até 50 IPs, domínios, URLs, hashes ou redes CIDR) | Por valor: o que cada fonte lista (família, ameaça, confiança, primeira e última vez visto, validade), URLs do host, **redes do DROP que contêm o IP** (ou se sobrepõem à rede consultada) e a divergência entre fontes. **Sem veredito** |
 | `ioc_novidades` | `tipo?`, `familia?`, `desde?`, `pagina?` | Indicadores que entraram (50 por página), com total |
 | `exportar_lista` | `tipo`, `fonte?`, `confianca_min?`, `formato?` (`texto`, `csv`, `cdb`), `limite?` | Lista vigente para aplicar (até 2.000 linhas); a inteira sai em `GET /v1/listas/{tipo}` |
 | `mitre_tecnica` | `consulta` (id ou termo) | Técnica, grupo, software, tática ou mitigação do ATT&CK: descrição, táticas, plataformas, detecção, mitigações, subtécnicas, grupos e software, com URL oficial e versão da base |
@@ -84,6 +85,18 @@ O ness.know chama os MCP públicos da Microsoft (`learn.microsoft.com/api/mcp`) 
 - **`exportar_lista`:** o ness.know não bloqueia nada. A lista é entrada para o processo de aprovação do ness.OS. Com `confianca_min`, quem não informa confiança fica de fora. A lista CDB do Wazuh (`chave:valor`) não aceita URL nem IPv6 (a chave não pode ter `:`); o IPv6 é omitido e contado.
 - **Chave:** ThreatFox, URLhaus e MalwareBazaar exigem Auth-Key gratuita (auth.abuse.ch) no secret `ABUSECH_AUTH_KEY` (`npx wrangler secret put ABUSECH_AUTH_KEY --name ness-know`). Sem ela, essas três registram o erro em `saude_fontes` e o Feodo segue.
 - **Fora desta etapa** (licença por confirmar, ver lacunas 8.5): Spamhaus DROP, ransomware.live, MISP/CIRCL, VirusTotal, AbuseIPDB e Shodan InternetDB.
+
+### Spamhaus DROP (redes sequestradas)
+
+- **O que é:** lista "Don't Route or Peer" (v4 e v6): blocos de endereços alugados ou sequestrados por quadrilhas de spam e crime cibernético (cerca de 1.800 redes). Entra em `indicadores` como tipo `rede`, com a faixa de cada CIDR; `ioc_consultar` responde se um IP (ou uma rede) cai dentro de alguma rede listada, comparando faixas, não texto.
+- **Termos lidos** (https://www.spamhaus.org/blocklists/drop-fair-use-policy/) e o que mudam no uso:
+  - **2.1** gratuito: a fonte entra.
+  - **3.1** o conteúdo é protegido por direito autoral e de banco de dados, sem licença de redistribuição: **uso interno da ness.**; a lista não vai para terceiros nem para clientes. `exportar_lista` e `/v1/listas/rede` trazem o aviso.
+  - **3.2** é proibido usar o nome Spamhaus em material comercial ou promocional: a atribuição é interna e o agente não deve citar o nome em proposta, relatório ou material para cliente.
+  - **4.2** manter a lista em dia e revisar antes de importar em filtros: a coleta é a cada 6 h e **o que sai da lista expira na hora** (não espera os 3 dias das demais). Aplicar sempre pelo processo de aprovação do ness.OS.
+- **Validação:** cada arquivo traz uma linha de metadados com a contagem; contagem que não bate, linha fora do formato ou lista pequena demais (menos de 100 redes no v4) derrubam a coleta sem tocar no que já estava gravado.
+- **Exportação:** `exportar_lista(tipo: "rede")` em texto, CSV ou CDB do Wazuh (que aceita CIDR IPv4 como chave; o IPv6 é omitido porque a chave não pode ter `:`).
+- **Cuidado de leitura:** estar numa rede do DROP é um sinal forte sobre o bloco, mas não é veredito sobre o IP, e a lista muda com o tempo (alocações são reatribuídas).
 
 ### MITRE ATT&CK
 

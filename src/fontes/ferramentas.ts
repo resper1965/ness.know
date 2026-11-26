@@ -257,7 +257,7 @@ export const FERRAMENTAS_FONTES = [
   {
     name: "ioc_consultar",
     description:
-      `Consulta indicadores (IP, domínio, URL ou hash MD5/SHA-1/SHA-256) nas fontes abertas de ameaças coletadas pelo ness.know (abuse.ch: Feodo Tracker, ThreatFox, URLhaus, MalwareBazaar). Para cada valor mostra o que cada fonte lista (família, tipo de ameaça, confiança, primeira e última vez visto, validade) e, para IP e domínio, URLs listadas nesse host. NÃO dá veredito: se as fontes divergem, mostra a divergência; não listado não significa seguro. Aceita valor ofuscado (hxxp, [.]) e ip:porta. Até ${MAX_VALORES} valores. Consulte o indicador, nunca o nome do cliente.`,
+      `Consulta indicadores (IP, domínio, URL ou hash MD5/SHA-1/SHA-256) nas fontes abertas de ameaças coletadas pelo ness.know (Feodo Tracker do abuse.ch e redes do DROP; ThreatFox, URLhaus e MalwareBazaar estão pausados por licença). Para cada valor mostra o que cada fonte lista (família, tipo de ameaça, confiança, primeira e última vez visto, validade), as URLs listadas num IP ou domínio e, para IP ou rede (CIDR), as redes listadas no DROP que o contêm ou se sobrepõem. NÃO dá veredito: se as fontes divergem, mostra a divergência; não listado não significa seguro. Aceita valor ofuscado (hxxp, [.]) e ip:porta. Até ${MAX_VALORES} valores. Consulte o indicador, nunca o nome do cliente.`,
     inputSchema: { type: "object", properties: { valores: { type: "array", items: { type: "string" }, description: `IPs, domínios, URLs ou hashes, até ${MAX_VALORES}` } }, required: ["valores"] },
     annotations: { readOnlyHint: true },
   },
@@ -273,12 +273,12 @@ export const FERRAMENTAS_FONTES = [
   {
     name: "exportar_lista",
     description:
-      "Lista de indicadores vigentes de um tipo, pronta para aplicar: texto (um por linha), csv ou cdb (chave:valor, lista CDB do Wazuh; sem URL e sem IPv6). O ness.know não bloqueia nada: a lista é entrada para o processo de aprovação do ness.OS. Até 2.000 linhas por chamada; para a lista inteira use GET /v1/listas/{tipo}. Com confianca_min, indicadores sem confiança informada ficam de fora.",
+      "Lista de indicadores vigentes de um tipo, pronta para aplicar: texto (um por linha), csv ou cdb (chave:valor, lista CDB do Wazuh; sem URL e sem IPv6). O ness.know não bloqueia nada: a lista é entrada para o processo de aprovação do ness.OS (tipo rede = redes do DROP, uso interno). Até 2.000 linhas por chamada; para a lista inteira use GET /v1/listas/{tipo}. Com confianca_min, indicadores sem confiança informada ficam de fora.",
     inputSchema: {
       type: "object",
       properties: {
-        tipo: { type: "string", description: "ip, dominio, url ou hash" },
-        fonte: { type: "string", description: "feodo, threatfox, urlhaus ou malwarebazaar; omitido: todas" },
+        tipo: { type: "string", description: "ip, dominio, url, hash ou rede (CIDR, do DROP)" },
+        fonte: { type: "string", description: "feodo, threatfox, urlhaus, malwarebazaar ou spamhaus-drop; omitido: todas" },
         confianca_min: { type: "integer", description: "0 a 100" },
         formato: { type: "string", description: "texto (padrão), csv ou cdb" },
         limite: { type: "integer", description: "linhas (1 a 2000, padrão 500)" },
@@ -398,7 +398,7 @@ export async function chamarFonte(env: EnvFontes, nome: string, args: Record<str
     if ("erro" in f) return erro(f.erro);
     const limite = Math.min(Math.max(Math.floor(Number(args.limite)) || 500, 1), 2000);
     const r = await exportarLista(db, f, limite, agora);
-    return json({ formato: f.formato, tipo: f.tipo, total: r.total, retornadas: r.retornadas, ...(r.omitidos ? { omitidos: r.omitidos, aviso_omitidos: "Itens com ':' (IPv6) não cabem na chave da lista CDB e foram omitidos." } : {}), ...(r.total > r.retornadas + r.omitidos ? { aviso_truncada: "Lista cortada no limite; use GET /v1/listas/{tipo} para a lista inteira." } : {}), conteudo: r.linhas.join("\n"), aviso_aplicacao: "O ness.know não bloqueia nada. Aplique pelo processo de aprovação do ness.OS.", fontes: r.fontes, nota: NOTA_IOC });
+    return json({ formato: f.formato, tipo: f.tipo, total: r.total, retornadas: r.retornadas, ...(r.omitidos ? { omitidos: r.omitidos, aviso_omitidos: "Itens com ':' (IPv6) não cabem na chave da lista CDB e foram omitidos." } : {}), ...(r.total > r.retornadas + r.omitidos ? { aviso_truncada: "Lista cortada no limite; use GET /v1/listas/{tipo} para a lista inteira." } : {}), conteudo: r.linhas.join("\n"), aviso_aplicacao: "O ness.know não bloqueia nada. Aplique pelo processo de aprovação do ness.OS.", ...(r.aviso_licenca ? { aviso_licenca: r.aviso_licenca } : {}), fontes: r.fontes, nota: NOTA_IOC });
   }
   if (nome === "mitre_tecnica") {
     const r = mitreTecnica(await carregarAttack(), args, agora);

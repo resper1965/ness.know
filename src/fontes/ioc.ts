@@ -2,9 +2,12 @@
 import { limpar, selo, type Selo } from "./base";
 import { normalizar, type TipoIndicador } from "./indicadores";
 import { carregarAttack, programaPorNome } from "./mitre";
+import { chave, parseCidr, parseIp } from "./rede";
 
-export const FONTES_IOC = ["feodo", "threatfox", "urlhaus", "malwarebazaar"];
-export const TIPOS_IOC: TipoIndicador[] = ["ip", "dominio", "url", "hash"];
+export const FONTES_IOC = ["feodo", "threatfox", "urlhaus", "malwarebazaar", "spamhaus-drop"];
+export const TIPOS_IOC: TipoIndicador[] = ["ip", "dominio", "url", "hash", "rede"];
+const ATIVAS_SQL = "fonte IN (SELECT id FROM fontes WHERE ativa = 1)";
+export const AVISO_LICENCA_DROP = "Lista do DROP (Spamhaus): uso interno da ness. Os termos protegem o conteúdo (3.1), proíbem o nome Spamhaus em material comercial (3.2) e pedem lista em dia, revisada antes de importar em filtros (4.2). Não repasse a lista a terceiros nem cite o nome em proposta ou relatório de cliente.";
 export const MAX_VALORES = 50;
 const PAGINA = 50;
 const UM_DIA = 86_400_000;
@@ -34,7 +37,7 @@ export function classificar(bruto: unknown): { tipo: TipoIndicador | "cve" | nul
   const v = original.replace(/\[\.\]|\(\.\)/g, ".").replace(/^hxxp/i, "http");
   if (/^CVE-\d{4}-\d{4,}$/i.test(v)) return { tipo: "cve", valor: v.toUpperCase() };
   const porPorta = v.match(/^(\d{1,3}(?:\.\d{1,3}){3}):\d{1,5}$/);
-  for (const tipo of ["url", "ip", "hash", "dominio"] as TipoIndicador[]) {
+  for (const tipo of ["url", "rede", "ip", "hash", "dominio"] as TipoIndicador[]) {
     const n = normalizar(tipo, porPorta ? porPorta[1] : v);
     if (n) return { tipo, valor: n };
   }
@@ -66,19 +69,27 @@ export async function iocConsultar(db: D1Database, valores: unknown[], agora: Da
       resultados.push({ valor, tipo, aviso: "É um CVE: use cve_consultar." });
       continue;
     }
-    const linhas = (await db.prepare("SELECT * FROM indicadores WHERE tipo = ? AND valor = ? AND fonte IN (SELECT id FROM fontes WHERE ativa = 1) ORDER BY expirado, ultimo_visto DESC LIMIT 10").bind(tipo, valor).all<Linha>()).results;
+    const linhas = tipo === "rede" ? [] : (await db.prepare("SELECT * FROM indicadores WHERE tipo = ? AND valor = ? AND fonte IN (SELECT id FROM fontes WHERE ativa = 1) ORDER BY expirado, ultimo_visto DESC LIMIT 10").bind(tipo, valor).all<Linha>()).results;
     const regs = linhas.map((l) => registro(l, agora));
+    // Redes listadas que contêm o IP (ou se sobrepõem à rede consultada): comparação da faixa, não do texto.
+    const faixa = tipo === "ip" ? parseIp(valor) : tipo === "rede" ? parseCidr(valor) : null;
+    const [qIni, qFim] = faixa ? ("n" in faixa ? [faixa.n, faixa.n] : [faixa.ini, faixa.fim]) : [0n, 0n];
+    const redes = faixa
+      ? (await db.prepare(`SELECT * FROM indicadores WHERE tipo = 'rede' AND ini <= ? AND fim >= ? AND ${ATIVAS_SQL} ORDER BY expirado, ultimo_visto DESC LIMIT 10`).bind(chave(faixa.fam, qFim), chave(faixa.fam, qIni)).all<Linha>()).results
+      : [];
     const doHost = tipo === "ip" || tipo === "dominio" ? (await db.prepare("SELECT * FROM indicadores WHERE tipo = 'url' AND host = ? AND expirado = 0 AND expira_em >= ? AND fonte IN (SELECT id FROM fontes WHERE ativa = 1) ORDER BY ultimo_visto DESC LIMIT 5").bind(valor, agora.toISOString()).all<Linha>()).results : [];
-    for (const r of [...regs, ...doHost]) usadas.add(r.fonte);
+    for (const r of [...regs, ...doHost, ...redes]) usadas.add(r.fonte);
     const div = divergencia(regs);
+    const redesReg = redes.map((l) => ({ rede: l.valor, ...registro(l, agora) }));
     resultados.push({
       valor,
       tipo,
-      listado: regs.some((r) => !r.expirado),
+      listado: regs.some((r) => !r.expirado) || redesReg.some((r) => !r.expirado),
       registros: regs,
+      ...(redesReg.length ? { redes: redesReg } : {}),
       ...(doHost.length ? { urls_no_host: doHost.map((l) => ({ url: l.valor, ...registro(l, agora) })) } : {}),
       ...(div ? { divergencia: div } : {}),
-      ...(!regs.length && !doHost.length ? { aviso: "Não consta nas fontes locais. Isso não significa que seja seguro." } : {}),
+      ...(!regs.length && !doHost.length && !redesReg.length ? { aviso: "Não consta nas fontes locais. Isso não significa que seja seguro." } : {}),
     });
   }
   // Família que o ATT&CK também descreve: liga ao software do ATT&CK (técnicas, grupos), sem afirmar nada além do nome.
@@ -167,7 +178,7 @@ export async function exportarLista(db: D1Database, f: FiltroLista, limite: numb
     else if (l.valor.includes(":")) omitidos++;
     else saida.push(`${l.valor}:${(l.familia ?? l.fonte).replace(/[^\w.-]+/g, "_")}`); // chave:valor, o formato de lista CDB do Wazuh
   }
-  const usadas = f.fonte ? [f.fonte] : FONTES_IOC;
+  const usadas = f.fonte ? [f.fonte] : f.tipo === "rede" ? ["spamhaus-drop"] : FONTES_IOC;
   const fontes = (await Promise.all(usadas.map((x) => selo(db, x, agora)))).filter((s): s is Selo => !!s);
-  return { linhas: saida, total, retornadas: linhas.length - omitidos, omitidos, fontes };
+  return { linhas: saida, total, retornadas: linhas.length - omitidos, omitidos, fontes, ...(f.tipo === "rede" || f.fonte === "spamhaus-drop" ? { aviso_licenca: AVISO_LICENCA_DROP } : {}) };
 }

@@ -3,11 +3,11 @@
 import { avisosFortinet, avisosMsrc } from "./avisos";
 import { type Adaptador, type EnvFontes, type Fonte, limpar } from "./base";
 import { epss } from "./epss";
-import { feodo, malwarebazaar, threatfox, urlhaus } from "./indicadores";
+import { feodo, malwarebazaar, spamhausDrop, threatfox, urlhaus } from "./indicadores";
 import { kev } from "./kev";
 
 /** Uma linha em `fontes` + um adaptador aqui = fonte nova (docs/fontes.md). */
-export const ADAPTADORES: Record<string, Adaptador> = { kev, epss, msrc: avisosMsrc, fortinet: avisosFortinet, feodo, threatfox, urlhaus, malwarebazaar };
+export const ADAPTADORES: Record<string, Adaptador> = { kev, epss, msrc: avisosMsrc, fortinet: avisosFortinet, feodo, threatfox, urlhaus, malwarebazaar, "spamhaus-drop": spamhausDrop };
 
 const RETENCAO_DIAS = 90;
 const TOLERANCIA_MS = 5 * 60_000; // o cron não cai no segundo exato
