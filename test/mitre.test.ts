@@ -37,7 +37,7 @@ const STIX = {
 };
 
 describe("gerar-attack: extração do STIX", () => {
-  const d: DadosAttack = extrair(STIX, { commit: "abc123", geradoEm: "2026-11-26T11:00:00.000Z" });
+  const d = extrair(STIX, { commit: "abc123", geradoEm: "2026-11-26T11:00:00.000Z" }) as unknown as DadosAttack;
   it("só o que está vivo, com versão, commit e atribuição", () => {
     expect(d.meta).toMatchObject({ dominio: "enterprise-attack", versao: "99.1", commit: "abc123", gerado_em: "2026-11-26T11:00:00.000Z" });
     expect(d.meta.atribuicao).toContain("MITRE");
@@ -65,7 +65,7 @@ describe("gerar-attack: extração do STIX", () => {
 });
 
 describe("mitre_tecnica (base mínima)", () => {
-  const d: DadosAttack = extrair(STIX, { geradoEm: "2026-11-26T11:00:00.000Z" });
+  const d = extrair(STIX, { geradoEm: "2026-11-26T11:00:00.000Z" }) as unknown as DadosAttack;
   const pedir = (consulta: string) => mitreTecnica(d, { consulta }, T) as any;
   it("por id: técnica com grupos e software inversos, mitigação e detecção; subtécnica aponta para o pai; id com barra", () => {
     const r = pedir("t1059.001").resultado;
