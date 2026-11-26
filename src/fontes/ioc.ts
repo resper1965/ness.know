@@ -57,10 +57,10 @@ function divergencia(regs: ReturnType<typeof registro>[]): string | null {
   return partes.length ? `As fontes divergem: ${partes.join("; ")}. Mostre as duas leituras, sem escolher uma.` : null;
 }
 
-export async function iocConsultar(db: D1Database, valores: unknown[], agora: Date) {
+export async function iocConsultar(db: D1Database, valores: unknown[], agora: Date, max = MAX_VALORES) {
   const resultados = [];
   const usadas = new Set<string>();
-  for (const bruto of valores.slice(0, MAX_VALORES)) {
+  for (const bruto of valores.slice(0, max)) {
     const { tipo, valor } = classificar(bruto);
     if (!tipo) {
       resultados.push({ valor, tipo: null, aviso: "Formato não reconhecido: informe IP, domínio, URL ou hash (MD5, SHA-1 ou SHA-256)." });
@@ -104,7 +104,7 @@ export async function iocConsultar(db: D1Database, valores: unknown[], agora: Da
   }
   // Frescor de todas as fontes: "não listado" só vale se a coleta está em dia.
   const fontes = (await Promise.all(FONTES_IOC.map((f) => selo(db, f, agora)))).filter((s): s is Selo => !!s);
-  return { resultados, ...(valores.length > MAX_VALORES ? { aviso_limite: `Só os ${MAX_VALORES} primeiros valores foram consultados.` } : {}), fontes, nota: NOTA_IOC };
+  return { resultados, ...(valores.length > max ? { aviso_limite: `Só os ${max} primeiros valores foram consultados.` } : {}), fontes, nota: NOTA_IOC };
 }
 
 export async function iocNovidades(db: D1Database, args: Record<string, unknown>, agora: Date): Promise<{ erro: string } | Record<string, unknown>> {

@@ -63,6 +63,17 @@ Na interface de administração, a aba **Fontes** lista cada fonte (coleta peri�
 
 Para sistemas (ness.OS): `POST /v1/cve` com `{"cves": [...]}` (até 500) e `Authorization: Bearer nesskb_…`. Devolve o mesmo formato, sem NVD. Limite por chave: o mesmo `LIMITE_MCP`.
 
+**API em lote para o ness.OS** (somente leitura; `Authorization: Bearer nesskb_…`, mesmo limite por chave do MCP):
+
+| Endpoint | O que faz |
+|---|---|
+| `POST /v1/cve` `{"cves": [...]}` | Até 500 CVEs: KEV, EPSS e avisos de fabricante, sem NVD |
+| `POST /v1/ioc` `{"valores": [...]}` | Até 300 IPs, domínios, URLs ou hashes. Uma resposta por indicador, o que cada fonte diz, sem veredito. O limite é 300 porque cada indicador pode fazer até 3 consultas ao D1, que aceita 1.000 por requisição. Mande só o indicador, nunca o nome do cliente |
+| `GET /v1/novidades?desde=<ISO>` | O que o ness.know **viu** depois de `desde` (KEV, avisos, contagem de indicadores novos por fonte e de vítimas de ransomware). Devolve `cursor`: guarde e mande de volta em `desde`. Se `completo` vier `false`, a lista foi cortada em 500 itens e o `cursor` aponta o último item devolvido, então a próxima chamada continua dali. Sem `desde`, vale as últimas 24 h. "Visto" é o instante da coleta do ness.know, não a data da fonte |
+| `GET /v1/saude` | O mesmo estado da aba Fontes e, em `problemas`, as fontes com erro, pausadas ou passadas do prazo; `ok: false` quando há alguma |
+| `GET /v1/listas/{tipo}` | Lista inteira de indicadores vigentes (`texto`, `csv` ou `cdb`), para o ness.OS aplicar pelo processo dele |
+
+
 ### Documentação oficial (`buscar_doc_oficial`)
 
 Cobertura do produto `microsoft` (testada em 26/11/2026): o Learn já traz Active Directory (replicação com `repadmin`, Kerberos), Windows Server, Group Policy, IDs de evento de auditoria (4768, 4771) e a referência de cmdlets do PowerShell (`Get-ADUser`). O que faltava era o roteamento: a descrição da ferramenta só citava M365, Entra, Exchange, Azure e Defender, então o agente não a escolhia para essas perguntas. Fora do Learn: status do M365 (sem página pública) e Fortinet (lacuna).

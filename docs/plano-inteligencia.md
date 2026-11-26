@@ -17,12 +17,12 @@ O ness.OS já consome `POST /v1/cve` e `GET /v1/listas/{tipo}` com a chave `ness
 
 | Entrega | Descrição | Esforço |
 |---|---|---|
-| `POST /v1/ioc` | Até 500 indicadores por chamada; uma resposta por indicador com o que cada fonte diz, fonte e frescor. Reaproveita `ioc_consultar` | 1 PR |
+| `POST /v1/ioc` | Até 300 indicadores por chamada (limite de consultas do D1); uma resposta por indicador com o que cada fonte diz, fonte e frescor. Reaproveita `ioc_consultar` | 1 PR |
 | `GET /v1/novidades?desde=<cursor>` | O que entrou desde a última leitura (KEV, indicadores, avisos, ransomware). O cursor evita repetir | 1 PR |
 | `GET /v1/saude` | O mesmo estado da aba Fontes, para o ness.OS alertar quando uma fonte parar | 1 PR (junto do anterior) |
 | Alerta de fonte parada (M1) | Fonte passada do TTL sinalizada em `/v1/saude` e na aba | no mesmo PR |
 
-**Pronto quando:** o ness.OS consulta 500 IPs de uma vez e recebe a resposta em formato estável, sem enviar nome de cliente. Testes com banco SQLite como os de `/v1/cve`; documento `docs/mcp.md` e OpenAPI atualizados.
+**Pronto quando:** o ness.OS consulta 300 IPs de uma vez e recebe a resposta em formato estável, sem enviar nome de cliente. Testes com banco SQLite como os de `/v1/cve`; documento `docs/mcp.md` e OpenAPI atualizados.
 
 ## Fase 1: reputação e contexto de indicadores (a maior lacuna)
 
