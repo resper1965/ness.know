@@ -7,7 +7,7 @@ import { chave, parseCidr, parseIp } from "./rede";
 export const FONTES_IOC = ["feodo", "threatfox", "urlhaus", "malwarebazaar", "spamhaus-drop"];
 export const TIPOS_IOC: TipoIndicador[] = ["ip", "dominio", "url", "hash", "rede"];
 const ATIVAS_SQL = "fonte IN (SELECT id FROM fontes WHERE ativa = 1)";
-export const AVISO_LICENCA_ABUSECH = "Dados do abuse.ch (ThreatFox, URLhaus, MalwareBazaar): uso interno da NESS, autorizado por escrito pelo abuse.ch para consulta da equipe de SOC e NOC. Não repasse a lista a terceiros nem a use para treinar ou melhorar modelo de IA.";
+export const AVISO_LICENCA_ABUSECH = "Dados do abuse.ch (ThreatFox, URLhaus, MalwareBazaar): uso interno da NESS, combinado com o abuse.ch para consulta da equipe de SOC e NOC. Não repasse a lista a terceiros nem a use para treinar ou melhorar modelo de IA.";
 export const AVISO_LICENCA_DROP = "Lista do DROP (Spamhaus): uso interno da ness. Os termos protegem o conteúdo (3.1), proíbem o nome Spamhaus em material comercial (3.2) e pedem lista em dia, revisada antes de importar em filtros (4.2). Não repasse a lista a terceiros nem cite o nome em proposta ou relatório de cliente.";
 export const MAX_VALORES = 50;
 const PAGINA = 50;
