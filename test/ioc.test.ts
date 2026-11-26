@@ -150,6 +150,9 @@ describe("ioc_consultar", () => {
     expect(cve.aviso).toContain("cve_consultar");
     expect(lixo.tipo).toBeNull();
     expect(j.resultados.every((r: any) => !("veredito" in r))).toBe(true);
+    // a família Emotet também está no ATT&CK: liga ao software, sem afirmar mais que o nome
+    expect(ip.mitre).toEqual([expect.objectContaining({ familia: "Emotet", id: "S0367", nome: "Emotet" })]);
+    expect(url.mitre).toBeUndefined(); // "Unknown malware" não é software do ATT&CK
     expect(j.fontes.map((f: { fonte: string }) => f.fonte)).toEqual(["Feodo Tracker (abuse.ch)", "ThreatFox (abuse.ch)", "URLhaus (abuse.ch)", "MalwareBazaar (abuse.ch)"]);
     expect(j.nota).toContain("não traz veredito");
   });
