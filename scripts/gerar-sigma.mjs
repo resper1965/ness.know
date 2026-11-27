@@ -14,7 +14,23 @@ const aparar = (s, max) => {
   const t = String(s ?? "").replace(/\s+/g, " ").trim();
   return t.length > max ? `${t.slice(0, max - 1)}…` : t;
 };
-const sem = (v) => String(v ?? "").trim().replace(/^["']|["']$/g, "");
+/** Valor escalar do YAML: entre aspas vale até a aspa que fecha (o # dentro é texto); sem aspas, " #" começa um comentário do autor. */
+export function sem(v) {
+  const t = String(v ?? "").trim();
+  const q = t[0];
+  if (q === '"' || q === "'") {
+    let out = "";
+    for (let i = 1; i < t.length; i++) {
+      if (q === '"' && t[i] === "\\" && i + 1 < t.length) out += t[++i];
+      else if (t[i] === q) {
+        if (q === "'" && t[i + 1] === "'") out += t[i++];
+        else return out;
+      } else out += t[i];
+    }
+    return out;
+  }
+  return t.replace(/\s+#.*$/, "").trim();
+}
 
 /** Lê só as chaves de topo que interessam; ignora `detection:` e o resto. */
 export function lerRegra(yml, arquivo) {
@@ -38,8 +54,7 @@ export function lerRegra(yml, arquivo) {
       chave = m[1];
       bloco = [];
       const v = m[2].trim();
-      if (["title", "id", "author"].includes(chave)) r[chave] = sem(v);
-      else if (["status", "level", "date", "modified"].includes(chave)) r[chave] = sem(v.replace(/\s+#.*$/, "")); // valor curto seguido de comentário do autor
+      if (["title", "id", "author", "status", "level", "date", "modified"].includes(chave)) r[chave] = sem(v);
       else if (chave === "description" && v && !/^[>|]/.test(v)) r.description = sem(v);
     } else if (chave) bloco.push(l);
   }

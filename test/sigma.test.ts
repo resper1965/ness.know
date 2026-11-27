@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { lerRegra } from "../scripts/gerar-sigma.mjs";
+import { lerRegra, sem } from "../scripts/gerar-sigma.mjs";
 import { chamarFonte } from "../src/fontes/ferramentas";
 import { carregarSigma, type DadosSigma, type RegraSigma, seloSigma, sigmaRegra } from "../src/fontes/sigma";
 import { migracoes } from "./escopo.test";
@@ -38,6 +38,11 @@ describe("gerador do Sigma", () => {
     const r = lerRegra(YML, "rules/windows/ps.yml")!;
     expect(r).toMatchObject({ id: "3b6ab547-8ec2-4991-b9d2-2b06702a48d7", nivel: "high", status: "test", autor: "Ana Silva @ana", produto: "windows", categoria: "process_creation", mitre: ["T1059.001"], taticas: ["execution"], cves: ["CVE-2021-44228"], data: "2023-05-06" });
     expect(JSON.stringify(r)).not.toContain("DownloadString");
+  });
+  it("comentário do autor depois do valor não entra no id nem no logsource; o # entre aspas é texto", () => {
+    const r = lerRegra("title: \"Regra com # no título\"\nid: 4c7f49ee-2638-43bb-b85b-ce676c30b260 # TMP File\nlevel: low\nlogsource:\n    product: windows # nota\n    service: security # outra\n", "x.yml")!;
+    expect(r).toMatchObject({ id: "4c7f49ee-2638-43bb-b85b-ce676c30b260", titulo: "Regra com # no título", produto: "windows", servico: "security" });
+    expect([sem("'it''s # aqui' # fora"), sem("valor # comentário"), sem('"a\\"b" # c')]).toEqual(["it's # aqui", "valor", 'a"b']);
   });
   it("sem id ou título, a regra é ignorada", () => {
     expect(lerRegra("title: só título\nlevel: low\n", "x.yml")).toBeNull();
