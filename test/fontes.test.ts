@@ -219,7 +219,7 @@ describe("ferramentas das fontes", () => {
     const nov = (await dado(DB, "novidades", { desde: "2026-11-01" })).j;
     expect(nov.itens.map((x: { id: string }) => x.id)).toEqual(["CVE-2026-9999", "2026-Nov"]);
     const saude = (await dado(DB, "saude_fontes", {})).j.fontes;
-    expect(saude.map((f: { id: string }) => f.id)).toEqual(["kev", "epss", "msrc", "fortinet", "metasploit", "nuclei", "learn", "cf-docs", "cf-blog", "cf-status", "atera-status", "kaseya-status", "gw-status", "azure-status", "action1-status", "radar", "rfc", "circl-hashlookup", "feodo", "threatfox", "urlhaus", "malwarebazaar", "spamhaus-drop", "ransomware-live", "mitre", "wazuh"]);
+    expect(saude.map((f: { id: string }) => f.id)).toEqual(["kev", "epss", "msrc", "fortinet", "metasploit", "nuclei", "learn", "cf-docs", "cf-blog", "cf-status", "atera-status", "kaseya-status", "gw-status", "azure-status", "action1-status", "radar", "rfc", "circl-hashlookup", "feodo", "threatfox", "urlhaus", "malwarebazaar", "spamhaus-drop", "ransomware-live", "mitre", "wazuh", "sigma", "atores"]);
     expect(saude[0]).toMatchObject({ itens: 3, frescor: expect.stringContaining("coletado há"), licenca: "Domínio público (CISA)", exige_chave: false });
     // fonte parada além do TTL: a resposta avisa em vez de omitir
     const velho = (await dado(DB, "kev_novidades", {}, horas(25 + 200))).j;
@@ -250,7 +250,7 @@ describe("pelo /mcp e pelo /v1", () => {
     const { result } = await rpc(await ambiente(), "tools/list");
     const nomes = result.tools.map((t: { name: string }) => t.name);
     expect(new Set(nomes).size).toBe(nomes.length);
-    for (const n of ["cve_consultar", "kev_buscar", "kev_novidades", "avisos_fabricante", "novidades", "saude_fontes", "buscar_doc_oficial", "status_provedor", "internet_estado", "ioc_consultar", "ioc_novidades", "exportar_lista", "mitre_tecnica", "wazuh_regra", "wazuh_decoder", "rfc_consultar", "listar_skills_fabricante", "ler_skill_fabricante", "ransomware_atividade"]) expect(nomes).toContain(n);
+    for (const n of ["cve_consultar", "kev_buscar", "kev_novidades", "avisos_fabricante", "novidades", "saude_fontes", "buscar_doc_oficial", "status_provedor", "internet_estado", "ioc_consultar", "ioc_novidades", "exportar_lista", "mitre_tecnica", "wazuh_regra", "wazuh_decoder", "ator_ameaca", "sigma_regra", "rfc_consultar", "listar_skills_fabricante", "ler_skill_fabricante", "ransomware_atividade"]) expect(nomes).toContain(n);
     for (const t of result.tools) {
       expect(t.name).toMatch(/^[a-z0-9_]{1,64}$/); // o portal prefixa o nome do servidor; nome fora disso quebra o namespace
       expect(t.description.length).toBeGreaterThan(20);

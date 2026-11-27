@@ -62,22 +62,31 @@ Situação em 26/11/2026, depois da leitura de licenças:
 
 ## Fase 3: detecção
 
-| Fonte | Como entra |
-|---|---|
-| Sigma | Metadados (id, título, técnica ATT&CK, produto, nível) embutidos como o Wazuh, com `wazuh_regra`-like `sigma_regra` |
-| YARA (regras públicas) | Só **metadados** (nome, autor, tag, técnica), nunca o conteúdo da regra. Consulta por família de malware |
-| Suricata (ET Open) | Metadados por id e técnica, em tabela coletada (o volume não cabe embutido) |
+Situação em 27/11/2026:
 
-**Liga com o ATT&CK:** `mitre_tecnica T1059.001` passa a listar as regras Wazuh, Sigma e Suricata que o cobrem, para responder "como detecto isso?" com regra concreta. **Pronto quando:** uma técnica devolve regras das três fontes, com versão e commit.
+| Fonte | Situação |
+|---|---|
+| Sigma (SigmaHQ) | **Feito** (`sigma_regra`). Licença DRL 1.1: uso comercial permitido, com o autor de cada regra. Base embutida de 3.782 regras, só metadados |
+| Wazuh | **Já existia** (`wazuh_regra`). O MITRE liga as duas: a mesma técnica, T1059.001, serve nas duas ferramentas |
+| YARA: signature-base (Neo23x0) | **Adiado.** DRL 1.1, mas "exceto as regras que indicam outra licença no campo `license`" e as versões até 2021 eram CC BY-NC; exige filtrar regra por regra. Índice não lido |
+| YARA: Yara-Rules | **Fora.** GPL-2.0 (copyleft); o texto da licença não pôde ser lido |
+| Suricata ET Open | **Fora por ora.** Licença não confirmada (o `LICENSE` da pasta não foi lido); o pacote tem 5 MB e o índice de descrições 26 MB |
 
 ## Fase 4: Brasil e marca
 
-- **CERT.br e CTIR Gov:** alertas e boletins de ameaças no Brasil. **Não verifiquei** se há feed estruturado; o primeiro passo é conferir e só então decidir entre coleta e consulta ao vivo.
-- **Certificate Transparency (crt.sh):** o ness.OS manda o domínio de um cliente e o ness.know devolve domínios parecidos recém-emitidos (golpe de marca). **Cuidado:** o domínio de um cliente é dado do cliente; ele só passa se o ness.OS enviar e o ness.know não guardar. Fica como consulta ao vivo, sem registro.
+| Fonte | Situação |
+|---|---|
+| CERT.br | **Fora.** O site é CC BY-NC-ND 4.0 (não comercial, sem derivados). Existe um RSS (`cert.br/rss/certbr-rss.xml`, não lido). Só com autorização do NIC.br |
+| CTIR Gov | **Não verificado.** A página estava em manutenção em 27/11/2026; tentar de novo |
+| crt.sh (domínios parecidos) | **Adiado.** A API JSON responde, mas a política de uso não foi lida e uma consulta por domínio devolve mais de 600 KB |
+| Certspotter (SSLMate) | **Fora.** Plano gratuito de 100 consultas por hora e 10 de domínio completo por hora, e a busca é por domínio, não por palavra parecida; termos não lidos |
 
 ## Fase 5: atores e campanhas
 
-Perfis de grupos de ameaça de fontes abertas (por exemplo, as galáxias do MISP) e ligação com o ATT&CK já embutido. **Pronto quando:** "o que o grupo X usa" devolve técnicas, software e, quando existir, a atividade recente do ransomware.live.
+| Fonte | Situação |
+|---|---|
+| MISP galaxy (threat-actor) | **Feito** (`ator_ameaca`). CC0 ou BSD pelo README (o `LICENSE.md` deu 503). 1.132 grupos, só metadados e links; ligado ao grupo do ATT&CK |
+| ETDA Threat Group Cards | **Fora.** CC BY-NC-SA 4.0 |
 
 ## Transversal (junto de cada fase)
 

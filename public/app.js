@@ -228,7 +228,7 @@ async function carregarFontes() {
           if (f.ultimo_erro && f.erro) nome.push(el("span", `Erro: ${f.erro}`, "sub vencendo"));
           const coleta = f.modo === "embutido" ? [`Gerada em ${f.coletado_em ? fmtData.format(new Date(f.coletado_em)) : "—"}`] : f.modo === "ao_vivo" ? ["Sob consulta", el("span", f.coletado_em ? `última ${quandoIso(f.coletado_em)}` : "ainda não consultada", "sub")] : [quandoIso(f.coletado_em), el("span", f.frescor || "", "sub")];
           const tr = el("tr");
-          tr.append(celula(nome), celula([TIPO_FONTE[f.modo] ?? f.modo, f.versao ? el("span", `versão ${f.versao}`, "sub") : null], "esconde-estreito"), celula(coleta, "esconde-estreito"), celula(f.modo === "ao_vivo" ? "—" : String(f.itens ?? "—"), "num"), celula(el("span", estado, cls ? `sub ${cls}` : null)));
+          tr.append(celula(nome), celula([TIPO_FONTE[f.modo] ?? f.modo, el("span", f.categoria === "conhecimento" ? "Conhecimento" : "Dado", "sub"), f.versao ? el("span", `versão ${f.versao}`, "sub") : null], "esconde-estreito"), celula(coleta, "esconde-estreito"), celula(f.modo === "ao_vivo" ? "—" : String(f.itens ?? "—"), "num"), celula(el("span", estado, cls ? `sub ${cls}` : null)));
           return tr;
         })
       : [vazio(5, "Nenhuma fonte cadastrada", "As fontes entram pelo catálogo do ness.know.")]),
