@@ -6,7 +6,7 @@ import { bancoTeste } from "./sqlite";
 
 const T = new Date("2026-11-26T12:00:00.000Z");
 const META = { doc_id: "RFC4271", title: "A Border Gateway Protocol 4 (BGP-4)", authors: ["Y. Rekhter", "T. Li"], status: "DRAFT STANDARD", pub_date: "January 2006", abstract: "This document discusses the BGP.", obsoletes: ["RFC1771"], obsoleted_by: [], updated_by: ["RFC4724", "RFC6286"], errata_url: "https://www.rfc-editor.org/errata_search.php?rfc=4271" };
-const TXT = "1. Introduction\n\nThe Hold Timer is negotiated in the OPEN message.\nThe HoldTime MUST be zero or at least three seconds.\n\n" + "x\n".repeat(40) + "Another hold timer mention here.\n";
+const TXT = "Table of Contents\n   6.5. Hold Timer Expired Error Handling .......................34\n\n1. Introduction\n\nThe Hold Timer is negotiated in the OPEN message.\nThe HoldTime MUST be zero or at least three seconds.\n\n" + "x\n".repeat(40) + "Another hold timer mention here.\n";
 function rede(rotas: Record<string, () => Response>) {
   const chamadas: string[] = [];
   vi.stubGlobal("fetch", async (url: string) => {

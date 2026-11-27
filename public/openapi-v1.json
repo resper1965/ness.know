@@ -1,0 +1,636 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "ness.know: API em lote para o ness.OS",
+  "version": "1.0.0",
+  "description": "Consulta somente leitura de conhecimento público (vulnerabilidades, exploits públicos, indicadores de ameaça e estado das fontes), pensada para sistemas da NESS como o ness.OS. A chave (nesskb_…) é a mesma do MCP e é gerada no painel de administração. O ness.know nunca bloqueia, envia nem escreve em sistema externo: quem decide e aplica é o sistema que consome. Mande só o indicador, nunca o nome do cliente. Os dados do abuse.ch, da lista DROP e do ransomware.live são de uso interno: não repasse a clientes. \"Listado\" não é \"comprometido\" e \"não listado\" não é \"seguro\"."
+ },
+ "servers": [
+  {
+   "url": "https://know.ness.com.br"
+  }
+ ],
+ "security": [
+  {
+   "chave": []
+  }
+ ],
+ "paths": {
+  "/v1/cve": {
+   "post": {
+    "operationId": "consultarCves",
+    "summary": "Enriquece CVEs",
+    "description": "Para cada CVE: CISA KEV, EPSS, avisos de fabricante e exploits públicos (Metasploit e Nuclei). Não consulta o NVD (que limita a taxa). Até 500 CVEs.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "required": [
+         "cves"
+        ],
+        "properties": {
+         "cves": {
+          "type": "array",
+          "maxItems": 500,
+          "items": {
+           "type": "string",
+           "examples": [
+            "CVE-2021-44228"
+           ]
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Um resultado por CVE, com fontes[] (fonte, versão, data da coleta e frescor)",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "resultados": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "properties": {
+             "cve": {
+              "type": "string"
+             },
+             "no_kev": {
+              "type": "boolean"
+             },
+             "kev": {
+              "type": [
+               "object",
+               "null"
+              ]
+             },
+             "epss": {
+              "type": [
+               "object",
+               "null"
+              ]
+             },
+             "avisos_fabricante": {
+              "type": "array",
+              "items": {
+               "type": "object"
+              }
+             },
+             "exploits_publicos": {
+              "$ref": "#/components/schemas/ExploitsPublicos"
+             }
+            }
+           }
+          },
+          "ignorados": {
+           "type": "array",
+           "items": {
+            "type": "string"
+           }
+          },
+          "fontes": {
+           "type": "array",
+           "items": {
+            "$ref": "#/components/schemas/Selo"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Erro",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Erro"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Chave ausente, inválida ou revogada (resposta no formato JSON-RPC: error.message = \"token inválido\")"
+     },
+     "429": {
+      "description": "Limite de requisições da chave excedido. Espere o cabeçalho retry-after (30 s)",
+      "headers": {
+       "retry-after": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/ioc": {
+   "post": {
+    "operationId": "consultarIndicadores",
+    "summary": "Consulta indicadores em lote",
+    "description": "IPs, domínios, URLs e hashes (MD5, SHA-1, SHA-256). Até 300 por chamada (cada indicador faz até 3 consultas ao D1, que aceita 1.000 por requisição). Para hashes, acrescenta o campo hashlookup (CIRCL): até 50 hashes distintos por chamada. Sem veredito.",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object",
+        "required": [
+         "valores"
+        ],
+        "properties": {
+         "valores": {
+          "type": "array",
+          "maxItems": 300,
+          "items": {
+           "type": "string",
+           "examples": [
+            "203.0.113.9",
+            "8ed4b4ed952526d89899e723f3488de4"
+           ]
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Um resultado por valor",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "resultados": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "properties": {
+             "valor": {
+              "type": "string"
+             },
+             "tipo": {
+              "type": [
+               "string",
+               "null"
+              ],
+              "enum": [
+               "ip",
+               "dominio",
+               "url",
+               "hash",
+               "rede",
+               "cve",
+               null
+              ]
+             },
+             "listado": {
+              "type": "boolean"
+             },
+             "registros": {
+              "type": "array",
+              "items": {
+               "type": "object"
+              }
+             },
+             "divergencia": {
+              "type": "string"
+             },
+             "aviso": {
+              "type": "string"
+             },
+             "hashlookup": {
+              "type": "object",
+              "description": "Só em hashes. conhecido, arquivo, tamanho, origem, base, confianca, produto; ou indisponivel."
+             }
+            }
+           }
+          },
+          "fontes": {
+           "type": "array",
+           "items": {
+            "$ref": "#/components/schemas/Selo"
+           }
+          },
+          "nota": {
+           "type": "string"
+          },
+          "nota_hashlookup": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Erro",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Erro"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Chave ausente, inválida ou revogada (resposta no formato JSON-RPC: error.message = \"token inválido\")"
+     },
+     "429": {
+      "description": "Limite de requisições da chave excedido. Espere o cabeçalho retry-after (30 s)",
+      "headers": {
+       "retry-after": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/novidades": {
+   "get": {
+    "operationId": "novidades",
+    "summary": "O que o ness.know viu desde o cursor",
+    "description": "KEV e avisos de fabricante (itens), mais a contagem de indicadores novos por fonte e de vítimas de ransomware. \"Visto\" é o instante em que o ness.know coletou, não a data da fonte; a primeira janela de cada fonte inclui a carga inicial. Guarde `cursor` como texto e mande de volta em `desde`. Se `completo` for false, a lista foi cortada em 500 itens e o cursor continua dali.",
+    "parameters": [
+     {
+      "name": "desde",
+      "in": "query",
+      "required": false,
+      "description": "Data ISO 8601 (ex.: 2026-11-26T12:00:00Z). Sem ela, vale as últimas 24 horas.",
+      "schema": {
+       "type": "string",
+       "format": "date-time"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Novidades e novo cursor",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "desde": {
+           "type": "string"
+          },
+          "cursor": {
+           "type": "string",
+           "format": "date-time"
+          },
+          "completo": {
+           "type": "boolean"
+          },
+          "kev": {
+           "type": "array",
+           "items": {
+            "type": "object"
+           }
+          },
+          "avisos": {
+           "type": "array",
+           "items": {
+            "type": "object"
+           }
+          },
+          "indicadores": {
+           "type": "object",
+           "properties": {
+            "novos": {
+             "type": "integer"
+            },
+            "por_fonte": {
+             "type": "object",
+             "additionalProperties": {
+              "type": "integer"
+             }
+            }
+           }
+          },
+          "ransomware": {
+           "type": "object",
+           "properties": {
+            "novas_vitimas": {
+             "type": "integer"
+            }
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Erro",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Erro"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Chave ausente, inválida ou revogada (resposta no formato JSON-RPC: error.message = \"token inválido\")"
+     },
+     "429": {
+      "description": "Limite de requisições da chave excedido. Espere o cabeçalho retry-after (30 s)",
+      "headers": {
+       "retry-after": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/saude": {
+   "get": {
+    "operationId": "saudeDasFontes",
+    "summary": "Estado de cada fonte",
+    "description": "O mesmo dado da aba Fontes do painel. `problemas` lista as fontes com erro na última coleta, pausadas ou passadas do prazo; `ok` é false quando há alguma.",
+    "responses": {
+     "200": {
+      "description": "Estado das fontes",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "ok": {
+           "type": "boolean"
+          },
+          "problemas": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "properties": {
+             "id": {
+              "type": "string"
+             },
+             "motivo": {
+              "type": "string"
+             },
+             "erro": {
+              "type": [
+               "string",
+               "null"
+              ]
+             }
+            }
+           }
+          },
+          "fontes": {
+           "type": "array",
+           "items": {
+            "type": "object"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Chave ausente, inválida ou revogada (resposta no formato JSON-RPC: error.message = \"token inválido\")"
+     },
+     "429": {
+      "description": "Limite de requisições da chave excedido. Espere o cabeçalho retry-after (30 s)",
+      "headers": {
+       "retry-after": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/v1/listas/{tipo}": {
+   "get": {
+    "operationId": "listaVigente",
+    "summary": "Lista vigente de indicadores",
+    "description": "Para o ness.OS aplicar pelo processo de aprovação dele. O ness.know não bloqueia nada. Cabeçalhos: x-total, x-omitidos, x-gerado-em, x-fontes e x-aviso (inclui o aviso de licença).",
+    "parameters": [
+     {
+      "name": "tipo",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "ip",
+        "dominio",
+        "url",
+        "hash",
+        "rede"
+       ]
+      }
+     },
+     {
+      "name": "fonte",
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "confianca_min",
+      "in": "query",
+      "schema": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 100
+      }
+     },
+     {
+      "name": "formato",
+      "in": "query",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "texto",
+        "csv",
+        "cdb"
+       ],
+       "default": "texto"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Uma linha por indicador",
+      "content": {
+       "text/plain": {
+        "schema": {
+         "type": "string"
+        }
+       },
+       "text/csv": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Erro",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Erro"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Chave ausente, inválida ou revogada (resposta no formato JSON-RPC: error.message = \"token inválido\")"
+     },
+     "429": {
+      "description": "Limite de requisições da chave excedido. Espere o cabeçalho retry-after (30 s)",
+      "headers": {
+       "retry-after": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "components": {
+  "securitySchemes": {
+   "chave": {
+    "type": "http",
+    "scheme": "bearer",
+    "description": "Chave nesskb_…, gerada no painel de administração do ness.know (aba Chaves). Aparece uma vez, na criação. O painel exige marcar ao menos um pacote, mas estas rotas não dependem de pacote."
+   }
+  },
+  "schemas": {
+   "Erro": {
+    "type": "object",
+    "properties": {
+     "erro": {
+      "type": "string"
+     }
+    }
+   },
+   "Selo": {
+    "type": "object",
+    "description": "Fonte, versão, data da coleta e frescor. Cite `citar`.",
+    "properties": {
+     "fonte": {
+      "type": "string"
+     },
+     "versao": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "coletado_em": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "frescor": {
+      "type": "string"
+     },
+     "citar": {
+      "type": "string"
+     },
+     "atribuicao": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "url": {
+      "type": "string"
+     },
+     "aviso": {
+      "type": "string"
+     }
+    }
+   },
+   "ExploitsPublicos": {
+    "type": "object",
+    "description": "Índice de exploits públicos (Metasploit e Nuclei). Existir exploit público não diz que o CVE está sendo explorado: isso é no_kev.",
+    "properties": {
+     "exploit_publico": {
+      "type": "boolean",
+      "description": "Há módulo do Metasploit de tipo exploit"
+     },
+     "verificador_publico": {
+      "type": "boolean",
+      "description": "Há módulo auxiliary ou template do Nuclei, que só verificam a falha"
+     },
+     "total": {
+      "type": "integer"
+     },
+     "por_fonte": {
+      "type": "object",
+      "additionalProperties": {
+       "type": "integer"
+      }
+     },
+     "itens": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+       "type": "object",
+       "properties": {
+        "fonte": {
+         "type": "string"
+        },
+        "ref": {
+         "type": "string"
+        },
+        "titulo": {
+         "type": "string"
+        },
+        "tipo": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "publicado": {
+         "type": [
+          "string",
+          "null"
+         ]
+        },
+        "url": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "aviso": {
+      "type": "string"
+     }
+    }
+   }
+  }
+ }
+}

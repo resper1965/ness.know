@@ -55,7 +55,7 @@ Situação em 26/11/2026, depois da leitura de licenças:
 | Nuclei (templates de CVE) | **Feito.** MIT. Mesmo molde; o template só verifica a falha, não explora |
 | Exploit-DB | **Fora.** Termos do site proíbem copiar o serviço; só entra com autorização da OffSec |
 | PoC-in-GitHub | **Fora.** Sem índice único (um JSON por CVE) e o repositório avisa que há malware |
-| Avisos de fabricante: Palo Alto e Ivanti | **Possível.** Há RSS público sem login (verificado); os termos de uso não foram lidos |
+| Avisos de fabricante: Palo Alto e Ivanti | **Fora por ora.** Há RSS público, mas os termos de uso (lidos em 26/11/2026) limitam o uso a "personal, non-commercial internal use" e proíbem reproduzir o conteúdo; nenhum fala de RSS nem de coleta automatizada. O Ivanti traz os CVEs só no corpo do item, não no título. Entram se o jurídico entender que título, data, CVE e link não são "reprodução", ou com autorização do fabricante |
 | Avisos de fabricante: Cisco, Broadcom/VMware, Citrix, SonicWall | **Sem feed verificado.** Cisco só mostra CVRF e API openVuln (não lidos); Broadcom exige login; Citrix e SonicWall são páginas em JavaScript |
 | OSV e GitHub Advisories | **Adiado.** GitHub Advisory DB é CC-BY 4.0, mas a licença do OSV varia por fonte (há CC-BY-NC-ND) e o dump completo não cabe no Worker. Interessa mais a bibliotecas que a infraestrutura |
 | CPE via NVD (M2) | **Pendente.** O NVD limita a taxa |

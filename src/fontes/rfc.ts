@@ -38,7 +38,7 @@ export function trechos(texto: string, termo: string): string[] {
   const linhas = texto.replace(/\r/g, "").split("\n");
   const achados: string[] = [];
   for (let i = 0; i < linhas.length && achados.length < MAX_TRECHOS; i++) {
-    if (!linhas[i].toLowerCase().includes(t)) continue;
+    if (!linhas[i].toLowerCase().includes(t) || /\.{4,}\s*\d+\s*$/.test(linhas[i])) continue; // linha do índice do documento (pontos de preenchimento e página)
     const bloco = linhas.slice(Math.max(0, i - 3), i + 12).join("\n");
     achados.push(limparTexto(bloco, TAM_TRECHO));
     i += 15; // o próximo trecho não repete a mesma passagem
