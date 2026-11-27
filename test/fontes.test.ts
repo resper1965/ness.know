@@ -219,7 +219,7 @@ describe("ferramentas das fontes", () => {
     const nov = (await dado(DB, "novidades", { desde: "2026-11-01" })).j;
     expect(nov.itens.map((x: { id: string }) => x.id)).toEqual(["CVE-2026-9999", "2026-Nov"]);
     const saude = (await dado(DB, "saude_fontes", {})).j.fontes;
-    expect(saude.map((f: { id: string }) => f.id)).toEqual(["kev", "epss", "msrc", "fortinet", "learn", "cf-docs", "cf-blog", "cf-status", "atera-status", "kaseya-status", "gw-status", "azure-status", "action1-status", "radar", "rfc", "feodo", "threatfox", "urlhaus", "malwarebazaar", "spamhaus-drop", "ransomware-live", "mitre", "wazuh"]);
+    expect(saude.map((f: { id: string }) => f.id)).toEqual(["kev", "epss", "msrc", "fortinet", "metasploit", "nuclei", "learn", "cf-docs", "cf-blog", "cf-status", "atera-status", "kaseya-status", "gw-status", "azure-status", "action1-status", "radar", "rfc", "circl-hashlookup", "feodo", "threatfox", "urlhaus", "malwarebazaar", "spamhaus-drop", "ransomware-live", "mitre", "wazuh"]);
     expect(saude[0]).toMatchObject({ itens: 3, frescor: expect.stringContaining("coletado há"), licenca: "Domínio público (CISA)", exige_chave: false });
     // fonte parada além do TTL: a resposta avisa em vez de omitir
     const velho = (await dado(DB, "kev_novidades", {}, horas(25 + 200))).j;

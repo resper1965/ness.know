@@ -63,6 +63,17 @@ Na interface de administração, a aba **Fontes** lista cada fonte (coleta peri�
 
 Para sistemas (ness.OS): `POST /v1/cve` com `{"cves": [...]}` (até 500) e `Authorization: Bearer nesskb_…`. Devolve o mesmo formato, sem NVD. Limite por chave: o mesmo `LIMITE_MCP`.
 
+**API em lote para o ness.OS** (somente leitura; `Authorization: Bearer nesskb_…`, mesmo limite por chave do MCP):
+
+| Endpoint | O que faz |
+|---|---|
+| `POST /v1/cve` `{"cves": [...]}` | Até 500 CVEs: KEV, EPSS e avisos de fabricante, sem NVD |
+| `POST /v1/ioc` `{"valores": [...]}` | Até 300 IPs, domínios, URLs ou hashes. Uma resposta por indicador, o que cada fonte diz, sem veredito. O limite é 300 porque cada indicador pode fazer até 3 consultas ao D1, que aceita 1.000 por requisição. Mande só o indicador, nunca o nome do cliente |
+| `GET /v1/novidades?desde=<ISO>` | O que o ness.know **viu** depois de `desde` (KEV, avisos, contagem de indicadores novos por fonte e de vítimas de ransomware). Devolve `cursor`: guarde e mande de volta em `desde`. Se `completo` vier `false`, a lista foi cortada em 500 itens e o `cursor` aponta o último item devolvido, então a próxima chamada continua dali. Sem `desde`, vale as últimas 24 h. "Visto" é o instante da coleta do ness.know, não a data da fonte |
+| `GET /v1/saude` | O mesmo estado da aba Fontes e, em `problemas`, as fontes com erro, pausadas ou passadas do prazo; `ok: false` quando há alguma |
+| `GET /v1/listas/{tipo}` | Lista inteira de indicadores vigentes (`texto`, `csv` ou `cdb`), para o ness.OS aplicar pelo processo dele |
+
+
 ### Documentação oficial (`buscar_doc_oficial`)
 
 Cobertura do produto `microsoft` (testada em 26/11/2026): o Learn já traz Active Directory (replicação com `repadmin`, Kerberos), Windows Server, Group Policy, IDs de evento de auditoria (4768, 4771) e a referência de cmdlets do PowerShell (`Get-ADUser`). O que faltava era o roteamento: a descrição da ferramenta só citava M365, Entra, Exchange, Azure e Defender, então o agente não a escolhia para essas perguntas. Fora do Learn: status do M365 (sem página pública) e Fortinet (lacuna).
@@ -140,6 +151,16 @@ Skill é instrução que o agente executa com o acesso da pessoa. Por isso entra
 ### RFCs do IETF (roteamento e VPN)
 
 Consulta ao vivo ao `www.rfc-editor.org` (`/rfc/rfcN.json` para metadados e `/rfc/rfcN.txt` para os trechos). **Licença:** IETF Trust Legal Provisions (TLP 5), seção 3.c, permite copiar e distribuir documentos do IETF integralmente e sem modificação, com atribuição ao IETF e ao RFC; acima de um quinto do texto exige os avisos legais originais. Por isso a ferramenta devolve metadados e **trechos literais curtos** (até 3, 900 caracteres), nunca o RFC inteiro, e nunca resume o texto dentro do campo do trecho. Derivados (resumos, traduções) não são licença concedida: o resumo vem do campo `abstract` do próprio RFC Editor. Verificado em 26/11/2026 para os RFCs 4271, 2328 e 4301. O `status` do JSON é o nível atual; o cabeçalho do `.txt` mostra o da publicação. Confira `obsoleta_por` e `atualizada_por` antes de afirmar o comportamento atual.
+
+### Exploits públicos por CVE (Metasploit e Nuclei)
+
+Coleta diária do **índice** (nunca o código): `modules_metadata_base.json` do Metasploit Framework (BSD de 3 cláusulas, © Rapid7) e `cves.json` do Nuclei Templates (MIT, ProjectDiscovery), em tabela `exploits`. O `cve_consultar` e `/v1/cve` ganham `exploits_publicos`: `exploit_publico` (módulo de tipo exploit), `verificador_publico` (módulo auxiliary ou template do Nuclei, que só verificam a falha), contagem por fonte e até 8 itens com link para a origem. **Existir exploit público não diz que o CVE está sendo explorado: isso é o `no_kev`.** Grava só o que mudou; o que sai da origem fica marcado por 90 dias; se a origem vier com menos da metade do que já temos, a coleta falha sem apagar nada. Medido em 26/11/2026: 3.555 registros do Metasploit (3.217 CVEs) e 4.812 do Nuclei.
+
+**Exploit-DB: fora, por decisão.** O repositório é GPL, mas os termos do site (exploit-db.com/terms) dizem "You agree not to reproduce, duplicate, copy, sell, resell, or exploit any portion of the Service" e limitam o uso da API. Entra se a OffSec autorizar por escrito. **PoC-in-GitHub** (CC0) não tem índice único (um JSON por CVE, milhares de arquivos) e o próprio repositório avisa que há malware: fica fora.
+
+### CIRCL hashlookup (hash de arquivo conhecido)
+
+Ao vivo em `hashlookup.circl.lu/lookup/{md5|sha1|sha256}/{hash}`, sem chave. `ioc_consultar` e `POST /v1/ioc` acrescentam o campo `hashlookup` a cada hash: `conhecido`, arquivo, tamanho, origem (NSRL e outras), base, confiança do CIRCL (50 é "sem opinião") e produto. Até 50 hashes distintos por chamada, cache de 24 h; falha de um hash não derruba os outros (`indisponivel`). **Estar na lista não prova que o arquivo é seguro, e não estar não prova que é malicioso.** Licença: dados CC-BY, uso comercial permitido com referência a `circl.lu/services/hashlookup/` (a resposta cita a fonte).
 
 ### Wazuh (regras e decoders por id)
 

@@ -17,25 +17,29 @@ O ness.OS já consome `POST /v1/cve` e `GET /v1/listas/{tipo}` com a chave `ness
 
 | Entrega | Descrição | Esforço |
 |---|---|---|
-| `POST /v1/ioc` | Até 500 indicadores por chamada; uma resposta por indicador com o que cada fonte diz, fonte e frescor. Reaproveita `ioc_consultar` | 1 PR |
+| `POST /v1/ioc` | Até 300 indicadores por chamada (limite de consultas do D1); uma resposta por indicador com o que cada fonte diz, fonte e frescor. Reaproveita `ioc_consultar` | 1 PR |
 | `GET /v1/novidades?desde=<cursor>` | O que entrou desde a última leitura (KEV, indicadores, avisos, ransomware). O cursor evita repetir | 1 PR |
 | `GET /v1/saude` | O mesmo estado da aba Fontes, para o ness.OS alertar quando uma fonte parar | 1 PR (junto do anterior) |
 | Alerta de fonte parada (M1) | Fonte passada do TTL sinalizada em `/v1/saude` e na aba | no mesmo PR |
 
-**Pronto quando:** o ness.OS consulta 500 IPs de uma vez e recebe a resposta em formato estável, sem enviar nome de cliente. Testes com banco SQLite como os de `/v1/cve`; documento `docs/mcp.md` e OpenAPI atualizados.
+**Pronto quando:** o ness.OS consulta 300 IPs de uma vez e recebe a resposta em formato estável, sem enviar nome de cliente. Testes com banco SQLite como os de `/v1/cve`; documento `docs/mcp.md` e OpenAPI atualizados.
 
 ## Fase 1: reputação e contexto de indicadores (a maior lacuna)
 
 Objetivo: uma segunda e terceira opinião além do abuse.ch, e contexto de quem é o IP.
 
-| Fonte | O que traz | Observação a tratar |
+Situação em 26/11/2026, depois da leitura dos termos (o que não foi possível ler está marcado):
+
+| Fonte | O que traz | Situação |
 |---|---|---|
-| VirusTotal | Reputação de hash, domínio, IP e URL | Cota gratuita muito baixa: só consulta pontual, com cache longo |
-| AbuseIPDB | Denúncias por IP | Cota diária; uso comercial a conferir |
-| GreyNoise | "É ruído de varredura da internet?" | Nível gratuito limitado |
-| CIRCL (hashlookup, DNS passivo) | Hash conhecido como legítimo; histórico de resolução | Conferir termos |
-| RDAP/WHOIS e ASN (RIR, RIPEstat) | Dono, país e rede do IP ou domínio | Dados públicos; RDAP é o caminho oficial |
-| Shodan ou Censys | Portas e serviços expostos | Gratuito muito limitado; decidir se vale |
+| CIRCL hashlookup | Hash conhecido (NSRL e outras bases) | **Feito.** Dados CC-BY, uso comercial permitido com referência ao CIRCL; sem chave. Ao vivo, cache de 24 h, até 50 hashes por chamada |
+| CIRCL DNS passivo | Histórico de resolução | **Fora.** Restrito a parceiros; exige pedir acesso ao CIRCL |
+| RIPEstat (ASN, prefixo, país) | Dono, país e rede do IP | **Em espera.** Os termos proíbem uso comercial e redistribuição sem autorização escrita da RIPE NCC (stat@ripe.net) e a finalidade declarada é análise e monitoramento de rede e pesquisa. Só entra com confirmação por escrito |
+| RDAP/WHOIS | Dono de IP e domínio | **Fora por ora.** O banco do RIPE proíbe redistribuir e usar para marketing; Registro.br e LACNIC não puderam ser lidos |
+| VirusTotal | Reputação de hash, domínio, IP e URL | **Barrada.** A API gratuita não pode ser usada em produto ou serviço comercial nem em fluxo que não envie arquivos novos. Cota 500 por dia e 4 por minuto. Termos de uso não lidos (403) |
+| AbuseIPDB | Denúncias por IP | **Não confirmada.** Cota de 1.000 por dia no plano Standard; página de termos não lida (404) |
+| GreyNoise | "É ruído de varredura da internet?" | **Inviável gratuita.** 50 consultas por semana e o EULA proíbe produtos derivados e repasse a terceiros |
+| Shodan, Censys | Portas e serviços expostos | **Não confirmadas.** Plano gratuito, cota e termos não lidos |
 
 **Como:** consulta **ao vivo** com cache (como `buscar_doc_oficial`), chave em `wrangler secret`, uma linha por fonte no catálogo (modo `ao_vivo`). `ioc_consultar` e `/v1/ioc` passam a mostrar cada fonte lado a lado, com a **contagem de fontes que concordam** (sem veredito). Cada consulta falha sozinha sem derrubar as outras.
 
@@ -43,14 +47,18 @@ Objetivo: uma segunda e terceira opinião além do abuse.ch, e contexto de quem 
 
 ## Fase 2: vulnerabilidade com contexto de exploração
 
-| Entrega | Descrição |
-|---|---|
-| Disponibilidade de exploit por CVE | Exploit-DB, módulos do Metasploit, templates do Nuclei e PoCs públicos. Coleta periódica em tabela `exploits`, ligada ao `cve_consultar` ("existe exploit pronto?") |
-| Mais avisos de fabricante | Cisco, Palo Alto, Ivanti, VMware, Citrix e SonicWall, no molde de `avisos_fabricante` |
-| OSV e GitHub Advisories | Bibliotecas e pacotes (SCA), com o CVE e a versão corrigida |
-| CPE via NVD (M2) | `kev_buscar` por produto sem depender do nome que a CISA escreveu |
+Situação em 26/11/2026, depois da leitura de licenças:
 
-**Pronto quando:** `cve_consultar` mostra, para um CVE do KEV, o aviso do fabricante, o EPSS e se há exploit público, tudo com data.
+| Entrega | Situação |
+|---|---|
+| Metasploit (módulos) | **Feito.** BSD de 3 cláusulas. Índice (CVE, nome, tipo, data, link) em tabela `exploits`, ligado ao `cve_consultar` |
+| Nuclei (templates de CVE) | **Feito.** MIT. Mesmo molde; o template só verifica a falha, não explora |
+| Exploit-DB | **Fora.** Termos do site proíbem copiar o serviço; só entra com autorização da OffSec |
+| PoC-in-GitHub | **Fora.** Sem índice único (um JSON por CVE) e o repositório avisa que há malware |
+| Avisos de fabricante: Palo Alto e Ivanti | **Possível.** Há RSS público sem login (verificado); os termos de uso não foram lidos |
+| Avisos de fabricante: Cisco, Broadcom/VMware, Citrix, SonicWall | **Sem feed verificado.** Cisco só mostra CVRF e API openVuln (não lidos); Broadcom exige login; Citrix e SonicWall são páginas em JavaScript |
+| OSV e GitHub Advisories | **Adiado.** GitHub Advisory DB é CC-BY 4.0, mas a licença do OSV varia por fonte (há CC-BY-NC-ND) e o dump completo não cabe no Worker. Interessa mais a bibliotecas que a infraestrutura |
+| CPE via NVD (M2) | **Pendente.** O NVD limita a taxa |
 
 ## Fase 3: detecção
 

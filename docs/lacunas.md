@@ -123,7 +123,7 @@ Levantamento de 25/11/2026, a partir do plano das fontes externas ([fontes.md](f
 | M2 | Cruzar CVE com produto por CPE (NVD) | `kev_buscar` acha o produto sem depender do nome escrito pela CISA | Médio: NVD limita a taxa; CPE vem sujo |
 | M3 | Mais fabricantes em `avisos_fabricante` (Cisco, Palo Alto, VMware, Fortinet por CSAF) | Cobre o que a ness. e os clientes operam | Baixo por fonte; precisa conferir termos de cada feed |
 | M4 | EPSS completo (400 mil linhas) em D1 | `cve_consultar` sem chamada ao vivo | Alto: ~12 milhões de linhas gravadas por mês e mais armazenamento; só se a FIRST limitar a API |
-| M5 | Endpoints em lote além do CVE (`/v1/listas/{tipo}`, CDB do Wazuh) | O ness.OS aplica listas com o próprio processo de aprovação | Médio; depende da camada de inteligência de ameaças |
+| M5 | Endpoints em lote além do CVE (`/v1/ioc`, `/v1/novidades`, `/v1/saude` e `/v1/listas/{tipo}` feitos em 26/11/2026; falta o CDB do Wazuh) | O ness.OS aplica listas com o próprio processo de aprovação | Médio; depende da camada de inteligência de ameaças |
 | M6 | Tendências do KEV (inclusões por fornecedor e por mês, uso em ransomware) | Resposta a "o que mais está sendo explorado" | Baixo; só consulta no banco |
 | M7 | Trocar o cache em D1 por KV, se a leitura pesar | Menos carga no D1 | Baixo; exige criar o namespace na conta |
 | M8 | Consolidar ferramentas parecidas (`kev_*` e `novidades`) se o portal pesar | Menos ferramentas no contexto do agente | Baixo; muda nomes que já podem estar em instruções |
