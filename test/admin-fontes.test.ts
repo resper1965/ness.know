@@ -15,6 +15,9 @@ describe("GET /api/fontes (página Fontes do admin)", () => {
     for (const id of ["kev", "feodo", "ransomware-live", "rfc", "mitre", "wazuh"]) expect(ids).toContain(id);
     expect(fontes.find((f) => f.id === "wazuh")).toMatchObject({ modo: "embutido", licenca: expect.stringContaining("GPLv2") });
     expect(fontes.every((f) => f.licenca && f.fonte)).toBe(true);
+    const cat = (id: string) => (fontes.find((f) => f.id === id) as unknown as { categoria: string }).categoria;
+    expect([cat("rfc"), cat("mitre"), cat("wazuh"), cat("learn")]).toEqual(["conhecimento", "conhecimento", "conhecimento", "conhecimento"]);
+    expect([cat("kev"), cat("feodo"), cat("radar"), cat("metasploit")]).toEqual(["dado", "dado", "dado", "dado"]);
   });
   it("é só leitura: outros métodos não mudam nada e a rota não existe para POST", async () => {
     const DB = bancoTeste(...migracoes());

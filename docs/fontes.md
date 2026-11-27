@@ -39,7 +39,7 @@ O **prazo** do KEV é o da diretiva BOD da CISA para agências federais dos EUA.
 
 ## Ferramentas
 
-Na interface de administração, a aba **Fontes** lista cada fonte (coleta periódica, consulta ao vivo ou base embutida) com versão, última coleta, itens, estado e licença (resumo com "ver mais"). É somente leitura e usa `GET /api/fontes`, o mesmo dado da ferramenta `saude_fontes`.
+Na interface de administração, a aba **Fontes** lista cada fonte (marcada como **Conhecimento**, referência para consultar e entender, ou **Dado**, estado e sinais que mudam) (coleta periódica, consulta ao vivo ou base embutida) com versão, última coleta, itens, estado e licença (resumo com "ver mais"). É somente leitura e usa `GET /api/fontes`, o mesmo dado da ferramenta `saude_fontes`.
 
 | Ferramenta | Entrada | Saída |
 | --- | --- | --- |
