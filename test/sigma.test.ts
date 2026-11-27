@@ -44,6 +44,13 @@ describe("gerador do Sigma", () => {
     expect(r).toMatchObject({ id: "4c7f49ee-2638-43bb-b85b-ce676c30b260", titulo: "Regra com # no título", produto: "windows", servico: "security" });
     expect([sem("'it''s # aqui' # fora"), sem("valor # comentário"), sem('"a\\"b" # c')]).toEqual(["it's # aqui", "valor", 'a"b']);
   });
+  it("decodifica os escapes do YAML entre aspas duplas (\\n, \\t, \\u00e9, \\x41) em vez de descartar a barra", () => {
+    expect(sem('"caf\\u00e9 e\\x41 e \\U0001F600"')).toBe("café eA e 😀");
+    expect(sem('"linha\\nnova\\tcom tab"')).toBe("linha\nnova\tcom tab");
+    expect(sem('"barra \\\\ e aspa \\" # fim" # comentário')).toBe('barra \\ e aspa " # fim');
+    expect(sem('"escape desconhecido \\q"')).toBe("escape desconhecido q");
+    expect(sem("'sem escape \\n em aspas simples'")).toBe("sem escape \\n em aspas simples");
+  });
   it("sem id ou título, a regra é ignorada", () => {
     expect(lerRegra("title: só título\nlevel: low\n", "x.yml")).toBeNull();
   });

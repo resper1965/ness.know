@@ -14,6 +14,9 @@ const aparar = (s, max) => {
   const t = String(s ?? "").replace(/\s+/g, " ").trim();
   return t.length > max ? `${t.slice(0, max - 1)}…` : t;
 };
+/** Escapes de um escalar YAML entre aspas duplas (\\xHH, \\uHHHH e \\UHHHHHHHH são tratados à parte). */
+const ESCAPES = { 0: "\0", a: "\x07", b: "\b", t: "\t", "\t": "\t", n: "\n", v: "\v", f: "\f", r: "\r", e: "\x1b", " ": " ", "\"": '"', "/": "/", "\\": "\\", N: "\x85", _: "\xa0", L: "\u2028", P: "\u2029" };
+
 /** Valor escalar do YAML: entre aspas vale até a aspa que fecha (o # dentro é texto); sem aspas, " #" começa um comentário do autor. */
 export function sem(v) {
   const t = String(v ?? "").trim();
@@ -21,7 +24,14 @@ export function sem(v) {
   if (q === '"' || q === "'") {
     let out = "";
     for (let i = 1; i < t.length; i++) {
-      if (q === '"' && t[i] === "\\" && i + 1 < t.length) out += t[++i];
+      if (q === '"' && t[i] === "\\" && i + 1 < t.length) {
+        const c = t[++i];
+        const n = { x: 2, u: 4, U: 8 }[c];
+        if (n && /^[0-9a-fA-F]+$/.test(t.slice(i + 1, i + 1 + n)) && t.slice(i + 1, i + 1 + n).length === n) {
+          out += String.fromCodePoint(parseInt(t.slice(i + 1, i + 1 + n), 16));
+          i += n;
+        } else out += ESCAPES[c] ?? c;
+      }
       else if (t[i] === q) {
         if (q === "'" && t[i + 1] === "'") out += t[i++];
         else return out;
