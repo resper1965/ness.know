@@ -118,6 +118,19 @@
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"buscar_conhecimento","arguments":{"consulta":"retenção de logs","limite":5}}}'</code></pre>
   <p>O resultado vem em <code>result.content[0].text</code>, como texto JSON, como manda o protocolo. Para ver todas as ferramentas e seus argumentos, use <code>{"jsonrpc":"2.0","id":1,"method":"tools/list"}</code>.</p>
 
+  <h2 id="lote">API em lote (sistemas da NESS)</h2>
+  <p>Para sistemas como o ness.OS, o conhecimento público também sai por uma API REST somente leitura, com a mesma chave <code>nesskb_…</code> do MCP. A especificação está em <a href="/openapi-v1.json">/openapi-v1.json</a> (OpenAPI 3.1). Mande só o indicador, nunca o nome do cliente.</p>
+  <div class="tabela"><table>
+    <thead><tr><th>Rota</th><th>O que faz</th></tr></thead>
+    <tbody>
+      <tr><td><code>POST /v1/cve</code></td><td>Até 500 CVEs: KEV, EPSS, avisos de fabricante e exploits públicos.</td></tr>
+      <tr><td><code>POST /v1/ioc</code></td><td>Até 300 IPs, domínios, URLs ou hashes, sem veredito. Hashes trazem o CIRCL hashlookup.</td></tr>
+      <tr><td><code>GET /v1/novidades?desde=</code></td><td>O que o ness.know viu desde o cursor; guarde o <code>cursor</code> como texto.</td></tr>
+      <tr><td><code>GET /v1/saude</code></td><td>Estado de cada fonte e as que pedem atenção.</td></tr>
+      <tr><td><code>GET /v1/listas/{tipo}</code></td><td>Lista vigente de indicadores, para aplicar pelo processo de aprovação do consumidor.</td></tr>
+    </tbody>
+  </table></div>
+
   <h2 id="enviar">Enviar conteúdo</h2>
   <p>O envio coloca o conteúdo da sua empresa no pacote dela. Quem consulta pelo MCP passa a enxergá-lo, sem fazer mais nada.</p>
 

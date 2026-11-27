@@ -91,7 +91,7 @@ describe("a página de documentação", () => {
     for (const ancora of [...docs.matchAll(/href="#([^"]+)"/g)].map((m) => m[1])) expect(docs, ancora).toContain(`id="${ancora}"`);
   });
   it("os links do llms.txt apontam para o que existe", () => {
-    for (const caminho of [...llms.matchAll(/https:\/\/know\.ness\.com\.br(\/[a-z.]*)/g)].map((m) => m[1]).filter((c) => c !== "/mcp")) {
+    for (const caminho of [...llms.matchAll(/https:\/\/know\.ness\.com\.br(\/[a-z0-9.-]*)/g)].map((m) => m[1]).filter((c) => c !== "/mcp")) {
       const arquivo = caminho === "/enviar" ? "enviar.html" : caminho === "/docs" ? "docs.html" : caminho.slice(1);
       expect(existsSync(`public/${arquivo}`), caminho).toBe(true);
     }
