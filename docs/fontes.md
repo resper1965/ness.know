@@ -56,6 +56,8 @@ Na interface de administração, a aba **Fontes** lista cada fonte (marcada como
 | `exportar_lista` | `tipo`, `fonte?`, `confianca_min?`, `formato?` (`texto`, `csv`, `cdb`), `limite?` | Lista vigente para aplicar (até 2.000 linhas); a inteira sai em `GET /v1/listas/{tipo}` |
 | `mitre_tecnica` | `consulta` (id ou termo) | Técnica, grupo, software, tática ou mitigação do ATT&CK: descrição, táticas, plataformas, detecção, mitigações, subtécnicas, grupos e software, com URL oficial e versão da base |
 | `ransomware_atividade` | `grupo?`, `setor?`, `pais?`, `desde?` (padrão 30 dias), `pagina?` | Total, resumo por grupo, país e setor (top 10) e as 20 vítimas mais recentes da página, com link da Ransomware.live. **Alegações, não incidentes confirmados** |
+| `ator_ameaca` | `consulta` (nome ou apelido, país de 2 letras ou setor) | Perfil de grupo de ameaça (MISP galaxy): apelidos, país atribuído, patrocinador suspeito, setores alvo, referências e ligação com o grupo do ATT&CK. Só metadados e links |
+| `sigma_regra` | `consulta` (UUID, técnica ATT&CK, tática, produto, CVE ou termo) | Regra Sigma: título, nível, status, autor, produto, técnicas e link do arquivo no commit da base. Só metadados |
 | `rfc_consultar` | `numero`, `termo?` | RFC do IETF ao vivo (rfc-editor.org): título, status, resumo, obsoletos e atualizações, erratas e, com `termo`, até 3 trechos literais do texto. Cache de 24 h |
 | `wazuh_regra` | `consulta` (id ou termo) | Regra do ruleset oficial do Wazuh: nível, descrição, arquivo, grupos, decoder, dependências, regras filhas, técnicas ATT&CK com nome e CVEs. Por termo: descrição, grupo, id MITRE ou CVE |
 | `wazuh_decoder` | `consulta` (nome ou termo) | Decoder do ruleset oficial: pai, filhos, programa, campos extraídos, arquivo e regras que o usam |
@@ -151,6 +153,14 @@ Skill é instrução que o agente executa com o acesso da pessoa. Por isso entra
 ### RFCs do IETF (roteamento e VPN)
 
 Consulta ao vivo ao `www.rfc-editor.org` (`/rfc/rfcN.json` para metadados e `/rfc/rfcN.txt` para os trechos). **Licença:** IETF Trust Legal Provisions (TLP 5), seção 3.c, permite copiar e distribuir documentos do IETF integralmente e sem modificação, com atribuição ao IETF e ao RFC; acima de um quinto do texto exige os avisos legais originais. Por isso a ferramenta devolve metadados e **trechos literais curtos** (até 3, 900 caracteres), nunca o RFC inteiro, e nunca resume o texto dentro do campo do trecho. Derivados (resumos, traduções) não são licença concedida: o resumo vem do campo `abstract` do próprio RFC Editor. Verificado em 26/11/2026 para os RFCs 4271, 2328 e 4301. O `status` do JSON é o nível atual; o cabeçalho do `.txt` mostra o da publicação. Confira `obsoleta_por` e `atualizada_por` antes de afirmar o comportamento atual.
+
+### Grupos de ameaça (MISP galaxy)
+
+Base embutida: `scripts/gerar-atores.mjs <threat-actor.json>` lê o cluster `threat-actor` do MISP galaxy (https://github.com/MISP/misp-galaxy) e grava `src/fontes/dados/atores.json` (~400 KB): 1.132 grupos na versão 360 (27/11/2026). **Licença:** os arquivos de cluster são CC0 1.0 ou BSD, segundo o README; **o `LICENSE.md` não pôde ser lido** (HTTP 503), então a leitura vem do README. Só metadados e links; a **descrição não é copiada**, porque cita trechos de relatórios de terceiros. O grupo é ligado ao do ATT&CK pelo nome, apelido ou id (`G0016`). Atribuição a um país ou setor é relato público, nomes diferentes podem ser o mesmo grupo, e nada disso diz que o cliente foi atingido. **ETDA Threat Group Cards fica fora:** CC BY-NC-SA, não comercial.
+
+### Sigma (regras de detecção)
+
+Base embutida, como o Wazuh: `scripts/gerar-sigma.mjs <pasta-do-repositorio-sigma> <commit>` lê `rules`, `rules-emerging-threats`, `rules-threat-hunting` e `rules-compliance` do repositório SigmaHQ/sigma e grava `src/fontes/dados/sigma.json` (~2 MB, carregado só na consulta): 3.782 regras no commit `876eb7b8cf` (27/11/2026). **Licença:** Detection Rule License (DRL) 1.1, que permite uso comercial e exige manter o **autor** junto de quem mostra a regra; por isso cada resposta traz `autor` e a frase de autoria. Só metadados (id, título, nível, status, autor, produto, técnicas, CVE, arquivo e descrição curta); a seção `detection:` não é copiada. `T1059` encontra também as subtécnicas. As regras são genéricas: precisam ser convertidas e ajustadas ao SIEM, e existir regra para a técnica não prova que o ambiente a detecta. A resposta avisa quando a base passa de 120 dias.
 
 ### Exploits públicos por CVE (Metasploit e Nuclei)
 

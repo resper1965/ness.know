@@ -169,6 +169,14 @@ export function mitreTecnica(d: DadosAttack, args: Record<string, unknown>, agor
   return pronto({ candidatos: cands.slice(0, 10).map((c) => resumo(c.tipo, c)), total: cands.length, aviso: "Mais de um resultado: consulte pelo id para ver o detalhe." });
 }
 
+/** Grupo do ATT&CK pelo id (G0016) ou pelo nome ou apelido exato (usado para ligar um perfil de ator ao ATT&CK). */
+export function grupoPorNomeOuId(d: DadosAttack, nome: string): { id: string; nome: string; url: string } | null {
+  const q = norm(nome);
+  if (!q) return null;
+  const g = d.grupos.find((x) => norm(x.id) === q || norm(x.nome) === q || x.aliases.some((a) => norm(a) === q));
+  return g ? { id: g.id, nome: g.nome, url: g.url } : null;
+}
+
 /** Software do ATT&CK pelo nome ou apelido exato (usado para ligar a família de malware de um indicador ao ATT&CK). */
 export function programaPorNome(d: DadosAttack, nome: string): { id: string; nome: string; url: string } | null {
   const q = norm(nome);

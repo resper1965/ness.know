@@ -85,6 +85,6 @@ describe("base embutida do Wazuh (a gerada de verdade)", () => {
     expect(r.resultado.mitre[0].nome).toBeTruthy();
     expect((await chamarFonte({ DB }, "wazuh_decoder", {}, T))!.isError).toBe(true);
     const saude = JSON.parse((await chamarFonte({ DB }, "saude_fontes", {}, T))!.content[0].text).fontes;
-    expect(saude.at(-1)).toMatchObject({ id: "wazuh", modo: "embutido" });
+    expect(saude.find((f: { id: string }) => f.id === "wazuh")).toMatchObject({ modo: "embutido" });
   });
 });
