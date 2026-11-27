@@ -79,6 +79,8 @@ Nenhuma pendência.
 
 Levantamento de 25/11/2026, a partir do plano das fontes externas ([fontes.md](fontes.md)). O ness.know só serve conhecimento **externo e público**; dado interno da ness. e dado de cliente ficam no ness.OS.
 
+**Estado em 27/11/2026.** Camadas no ar: vulnerabilidades (KEV, EPSS, avisos da Microsoft e da Fortinet, exploits públicos do Metasploit e do Nuclei), ameaças (abuse.ch, DROP, ransomware.live, CIRCL hashlookup), referência técnica (documentação oficial, RFCs, MITRE ATT&CK, grupos de ameaça do MISP, Wazuh, Sigma, YARA, skills de fabricante), estado (provedores e Radar) e a API em lote `/v1` para o ness.OS, com a aba Fontes no painel. O que ficou de fora **foi por licença** (ver [plano-inteligencia.md](plano-inteligencia.md)) e depende de decisão ou autorização do dono ([pedidos-autorizacao.md](pedidos-autorizacao.md)).
+
 ### 8.1 Lacunas, com as soluções possíveis
 
 | # | Lacuna | Efeito | Soluções possíveis | Prioridade |
@@ -99,6 +101,8 @@ Levantamento de 25/11/2026, a partir do plano das fontes externas ([fontes.md](f
 - Rascunhos dos pedidos de autorização (Fortinet, RIPE NCC, OffSec, Palo Alto, Ivanti e NIC.br) em [pedidos-autorizacao.md](pedidos-autorizacao.md). Nenhum foi enviado.
 - **Fortinet PSIRT (`avisos_fabricante`) já está em produção com a mesma exposição.** Foi ativado como "feed RSS público" sem eu ter lido os termos; ao ler os termos do site (fortinet.com/corporate/about-us/legal.html, 26/11/2026, em parte por resumo), eles limitam o uso a fins não comerciais dentro da organização e proíbem modificar, distribuir ou criar derivados. O ness.know guarda só título, resumo curto, CVEs e link. Decisão pendente do dono: manter (risco assumido), pedir autorização à Fortinet ou pausar a fonte (`UPDATE fontes SET ativa = 0 WHERE id = 'fortinet'`).
 - **Roteamento e VPN (protocolos):** `rfc_consultar` (RFCs do IETF, ao vivo). Documentação de equipamento de outros fabricantes (Cisco, Juniper, MikroTik) não foi avaliada.
+- `sigma_regra`, `yara_regra` e `ator_ameaca` (26 e 27/11/2026) são bases embutidas, só metadados: Sigma (DRL 1.1, 3.782 regras), YARA do signature-base (DRL 1.1, 5.881 regras; as 44 com licença própria ficam de fora) e grupos do MISP galaxy (CC0 ou BSD, 1.132 grupos, sem a descrição). O autor da regra acompanha cada resposta.
+- `cve_consultar` traz `exploits_publicos` (Metasploit, BSD-3; Nuclei, MIT), só o índice e o link. Exploit-DB e PoC-in-GitHub ficam de fora. `ioc_consultar` traz o CIRCL hashlookup para hashes.
 - `wazuh_regra` e `wazuh_decoder` (PR 7) usam o ruleset oficial por base embutida (só metadados, GPLv2 citado). Limite: é a regra oficial da tag gerada, não a do manager do cliente (regra local e `overwrite` ficam fora); decoders ficam sem a lógica completa (só o início do `prematch`).
 - `buscar_doc_oficial` (PR 2) consulta Microsoft Learn, Cloudflare Docs e Cloudflare Blog ao vivo; o Learn não tem `maxTokenBudget`, então o limite de tamanho é do ness.know (5 resultados de até 1.200 caracteres, cache de 10 minutos).
 - `status_provedor` (PR 4) cobre Cloudflare, Atera, Datto RMM, Google Workspace, Azure e Action1; `internet_estado` usa o Radar com token só de leitura. O status do Microsoft 365 segue como lacuna (8.3). O `/history` da Action1 não é documentado: se mudar, a ferramenta avisa que falhou.
@@ -121,9 +125,9 @@ Levantamento de 25/11/2026, a partir do plano das fontes externas ([fontes.md](f
 
 | # | Melhoria | Ganho | Custo e risco |
 | --- | --- | --- | --- |
-| M1 | Alarme quando uma fonte passa do TTL (hoje só a resposta avisa) | Quem opera descobre a fonte parada sem consultar | Médio: precisa de canal de aviso; sem escrita em sistema externo |
+| M1 | Alarme quando uma fonte passa do TTL | Quem opera descobre a fonte parada sem consultar | **Parcial (26/11/2026):** `GET /v1/saude` e a aba Fontes mostram as fontes com problema. O aviso ativo (e-mail, Teams) é do ness.OS, que consulta `/v1/saude`: o ness.know não envia nada |
 | M2 | Cruzar CVE com produto por CPE (NVD) | `kev_buscar` acha o produto sem depender do nome escrito pela CISA | Médio: NVD limita a taxa; CPE vem sujo |
-| M3 | Mais fabricantes em `avisos_fabricante` (Cisco, Palo Alto, VMware, Fortinet por CSAF) | Cobre o que a ness. e os clientes operam | Baixo por fonte; precisa conferir termos de cada feed |
+| M3 | Mais fabricantes em `avisos_fabricante` (Cisco, Palo Alto, VMware, Fortinet por CSAF) | Cobre o que a ness. e os clientes operam | **Conferido em 26/11/2026:** Palo Alto e Ivanti têm RSS, mas os termos limitam a uso pessoal e não comercial e proíbem reprodução; Cisco, Broadcom/VMware, Citrix e SonicWall sem feed verificado. Só com autorização ([pedidos-autorizacao.md](pedidos-autorizacao.md)) |
 | M4 | EPSS completo (400 mil linhas) em D1 | `cve_consultar` sem chamada ao vivo | Alto: ~12 milhões de linhas gravadas por mês e mais armazenamento; só se a FIRST limitar a API |
 | M5 | Endpoints em lote além do CVE (`/v1/ioc`, `/v1/novidades`, `/v1/saude` e `/v1/listas/{tipo}` feitos em 26/11/2026; falta o CDB do Wazuh) | O ness.OS aplica listas com o próprio processo de aprovação | Médio; depende da camada de inteligência de ameaças |
 | M6 | Tendências do KEV (inclusões por fornecedor e por mês, uso em ransomware) | Resposta a "o que mais está sendo explorado" | Baixo; só consulta no banco |
