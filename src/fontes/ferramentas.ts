@@ -10,6 +10,7 @@ import { ransomwareAtividade } from "./ransomware";
 import { rfcConsultar } from "./rfc";
 import { statusProvedor } from "./status";
 import { atorAmeaca, carregarAtores, seloAtores } from "./atores";
+import { carregarYara, seloYara, yaraRegra } from "./yara";
 import { carregarSigma, seloSigma, sigmaRegra } from "./sigma";
 import { carregarWazuh, seloWazuh, wazuhDecoder, wazuhRegra } from "./wazuh";
 
@@ -66,7 +67,7 @@ function itemKev(k: LinhaKev) {
 const aberto = async <T>(db: D1Database, sql: string, ...binds: unknown[]) => (await db.prepare(sql).bind(...binds).all<T>()).results;
 
 /** Referência para consultar e entender (conhecimento) ou estado e sinais que mudam (dado). Fonte nova fora desta lista conta como dado. */
-const CONHECIMENTO = new Set(["learn", "cf-docs", "cf-blog", "rfc", "mitre", "wazuh", "sigma", "atores"]);
+const CONHECIMENTO = new Set(["learn", "cf-docs", "cf-blog", "rfc", "mitre", "wazuh", "sigma", "yara", "atores"]);
 export const categoriaDaFonte = (id: string): "conhecimento" | "dado" => (CONHECIMENTO.has(id) ? "conhecimento" : "dado");
 
 /** Estado de cada fonte (catálogo, bases embutidas incluídas). Usado pela ferramenta saude_fontes e pela página Fontes do admin. */
@@ -79,8 +80,9 @@ export async function estadoFontes(db: D1Database, agora: Date) {
   const mitre = seloMitre(await carregarAttack(), agora);
   const wazuh = seloWazuh(await carregarWazuh(), agora);
   const sigma = seloSigma(await carregarSigma(), agora);
+  const yara = seloYara(await carregarYara(), agora);
   const atores = seloAtores(await carregarAtores(), agora);
-  return [...fontes, { id: "mitre", categoria: categoriaDaFonte("mitre"), ...mitre, modo: "embutido", licenca: "Uso livre com atribuição à MITRE (termos de uso do ATT&CK)", exige_chave: false, ativa: true }, { id: "wazuh", categoria: categoriaDaFonte("wazuh"), ...wazuh, modo: "embutido", licenca: "GPLv2 (© Wazuh, Inc.); só metadados, com atribuição", exige_chave: false, ativa: true }, { id: "sigma", categoria: categoriaDaFonte("sigma"), ...sigma, modo: "embutido", licenca: "DRL 1.1 (SigmaHQ): uso comercial permitido, com o autor de cada regra; só metadados", exige_chave: false, ativa: true }, { id: "atores", categoria: categoriaDaFonte("atores"), ...atores, modo: "embutido", licenca: "CC0 1.0 ou BSD (MISP galaxy); só metadados e links, sem a descrição", exige_chave: false, ativa: true }];
+  return [...fontes, { id: "mitre", categoria: categoriaDaFonte("mitre"), ...mitre, modo: "embutido", licenca: "Uso livre com atribuição à MITRE (termos de uso do ATT&CK)", exige_chave: false, ativa: true }, { id: "wazuh", categoria: categoriaDaFonte("wazuh"), ...wazuh, modo: "embutido", licenca: "GPLv2 (© Wazuh, Inc.); só metadados, com atribuição", exige_chave: false, ativa: true }, { id: "sigma", categoria: categoriaDaFonte("sigma"), ...sigma, modo: "embutido", licenca: "DRL 1.1 (SigmaHQ): uso comercial permitido, com o autor de cada regra; só metadados", exige_chave: false, ativa: true }, { id: "yara", categoria: categoriaDaFonte("yara"), ...yara, modo: "embutido", licenca: "DRL 1.1 (signature-base): uso comercial permitido, com o autor de cada regra; só metadados e só regras sem licença própria", exige_chave: false, ativa: true }, { id: "atores", categoria: categoriaDaFonte("atores"), ...atores, modo: "embutido", licenca: "CC0 1.0 ou BSD (MISP galaxy); só metadados e links, sem a descrição", exige_chave: false, ativa: true }];
 }
 
 interface Epss {
@@ -355,6 +357,13 @@ export const FERRAMENTAS_FONTES = [
     annotations: { readOnlyHint: true },
   },
   {
+    name: "yara_regra",
+    description:
+      "Regras YARA do signature-base (Neo23x0, licença DRL 1.1), pelo nome exato da regra ou por termo no nome, na descrição ou no arquivo (família de malware, grupo, ferramenta: cobaltstrike, apt29, ransomware). Devolve nome, descrição, autor, nota, data, referência e o link do arquivo, com o commit da base. Só metadados: o texto da regra (strings e condição) fica no arquivo original. Só entram regras sem licença própria ou com DRL 1.1. Cite o autor. Regra YARA gera falso positivo e precisa de teste antes de uso.",
+    inputSchema: { type: "object", properties: { consulta: { type: "string", description: "nome exato da regra ou termo (ex.: cobaltstrike, apt29)" } }, required: ["consulta"] },
+    annotations: { readOnlyHint: true },
+  },
+  {
     name: "sigma_regra",
     description:
       "Regras de detecção Sigma (SigmaHQ, licença DRL 1.1), por id (UUID), técnica ATT&CK (T1059.001; T1059 inclui as subtécnicas), tática (execution), produto (windows, aws, linux), CVE ou termo do título. Devolve título, nível, status, autor, produto, técnicas e o link do arquivo, com o commit da base. Só metadados, sem a lógica da regra. Cite sempre o autor. A regra é genérica e precisa ser convertida e ajustada ao SIEM; existir regra para a técnica não prova que o ambiente a detecta. Para a regra de Wazuh equivalente, use wazuh_regra com a mesma técnica.",
@@ -521,6 +530,10 @@ export async function chamarFonte(env: EnvFontes, nome: string, args: Record<str
   }
   if (nome === "ator_ameaca") {
     const r = atorAmeaca(await carregarAtores(), args, agora, await carregarAttack());
+    return "erro" in r ? erro(String(r.erro)) : json(r);
+  }
+  if (nome === "yara_regra") {
+    const r = yaraRegra(await carregarYara(), args, agora);
     return "erro" in r ? erro(String(r.erro)) : json(r);
   }
   if (nome === "sigma_regra") {

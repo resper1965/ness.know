@@ -68,16 +68,16 @@ Situação em 27/11/2026:
 |---|---|
 | Sigma (SigmaHQ) | **Feito** (`sigma_regra`). Licença DRL 1.1: uso comercial permitido, com o autor de cada regra. Base embutida de 3.782 regras, só metadados |
 | Wazuh | **Já existia** (`wazuh_regra`). O MITRE liga as duas: a mesma técnica, T1059.001, serve nas duas ferramentas |
-| YARA: signature-base (Neo23x0) | **Adiado.** DRL 1.1, mas "exceto as regras que indicam outra licença no campo `license`" e as versões até 2021 eram CC BY-NC; exige filtrar regra por regra. Índice não lido |
+| YARA: signature-base (Neo23x0) | **Feito** (`yara_regra`). DRL 1.1; as 44 regras com licença própria (CC BY-NC, OGL, Volexity, CAPE) ficam de fora. 5.881 regras, só metadados |
 | YARA: Yara-Rules | **Fora.** GPL-2.0 (copyleft); o texto da licença não pôde ser lido |
-| Suricata ET Open | **Fora por ora.** Licença não confirmada (o `LICENSE` da pasta não foi lido); o pacote tem 5 MB e o índice de descrições 26 MB |
+| Suricata ET Open | **Adiado.** A licença é mista por faixa de sid: sids 1 a 3464 e 100000000 a 100000908 são GPLv2; 2000000 a 2799999 são BSD de 3 cláusulas (© Emerging Threats); 2800000 a 2900000 são ETPro (licença própria). Daria para indexar só a faixa BSD, mas são ~45 mil regras: não cabem embutidas (o índice de descrições tem 26 MB) e exigiriam coleta em D1 |
 
 ## Fase 4: Brasil e marca
 
 | Fonte | Situação |
 |---|---|
 | CERT.br | **Fora.** O site é CC BY-NC-ND 4.0 (não comercial, sem derivados). Existe um RSS (`cert.br/rss/certbr-rss.xml`, não lido). Só com autorização do NIC.br |
-| CTIR Gov | **Não verificado.** A página estava em manutenção em 27/11/2026; tentar de novo |
+| CTIR Gov | **Fora por ora.** A página continuou em manutenção na segunda leitura (27/11/2026); o rodapé do gov.br indica CC BY-ND 3.0 (sem derivações), lido só por resumo |
 | crt.sh (domínios parecidos) | **Adiado.** A API JSON responde, mas a política de uso não foi lida e uma consulta por domínio devolve mais de 600 KB |
 | Certspotter (SSLMate) | **Fora.** Plano gratuito de 100 consultas por hora e 10 de domínio completo por hora, e a busca é por domínio, não por palavra parecida; termos não lidos |
 

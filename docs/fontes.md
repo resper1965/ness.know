@@ -57,6 +57,7 @@ Na interface de administração, a aba **Fontes** lista cada fonte (marcada como
 | `mitre_tecnica` | `consulta` (id ou termo) | Técnica, grupo, software, tática ou mitigação do ATT&CK: descrição, táticas, plataformas, detecção, mitigações, subtécnicas, grupos e software, com URL oficial e versão da base |
 | `ransomware_atividade` | `grupo?`, `setor?`, `pais?`, `desde?` (padrão 30 dias), `pagina?` | Total, resumo por grupo, país e setor (top 10) e as 20 vítimas mais recentes da página, com link da Ransomware.live. **Alegações, não incidentes confirmados** |
 | `ator_ameaca` | `consulta` (nome ou apelido, país de 2 letras ou setor) | Perfil de grupo de ameaça (MISP galaxy): apelidos, país atribuído, patrocinador suspeito, setores alvo, referências e ligação com o grupo do ATT&CK. Só metadados e links |
+| `yara_regra` | `consulta` (nome exato ou termo) | Regra YARA do signature-base: descrição, autor, nota, data, referência e link do arquivo. Só metadados e só regras sem licença própria |
 | `sigma_regra` | `consulta` (UUID, técnica ATT&CK, tática, produto, CVE ou termo) | Regra Sigma: título, nível, status, autor, produto, técnicas e link do arquivo no commit da base. Só metadados |
 | `rfc_consultar` | `numero`, `termo?` | RFC do IETF ao vivo (rfc-editor.org): título, status, resumo, obsoletos e atualizações, erratas e, com `termo`, até 3 trechos literais do texto. Cache de 24 h |
 | `wazuh_regra` | `consulta` (id ou termo) | Regra do ruleset oficial do Wazuh: nível, descrição, arquivo, grupos, decoder, dependências, regras filhas, técnicas ATT&CK com nome e CVEs. Por termo: descrição, grupo, id MITRE ou CVE |
@@ -153,6 +154,10 @@ Skill é instrução que o agente executa com o acesso da pessoa. Por isso entra
 ### RFCs do IETF (roteamento e VPN)
 
 Consulta ao vivo ao `www.rfc-editor.org` (`/rfc/rfcN.json` para metadados e `/rfc/rfcN.txt` para os trechos). **Licença:** IETF Trust Legal Provisions (TLP 5), seção 3.c, permite copiar e distribuir documentos do IETF integralmente e sem modificação, com atribuição ao IETF e ao RFC; acima de um quinto do texto exige os avisos legais originais. Por isso a ferramenta devolve metadados e **trechos literais curtos** (até 3, 900 caracteres), nunca o RFC inteiro, e nunca resume o texto dentro do campo do trecho. Derivados (resumos, traduções) não são licença concedida: o resumo vem do campo `abstract` do próprio RFC Editor. Verificado em 26/11/2026 para os RFCs 4271, 2328 e 4301. O `status` do JSON é o nível atual; o cabeçalho do `.txt` mostra o da publicação. Confira `obsoleta_por` e `atualizada_por` antes de afirmar o comportamento atual.
+
+### YARA (signature-base)
+
+Base embutida: `scripts/gerar-yara.mjs <pasta-do-repositorio> <commit>` lê `yara/*.yar` do Neo23x0/signature-base e grava `src/fontes/dados/yara.json` (~1,6 MB): 5.881 regras no commit `fffcaa4d39` (27/11/2026). **Licença:** DRL 1.1 no repositório, que permite uso comercial e exige o autor junto da regra; **44 regras trazem licença própria no campo `license` (CC BY-NC, OGL, Volexity, CAPE) e ficam de fora**, contadas em `fora_por_licenca_propria`. Só metadados (nome, descrição, autor, data, nota, referência https e arquivo); `strings:` e `condition:` não são copiados. As versões do repositório até 2021 eram CC BY-NC: não use commits antigos. **Yara-Rules** (GPL-2.0) fica fora.
 
 ### Grupos de ameaça (MISP galaxy)
 
