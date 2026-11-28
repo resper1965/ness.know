@@ -133,7 +133,7 @@
     .perigo:hover:not(:disabled) { background: color-mix(in oklab, var(--bad) 16%, transparent); }
     .pequeno { height: var(--control-h-sm); padding: 0 12px; }
     .primario:disabled, .secundario:disabled, .perigo:disabled { background: none; border-color: var(--line); color: var(--ink-4); cursor: not-allowed; }
-    .texto { font-size: 12px; color: var(--accent); }
+    .texto { font-size: 12px; color: var(--accent-text); }
     .texto:hover { color: var(--accent-claro); }
     .acoes { display: flex; gap: 8px; align-items: center; margin-top: 20px; }
 
@@ -208,7 +208,7 @@
     .resumo { display: flex; justify-content: space-between; gap: 16px; padding: 12px 20px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); color: var(--ink-3); font: 400 11px/1.4 var(--font-mono); }
     .trecho { display: grid; grid-template-columns: 28px 1fr; gap: 0 12px; padding: 16px 20px; border-bottom: 1px solid var(--line); }
     .trecho:last-child { border-bottom: 0; }
-    .trecho .pos { font: 500 12px/1.5 var(--font-mono); color: var(--accent); }
+    .trecho .pos { font: 500 12px/1.5 var(--font-mono); color: var(--accent-text); }
     .trecho h3 { margin: 0; font: 600 13px/1.4 var(--font-body); color: var(--ink); }
     .trecho .info { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 4px; color: var(--ink-4); font: 400 11px/1.4 var(--font-mono); }
     .trecho p { margin: 10px 0 0; white-space: pre-wrap; line-height: 1.6; color: var(--ink-2); max-width: 96ch; }
