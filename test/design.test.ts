@@ -6,12 +6,17 @@ const paginas = { "index.html": "painel", "enviar.html": "enviar", "docs.html": 
 const ler = (p: string) => readFileSync(`public/${p}`, "utf8");
 
 const TOKENS = ["--ness-paper: #0e1116", "--ness-surface: #16191f", "--ness-surface-2: #1e232b", "--ness-line: rgba(255, 255, 255, .14)", "--ness-bad: #f87171", "--ness-bluedot: #00ade8", "--ness-accent-ink: #04121c"];
+const TOKENS_CLARO = ["--ness-paper: #ffffff", "--ness-surface: #f8fafc", "--ness-ink: #0f172a", "--ness-accent-text: #006a8f", "--ness-bad: #b91c1c"];
 const PALETA_ANTIGA = ["#0b1326", "#162244", "#1e2d52", "#14214a", "#26365f", "#ef4444", "#fca5a5", "#ff6b6b", "#031018", "#a9b6cb", "#34d399"];
 
 describe.each(Object.keys(paginas))("%s", (arq) => {
   const html = ler(arq);
   it("traz os tokens do design system", () => {
     for (const t of TOKENS) expect(html, t).toContain(t);
+  });
+  it("abre no tema claro e guarda a escolha do usuário", () => {
+    for (const t of TOKENS_CLARO) expect(html, t).toContain(t);
+    expect(html).toContain('localStorage.getItem("ness-tema")');
   });
   it("não usa a paleta antiga", () => {
     for (const h of PALETA_ANTIGA) expect(html.toLowerCase(), h).not.toContain(h);
